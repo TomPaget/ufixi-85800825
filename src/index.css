@@ -59,14 +59,6 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
-
-    /* App custom tokens */
-    --color-bg: #FFF5EC;
-    --color-navy: #00172F;
-    --color-primary: #E8530A;
-    --color-secondary: #D93870;
-    --color-text-secondary: #6B6A8E;
-    --gradient-primary: linear-gradient(135deg, #E8530A, #D93870);
   }
 }
 
@@ -87,13 +79,12 @@
     background: var(--color-bg);
     min-height: 100vh;
     overscroll-behavior: none;
-    letter-spacing: 0.03em;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Coolvetica', sans-serif;
     font-weight: 400;
-    letter-spacing: 0.01em;
+    letter-spacing: -0.01em;
   }
 
   button, a, [role="button"], label {
