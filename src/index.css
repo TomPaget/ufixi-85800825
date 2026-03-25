@@ -59,6 +59,14 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* App custom tokens */
+    --color-bg: #FFF5EC;
+    --color-navy: #00172F;
+    --color-primary: #E8530A;
+    --color-secondary: #D93870;
+    --color-text-secondary: #6B6A8E;
+    --gradient-primary: linear-gradient(135deg, #E8530A, #D93870);
   }
 }
 
