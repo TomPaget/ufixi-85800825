@@ -5,6 +5,7 @@ import LavaLampBackground from "@/components/LavaLampBackground";
 import GlassCard from "@/components/GlassCard";
 import IssueCardDemo from "@/components/IssueCardDemo";
 import BottomNavDemo from "@/components/BottomNavDemo";
+import ufixiLogo from "@/assets/ufixi-logo.svg";
 
 const MOCK_ISSUES = [
   {
@@ -59,9 +60,7 @@ export default function HomeDashboard() {
           </button>
 
           <div className="absolute left-0 right-0 flex justify-center pointer-events-none">
-            <span className="text-lg font-bold tracking-tight" style={{ color: "var(--color-navy)", letterSpacing: "-0.03em" }}>
-              ufixi
-            </span>
+            <img src={ufixiLogo} alt="Ufixi" className="h-8 object-contain" />
           </div>
 
           <div className="flex items-center gap-2 ml-auto flex-shrink-0 pr-3">
@@ -74,7 +73,7 @@ export default function HomeDashboard() {
                 ],
               }}
               transition={{ duration: 2, ease: "easeInOut", repeat: Infinity }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-all active:scale-95"
               style={{ background: "var(--gradient-primary)", color: "#fff" }}
             >
               <Sparkles className="w-3.5 h-3.5" />
@@ -95,7 +94,6 @@ export default function HomeDashboard() {
           <h1
             style={{
               fontSize: "clamp(2.4rem, 7vw, 3.5rem)",
-              fontWeight: 700,
               lineHeight: 1.05,
               letterSpacing: "-0.03em",
               color: "var(--color-navy)",
@@ -113,7 +111,7 @@ export default function HomeDashboard() {
               fixing?
             </span>
           </h1>
-          <p className="text-sm max-w-xs mx-auto" style={{ color: "var(--color-text-secondary)", fontWeight: 500 }}>
+          <p className="text-sm max-w-xs mx-auto" style={{ color: "var(--color-text-secondary)" }}>
             Upload a photo or video and get an instant AI-powered repair assessment.
           </p>
         </motion.div>
@@ -132,10 +130,10 @@ export default function HomeDashboard() {
           ].map(({ icon: Icon, value, label, color }) => (
             <GlassCard key={label} className="text-center">
               <Icon className="w-5 h-5 mx-auto mb-1" style={{ color }} />
-              <p className="text-xl font-bold" style={{ color: "var(--color-navy)" }}>
+              <p className="text-xl" style={{ color: "var(--color-navy)" }}>
                 {value}
               </p>
-              <p className="text-xs font-semibold" style={{ color: "var(--color-text-secondary)" }}>
+              <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
                 {label}
               </p>
             </GlassCard>
@@ -160,9 +158,9 @@ export default function HomeDashboard() {
             }}
           >
             <Plus className="w-12 h-12" strokeWidth={2.5} />
-            <span className="text-sm font-bold tracking-wide">Scan</span>
+            <span className="text-sm tracking-wide">Scan</span>
           </button>
-          <p className="text-sm font-medium mt-4" style={{ color: "#6B6A8E" }}>
+          <p className="text-sm mt-4" style={{ color: "#6B6A8E" }}>
             Tap to scan a new issue
           </p>
         </motion.div>
@@ -183,11 +181,11 @@ export default function HomeDashboard() {
               minHeight: 44,
             }}
           >
-            <span className="font-bold flex items-center gap-2" style={{ color: "var(--color-navy)" }}>
+            <span className="flex items-center gap-2" style={{ color: "var(--color-navy)" }}>
               <History className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
               Recent Scans
               <span
-                className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                className="text-xs px-2 py-0.5 rounded-full"
                 style={{ background: "rgba(232,83,10,0.1)", color: "var(--color-primary)" }}
               >
                 {MOCK_ISSUES.length}
@@ -214,7 +212,7 @@ export default function HomeDashboard() {
                     <IssueCardDemo key={issue.id} issue={issue} />
                   ))}
                   <p
-                    className="block text-center text-sm font-semibold py-2 cursor-pointer"
+                    className="block text-center text-sm py-2 cursor-pointer"
                     style={{ color: "var(--color-primary)" }}
                   >
                     View All Issues →

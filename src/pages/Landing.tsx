@@ -4,6 +4,7 @@ import LavaLampBackground from "@/components/LavaLampBackground";
 import GradientButton from "@/components/GradientButton";
 import FeaturePill from "@/components/FeaturePill";
 import { motion } from "framer-motion";
+import ufixiLogo from "@/assets/ufixi-logo.svg";
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -19,12 +20,7 @@ export default function Landing() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h2
-            className="text-2xl font-bold tracking-tight"
-            style={{ color: "var(--color-navy)", letterSpacing: "-0.03em" }}
-          >
-            ufixi
-          </h2>
+          <img src={ufixiLogo} alt="Ufixi" className="h-9 mx-auto object-contain" />
         </motion.div>
 
         {/* Heading */}
@@ -37,7 +33,6 @@ export default function Landing() {
           <h1
             style={{
               fontSize: "clamp(2.8rem, 8vw, 4.5rem)",
-              fontWeight: 700,
               lineHeight: 1.05,
               letterSpacing: "-0.03em",
               color: "var(--color-navy)",
@@ -56,7 +51,7 @@ export default function Landing() {
           </h1>
           <p
             className="text-base max-w-[26rem] mx-auto"
-            style={{ color: "var(--color-text-secondary)", fontWeight: 500 }}
+            style={{ color: "var(--color-text-secondary)", fontWeight: 400 }}
           >
             Clarity before cost. AI diagnoses any home issue in seconds — know
             what's wrong, what it costs, and what to do.
@@ -88,7 +83,7 @@ export default function Landing() {
 
         {/* Tagline */}
         <motion.p
-          className="text-xs font-medium"
+          className="text-xs"
           style={{ color: "rgba(0,23,47,0.38)" }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
