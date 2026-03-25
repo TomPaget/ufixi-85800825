@@ -1,10 +1,13 @@
 import { useState } from "react";
-import { Plus, History, Sparkles, TrendingUp, Calendar, ChevronDown, ChevronUp, Menu } from "lucide-react";
+import { Plus, History, Sparkles, TrendingUp, Calendar, ChevronDown, ChevronUp, Menu, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import LavaLampBackground from "@/components/LavaLampBackground";
 import GlassCard from "@/components/GlassCard";
 import IssueCardDemo from "@/components/IssueCardDemo";
 import BottomNavDemo from "@/components/BottomNavDemo";
+import AuthPromptModal from "@/components/AuthPromptModal";
+import { useAuth } from "@/lib/AuthContext";
+import { toast } from "@/hooks/use-toast";
 import ufixiLogo from "@/assets/ufixi-logo.svg";
 
 const MOCK_ISSUES = [
@@ -36,14 +39,36 @@ const MOCK_ISSUES = [
 
 export default function HomeDashboard() {
   const [showRecentIssues, setShowRecentIssues] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const { user, signOut } = useAuth();
 
   const activeCount = MOCK_ISSUES.filter((i) => i.status === "active").length;
   const fixSoonCount = MOCK_ISSUES.filter((i) => i.urgency === "fix_soon").length;
   const resolvedCount = MOCK_ISSUES.filter((i) => i.status === "resolved").length;
 
+  const handleScanClick = () => {
+    // The scan itself is free, but saving requires auth
+    // For now, show a toast simulating a scan result, then prompt auth to save
+    if (!user) {
+      toast({
+        title: "Scan complete!",
+        description: "Create an account to save your diagnostic results.",
+      });
+      setShowAuthModal(true);
+    } else {
+      toast({
+        title: "Scan started",
+        description: "Upload functionality coming soon!",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen pb-20 relative overflow-hidden" style={{ background: "transparent" }}>
       <LavaLampBackground />
+
+      {/* Auth Modal */}
+      <AuthPromptModal open={showAuthModal} onClose={() => setShowAuthModal(false)} />
 
       {/* Header */}
       <motion.header
@@ -64,21 +89,33 @@ export default function HomeDashboard() {
           </div>
 
           <div className="flex items-center gap-2 ml-auto flex-shrink-0 pr-3">
-            <motion.button
-              animate={{
-                boxShadow: [
-                  "0 0 0 0px rgba(226,100,171,0.2)",
-                  "0 0 0 6px rgba(226,100,171,0.08)",
-                  "0 0 0 0px rgba(226,100,171,0.2)",
-                ],
-              }}
-              transition={{ duration: 2, ease: "easeInOut", repeat: Infinity }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-all active:scale-95"
-              style={{ background: "var(--gradient-primary)", color: "#fff" }}
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              Go Premium
-            </motion.button>
+            {user ? (
+              <button
+                onClick={() => signOut()}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-all active:scale-95"
+                style={{ background: "rgba(0,23,47,0.06)", color: "var(--color-navy)" }}
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                Sign Out
+              </button>
+            ) : (
+              <motion.button
+                onClick={() => setShowAuthModal(true)}
+                animate={{
+                  boxShadow: [
+                    "0 0 0 0px rgba(226,100,171,0.2)",
+                    "0 0 0 6px rgba(226,100,171,0.08)",
+                    "0 0 0 0px rgba(226,100,171,0.2)",
+                  ],
+                }}
+                transition={{ duration: 2, ease: "easeInOut", repeat: Infinity }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-all active:scale-95"
+                style={{ background: "var(--gradient-primary)", color: "#fff" }}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Go Premium
+              </motion.button>
+            )}
           </div>
         </div>
       </motion.header>
@@ -95,7 +132,7 @@ export default function HomeDashboard() {
             style={{
               fontSize: "clamp(2.4rem, 7vw, 3.5rem)",
               lineHeight: 1.05,
-              letterSpacing: "-0.03em",
+              letterSpacing: "-0.02em",
               color: "var(--color-navy)",
               marginTop: "1rem",
             }}
@@ -148,6 +185,7 @@ export default function HomeDashboard() {
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           <button
+            onClick={handleScanClick}
             className="w-40 h-40 rounded-full flex flex-col items-center justify-center gap-2 border-0 transition-transform active:scale-95"
             style={{
               background: "var(--gradient-primary)",
