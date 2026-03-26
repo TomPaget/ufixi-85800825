@@ -15,7 +15,7 @@ Examine the image. Determine:
 3. Write a brief_description of max 15 words describing the specific visible symptom.
 4. Write an issue_title of max 5 words describing the core symptom (e.g. "Ceiling Water Damage Leak", "Mould Behind Bathroom Tiles", "Boiler Pressure Too Low").
 
-Be specific about what you ACTUALLY SEE.`;
+Be specific about what you ACTUALLY SEE. Never use emojis.`;
 
 const STAGE2_PROMPT = `You are a UK home repair diagnostician. Be EXTREMELY CONCISE throughout.
 
