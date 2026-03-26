@@ -13,8 +13,6 @@ import { useSubscription } from "@/hooks/useSubscription";
 import ufixiLogo from "@/assets/ufixi-logo.svg";
 import GradientButton from "./GradientButton";
 import LavaLampBackground from "./LavaLampBackground";
-import GradientButton from "./GradientButton";
-import LavaLampBackground from "./LavaLampBackground";
 
 const CATEGORIES = [
   { id: "plumbing", label: "Plumbing", icon: Droplets },
