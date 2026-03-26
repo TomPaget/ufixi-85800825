@@ -10,7 +10,9 @@ import LavaLampBackground from "@/components/LavaLampBackground";
 import PageHeader from "@/components/PageHeader";
 import GradientButton from "@/components/GradientButton";
 import { MOCK_ISSUES } from "@/data/mockData";
-import { generateTradesmanPdf } from "@/lib/generateTradesmanPdf";
+import { generateTradesmanPdf, generateTradesmanEmail } from "@/lib/generateTradesmanPdf";
+import { getTradeNameForCategory } from "@/lib/tradeNameMap";
+import { useSubscription } from "@/hooks/useSubscription";
 
 const priorityColors: Record<string, { bg: string; text: string }> = {
   low: { bg: "rgba(107,122,141,0.1)", text: "#6B7A8D" },
