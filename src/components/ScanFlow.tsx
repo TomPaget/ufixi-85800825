@@ -319,6 +319,17 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
   // Results sections moved to DiagnosisResults component
 
   // --- AD OVERLAY ---
+  // Push AdSense ad when ad overlay mounts
+  useEffect(() => {
+    if (showAd && !isNative) {
+      try {
+        ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+      } catch (e) {
+        console.warn("AdSense push error:", e);
+      }
+    }
+  }, [showAd, isNative]);
+
   if (showAd) {
     return (
       <motion.div
@@ -329,11 +340,10 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
       >
         <LavaLampBackground />
         <div className="relative z-10 w-full max-w-md px-6 space-y-6 text-center">
-          {/* Ad unit placeholder */}
+          {/* Ad unit */}
           <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.95)", border: "1px solid rgba(0,23,47,0.08)", boxShadow: "var(--shadow-card)" }}>
             <div className="p-2">
               <p className="text-[10px] uppercase tracking-wider mb-1" style={{ color: textSecondary }}>Advertisement</p>
-              {/* Google AdSense ad slot — replace data-ad-slot with your real slot ID */}
               <div
                 className="w-full flex items-center justify-center rounded-xl"
                 style={{ minHeight: 250, background: "rgba(0,23,47,0.03)" }}
@@ -346,15 +356,14 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                   data-ad-format="auto"
                   data-full-width-responsive="true"
                 />
-                {/* Fallback when AdSense not loaded */}
-                <div className="text-center p-6 space-y-3">
-                  <Crown className="w-10 h-10 mx-auto" style={{ color: "var(--color-primary)" }} />
-                  <p className="text-lg font-bold" style={{ color: navy }}>Go Premium</p>
-                  <p className="text-sm" style={{ color: textSecondary }}>No ads, unlimited scans, save forever.</p>
-                  <p className="text-lg font-bold" style={{ background: "var(--gradient-primary)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                    Just £0.99/month
-                  </p>
-                </div>
+              </div>
+              {/* Fallback promo when no ad fills */}
+              <div className="text-center p-4 space-y-2">
+                <Crown className="w-8 h-8 mx-auto" style={{ color: "var(--color-primary)" }} />
+                <p className="text-sm font-bold" style={{ color: navy }}>Go Premium — No ads, unlimited scans</p>
+                <p className="text-lg font-bold" style={{ background: "var(--gradient-primary)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                  Just £0.99/month
+                </p>
               </div>
             </div>
           </div>
