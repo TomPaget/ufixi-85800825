@@ -491,37 +491,32 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                 <label className="text-base font-semibold flex items-center gap-2" style={{ color: navy }}>
                   <Camera className="w-4 h-4" style={{ color: "var(--color-primary)" }} /> Upload Evidence
                 </label>
-                <div className="space-y-3">
-                  {[
-                    { id: "photo", label: "Take Photo", sub: "Use your camera", icon: Camera },
-                    { id: "video", label: "Record Video", sub: "Up to 30 seconds", icon: Video },
-                    { id: "upload", label: "Upload Media", sub: "From your gallery", icon: Upload },
-                  ].map(({ id, label, sub, icon: Icon }) => (
-                    <button
-                      key={id}
-                      onClick={() => handleUploadOption(id)}
-                      className="w-full flex items-center gap-4 p-4 rounded-2xl transition-all active:scale-[0.98]"
-                      style={{
-                        background: uploadMethod === id ? "rgba(232,83,10,0.08)" : "white",
-                        border: `2px solid ${uploadMethod === id ? "var(--color-primary)" : "rgba(0,23,47,0.08)"}`,
-                        minHeight: 56,
-                      }}
-                    >
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(232,83,10,0.08)" }}>
-                        <Icon className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
-                      </div>
-                      <div className="text-left">
-                        <p className="text-base font-semibold" style={{ color: navy }}>{label}</p>
-                        <p className="text-sm" style={{ color: textSecondary }}>{sub}</p>
-                      </div>
-                      {uploadMethod === id && uploadedFile && (
-                        <span className="ml-auto text-xs px-2 py-1 rounded-full" style={{ background: "rgba(29,158,117,0.1)", color: "var(--color-success)" }}>
-                          ✓ {uploadedFile.name.slice(0, 15)}
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </div>
+                <button
+                  onClick={handleUploadMedia}
+                  className="w-full flex items-center gap-4 p-4 rounded-2xl transition-all active:scale-[0.98]"
+                  style={{
+                    background: uploadedFile ? "rgba(232,83,10,0.08)" : "white",
+                    border: `2px solid ${uploadedFile ? "var(--color-primary)" : "rgba(0,23,47,0.08)"}`,
+                    minHeight: 56,
+                  }}
+                >
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(232,83,10,0.08)" }}>
+                    <Upload className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-base font-semibold" style={{ color: navy }}>
+                      {uploadedFile ? "Change Media" : "Upload Photo or Video"}
+                    </p>
+                    <p className="text-sm" style={{ color: textSecondary }}>
+                      {uploadedFile ? uploadedFile.name.slice(0, 30) : "Take a photo, record video, or choose from gallery"}
+                    </p>
+                  </div>
+                  {uploadedFile && (
+                    <span className="ml-auto text-xs px-2 py-1 rounded-full" style={{ background: "rgba(29,158,117,0.1)", color: "var(--color-success)" }}>
+                      ✓
+                    </span>
+                  )}
+                </button>
               </div>
 
               {/* Image Preview */}
