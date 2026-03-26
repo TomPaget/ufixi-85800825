@@ -32,6 +32,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  const [welcomeEmailSent, setWelcomeEmailSent] = useState(false);
 
   const checkSubscription = useCallback(async () => {
     try {
@@ -46,15 +47,30 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       const { data, error } = await supabase.functions.invoke("check-subscription");
       if (error) throw error;
 
-      setIsPremium(data?.subscribed === true);
+      const nowPremium = data?.subscribed === true;
+      setIsPremium(nowPremium);
       setSubscriptionEnd(data?.subscription_end || null);
+
+      // Send welcome email on first premium detection (once per session)
+      if (nowPremium && !welcomeEmailSent) {
+        setWelcomeEmailSent(true);
+        const fullName = session.user.user_metadata?.full_name;
+        supabase.functions.invoke("send-transactional-email", {
+          body: {
+            templateName: "welcome-to-premium",
+            recipientEmail: session.user.email,
+            idempotencyKey: `welcome-premium-${session.user.id}`,
+            templateData: { name: fullName || undefined },
+          },
+        }).catch((err) => console.warn("Welcome email failed:", err));
+      }
     } catch (err) {
       console.error("Subscription check failed:", err);
       setIsPremium(false);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [welcomeEmailSent]);
 
   const startCheckout = useCallback(async () => {
     // Check if user is logged in first
