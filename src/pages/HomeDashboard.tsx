@@ -227,7 +227,7 @@ export default function HomeDashboard() {
                       ))}
                     </div>
 
-                    <GradientButton onClick={() => navigate("/upgrade")}>
+                    <GradientButton onClick={startCheckout}>
                       <span className="flex items-center justify-center gap-2"><Crown className="w-4 h-4" /> Upgrade to Premium — £3.99/mo</span>
                     </GradientButton>
                   </div>
