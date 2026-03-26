@@ -788,75 +788,14 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
 
           {/* STEP 5 — Real AI Results */}
           {!showSavePrompt && step === 5 && diagnosis && (
-            <motion.div key="s5" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.2 }} className="space-y-5 pb-6">
-              {/* Uploaded image preview */}
-              {uploadedPreviewUrl && uploadedFile?.type.startsWith("image/") && (
-                <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(0,23,47,0.08)" }}>
-                  <img src={uploadedPreviewUrl} alt="Scanned issue" className="w-full h-auto max-h-56 object-cover" />
-                </div>
-              )}
-
-              {/* Result header */}
-              <div className="rounded-2xl p-6 space-y-3" style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(12px)", border: "1px solid rgba(0,23,47,0.08)", boxShadow: "var(--shadow-card)" }}>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5" style={{ color: "var(--color-success)" }} />
-                  <span className="text-sm font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(29,158,117,0.1)", color: "var(--color-success)" }}>AI Diagnosis Complete</span>
-                </div>
-                <h2 className="text-2xl tracking-tight font-bold" style={{ color: navy }}>{triage?.issue_title || triage?.brief_description || "Issue Detected"}</h2>
-                <p className="text-base" style={{ color: textSecondary }}>{triage?.brief_description}</p>
-                <p className="text-sm" style={{ color: textSecondary }}>
-                  {triage?.category} • {triage?.confidence} confidence
-                </p>
-
-                {/* Urgency badge */}
-                {diagnosis.urgency_assessment && (
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{
-                      background: diagnosis.urgency_assessment.level === "fix_now" ? "rgba(220,38,38,0.1)" : diagnosis.urgency_assessment.level === "fix_soon" ? "rgba(240,144,10,0.1)" : "rgba(107,122,141,0.1)",
-                      color: diagnosis.urgency_assessment.level === "fix_now" ? "#DC2626" : diagnosis.urgency_assessment.level === "fix_soon" ? "#F0900A" : "#6B7A8D",
-                    }}>
-                      {diagnosis.urgency_assessment.level.replace("_", " ").toUpperCase()}
-                    </span>
-                    <span className="text-sm" style={{ color: textSecondary }}>{diagnosis.urgency_assessment.reason}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Accordion sections */}
-              {resultSections.map(({ id, title, icon: Icon, content }) => (
-                <div key={id} className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(12px)", border: "1px solid rgba(0,23,47,0.08)" }}>
-                  <button
-                    onClick={() => setExpandedSection(expandedSection === id ? null : id)}
-                    className="w-full flex items-center justify-between p-5 text-left"
-                    style={{ minHeight: 56 }}
-                  >
-                    <span className="flex items-center gap-2.5 text-base font-semibold" style={{ color: navy }}>
-                      <Icon className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
-                      {title}
-                    </span>
-                    {expandedSection === id ? <ChevronUp className="w-5 h-5" style={{ color: "#9aa5b4" }} /> : <ChevronDown className="w-5 h-5" style={{ color: "#9aa5b4" }} />}
-                  </button>
-                  <AnimatePresence>
-                    {expandedSection === id && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="px-5 pb-5">{content}</div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              ))}
-
-              <GradientButton size="lg" onClick={handleSave}>Save Full Diagnosis</GradientButton>
-              <button onClick={onClose} className="w-full text-center py-3 text-base" style={{ color: textSecondary }}>
-                Close without saving
-              </button>
-            </motion.div>
+            <DiagnosisResults
+              triage={triage}
+              diagnosis={diagnosis}
+              uploadedPreviewUrl={uploadedPreviewUrl}
+              uploadedFileType={uploadedFile?.type || null}
+              onSave={handleSave}
+              onClose={onClose}
+            />
           )}
         </AnimatePresence>
       </div>
