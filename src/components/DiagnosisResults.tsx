@@ -612,6 +612,16 @@ export default function DiagnosisResults({
         proCostRange={`£${proMin}–£${proMax}`}
       />
 
+      {/* Export PDF */}
+      <button
+        onClick={() => generateTradesmanPdf(triage, diagnosis)}
+        className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl text-base font-semibold transition-all active:scale-95"
+        style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", color: "var(--color-navy)", minHeight: 52 }}
+      >
+        <FileText className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
+        Export Report for Tradesman
+      </button>
+
       {/* Save / Close buttons */}
       <GradientButton size="lg" onClick={onSave}>
         Save Full Diagnosis
