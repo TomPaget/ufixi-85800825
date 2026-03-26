@@ -16,6 +16,7 @@ import Contractors from "./pages/Contractors";
 import Support from "./pages/Support";
 import Upgrade from "./pages/Upgrade";
 import NotFound from "./pages/NotFound";
+import AdminDashboard from "./pages/AdminDashboard";
 
 const queryClient = new QueryClient();
 
