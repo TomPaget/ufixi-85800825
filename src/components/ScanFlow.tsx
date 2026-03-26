@@ -31,7 +31,7 @@ const FOLLOW_UP_QUESTIONS = [
 
 const PREMIUM_BENEFITS = [
   { icon: CheckCircle2, text: "Save unlimited diagnoses" },
-  { icon: Clock, text: "Access scan history for 45 days" },
+  { icon: CheckCircle2, text: "Access scan history for 45 days" },
   { icon: X, text: "No ads during diagnosis" },
   { icon: Zap, text: "Priority AI analysis" },
   { icon: Mail, text: "Landlord letter generator" },
