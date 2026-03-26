@@ -564,11 +564,16 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Describe what you see..."
+                  placeholder={hasFile ? "Describe what you see..." : "Describe the issue in detail — what does it look like, where is it, when did it start, and has it changed over time?"}
                   className="w-full rounded-2xl p-4 text-base resize-none focus:outline-none focus:ring-2"
                   style={{ background: "white", border: "1px solid rgba(232,83,10,0.25)", color: navy, minHeight: 110, boxShadow: "0 0 0 0px transparent", "--tw-ring-color": "rgba(232,83,10,0.4)" } as React.CSSProperties}
                   rows={4}
                 />
+                {!hasFile && (
+                  <p className="text-xs" style={{ color: wordCount >= 20 ? "var(--color-success)" : textSecondary }}>
+                    {wordCount}/20 words minimum {wordCount >= 20 ? "✓" : "(no photo uploaded)"}
+                  </p>
+                )}
               </div>
 
               {/* Location */}
