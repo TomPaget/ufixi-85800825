@@ -17,23 +17,21 @@ Examine the image. Determine:
 
 Be specific about what you ACTUALLY SEE.`;
 
-const STAGE2_PROMPT = `You are a master UK home repair diagnostician, chartered surveyor, and experienced tradesperson.
+const STAGE2_PROMPT = `You are a UK home repair diagnostician. Be EXTREMELY CONCISE throughout.
 
-You have visually inspected the following issue:
-- Category: {category}
-- What you observed: {brief_description}
-- User's description: {user_description}
-- Location in property: {location}
-- User answers to follow-up questions: {answers}
+Issue: {category} — {brief_description}
+User says: {user_description} in {location}
+Answers: {answers}
 
-Now produce a COMPREHENSIVE, SPECIFIC, ACTIONABLE diagnosis. Do NOT give generic advice. Everything must be specific to THIS exact issue as observed.
-
-IMPORTANT RULES:
-- Every field must be specific to the image observed, NOT generic boilerplate
-- UK spelling, UK product brands, UK costs in GBP
-- If the issue could be dangerous (electrical, structural, gas), make safety_warnings prominent
-- Costs should reflect 2024-2025 UK market rates
-- Amazon search_terms should find real, purchasable UK products`;
+Produce a SPECIFIC, ACTIONABLE diagnosis. STRICT RULES:
+- Cause descriptions: 1 sentence max each.
+- DIY fix descriptions: 2 sentences max each.
+- Diagnostic steps: 1 sentence action per step.
+- call_pro_if items: 1 short bullet each.
+- safety_warnings: 1 sentence each.
+- No waffle, no repetition, no padding.
+- UK spelling, UK brands, GBP costs (2024-2025 rates).
+- Amazon search_terms must find real UK products.`;
 
 const STAGE1_TOOL = {
   type: "function",
