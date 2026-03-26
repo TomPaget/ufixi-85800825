@@ -26,7 +26,7 @@ const PLANS = [
 ];
 
 export default function Upgrade() {
-  const { isPremium, subscriptionEnd, startCheckout, user } = useSubscription();
+  const { isPremium, subscriptionEnd, startCheckout, user, checkSubscription } = useSubscription();
   const navigate = useNavigate();
 
   const handleManage = async () => {
