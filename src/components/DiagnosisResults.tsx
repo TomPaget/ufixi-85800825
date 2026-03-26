@@ -7,6 +7,8 @@ import {
 } from "lucide-react";
 import GradientButton from "./GradientButton";
 import DiagnosisChatbot from "./DiagnosisChatbot";
+import { generateTradesmanPdf } from "@/lib/generateTradesmanPdf";
+import { FileText } from "lucide-react";
 
 interface DiagnosisResultsProps {
   triage: any;
