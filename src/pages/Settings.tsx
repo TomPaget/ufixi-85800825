@@ -78,8 +78,8 @@ export default function Settings() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen pb-20" style={{ background: "var(--color-bg)" }}>
-        <PageHeader title="Settings" showBack={false} showLogo />
+      <div className="min-h-screen pb-20 relative overflow-hidden" style={{ background: "transparent" }}>
+        <LavaLampBackground />
 
         <main className="max-w-lg mx-auto px-5 py-4 space-y-3">
           {/* Profile card */}

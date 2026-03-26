@@ -57,7 +57,7 @@ export default function MyIssues() {
   if (!isPremium) {
     return (
       <PageTransition>
-        <div className="min-h-screen pb-20 relative overflow-hidden" style={{ background: "var(--color-bg)" }}>
+        <div className="min-h-screen pb-20 relative overflow-hidden" style={{ background: "transparent" }}>
           <LavaLampBackground />
           <PageHeader title="My Issues" showBack={false} showLogo />
 

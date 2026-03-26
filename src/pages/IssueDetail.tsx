@@ -75,8 +75,8 @@ export default function IssueDetail() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen pb-8" style={{ background: "var(--color-bg)" }}>
-        <PageHeader title="Issue Detail" />
+      <div className="min-h-screen pb-8 relative overflow-hidden" style={{ background: "transparent" }}>
+        <LavaLampBackground />
 
         <main className="max-w-lg mx-auto px-5 py-4 space-y-4">
           {/* Header card */}
