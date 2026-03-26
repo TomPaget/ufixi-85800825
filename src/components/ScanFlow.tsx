@@ -500,8 +500,8 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
 
               {/* Upload section */}
               <div className="space-y-2">
-                <label className="text-base font-semibold flex items-center gap-2" style={{ color: navy }}>
-                  <Camera className="w-4 h-4" style={{ color: "var(--color-primary)" }} /> Upload Evidence
+              <label className="text-base font-semibold flex items-center gap-2" style={{ color: navy }}>
+                  <Camera className="w-4 h-4" style={{ color: "var(--color-primary)" }} /> Upload Issue
                 </label>
                 <button
                   onClick={handleUploadMedia}
@@ -531,8 +531,8 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                 </button>
               </div>
 
-              {/* Image Preview */}
-              {uploadedPreviewUrl && uploadedFile && (
+              {/* Image/Video Preview OR Tips */}
+              {uploadedPreviewUrl && uploadedFile ? (
                 <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(0,23,47,0.08)" }}>
                   {uploadedFile.type.startsWith("image/") ? (
                     <img src={uploadedPreviewUrl} alt="Uploaded preview" className="w-full h-auto max-h-64 object-cover" />
@@ -540,17 +540,16 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                     <video src={uploadedPreviewUrl} controls className="w-full max-h-64" />
                   ) : null}
                 </div>
+              ) : (
+                <div className="rounded-2xl p-4 space-y-2" style={{ background: "rgba(232,83,10,0.06)", border: "1px solid rgba(232,83,10,0.12)" }}>
+                  <p className="text-sm font-semibold" style={{ color: "var(--color-primary)" }}>Tips for best results</p>
+                  <ul className="text-sm space-y-1.5" style={{ color: textSecondary }}>
+                    <li>• Good lighting helps AI accuracy</li>
+                    <li>• Capture the full affected area</li>
+                    <li>• Include close-ups of damage</li>
+                  </ul>
+                </div>
               )}
-
-              {/* Tips */}
-              <div className="rounded-2xl p-4 space-y-2" style={{ background: "rgba(232,83,10,0.06)", border: "1px solid rgba(232,83,10,0.12)" }}>
-                <p className="text-sm font-semibold" style={{ color: "var(--color-primary)" }}>Tips for best results</p>
-                <ul className="text-sm space-y-1.5" style={{ color: textSecondary }}>
-                  <li>• Good lighting helps AI accuracy</li>
-                  <li>• Capture the full affected area</li>
-                  <li>• Include close-ups of damage</li>
-                </ul>
-              </div>
 
               {/* Description */}
               <div className="space-y-2">
