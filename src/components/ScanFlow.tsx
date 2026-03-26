@@ -378,10 +378,14 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
           </div>
 
           <div className="space-y-3">
-            {!adDone ? (
+            {(!adDone || !pendingResults) ? (
               <div className="py-4">
                 <p className="text-sm font-semibold" style={{ color: textSecondary }}>
-                  Your results are ready in {adCountdown}s...
+                  {isAnalysing
+                    ? "Analysing your issue..."
+                    : adCountdown > 0
+                    ? `Results ready in ${adCountdown}s...`
+                    : "Preparing your results..."}
                 </p>
                 <div className="mt-2 w-full h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(0,23,47,0.08)" }}>
                   <motion.div
