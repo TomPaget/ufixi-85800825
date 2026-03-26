@@ -7,6 +7,7 @@ import { AnimatePresence } from "framer-motion";
 import { SubscriptionProvider } from "@/hooks/useSubscription";
 import Index from "./pages/Index";
 import HomeDashboard from "./pages/HomeDashboard";
+import Landing from "./pages/Landing";
 import MyIssues from "./pages/MyIssues";
 import IssueDetail from "./pages/IssueDetail";
 import AIHelp from "./pages/AIHelp";
