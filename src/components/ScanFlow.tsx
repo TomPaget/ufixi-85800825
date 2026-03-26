@@ -1,11 +1,11 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, Camera, Video, Upload, ArrowLeft, MapPin, Tag,
   Droplets, Zap, Building2, Wind, Cpu, Wrench,
   Bot, ChevronDown, ChevronUp, ExternalLink, AlertTriangle,
   Loader2, CheckCircle2, Lightbulb, UserPlus, Clock,
-  Stethoscope, ShieldAlert, PoundSterling
+  Stethoscope, ShieldAlert, PoundSterling, Crown, Lock, FileText, Mail
 } from "lucide-react";
 import { toast } from "sonner";
 import ufixiLogo from "@/assets/ufixi-logo.svg";
@@ -27,6 +27,15 @@ const FOLLOW_UP_QUESTIONS = [
   { q: "Have you attempted any fixes?", options: ["No, haven't tried anything", "Yes, basic DIY", "Yes, called a professional", "Waiting for advice"] },
 ];
 
+const PREMIUM_BENEFITS = [
+  { icon: CheckCircle2, text: "Save unlimited diagnoses" },
+  { icon: Clock, text: "Access scan history for 45 days" },
+  { icon: X, text: "No ads during diagnosis" },
+  { icon: Zap, text: "Priority AI analysis" },
+  { icon: Mail, text: "Landlord letter generator" },
+  { icon: FileText, text: "Export diagnosis as PDF" },
+];
+
 interface ScanFlowProps {
   onClose: () => void;
 }
@@ -36,7 +45,6 @@ async function fileToBase64(file: File): Promise<string> {
     const reader = new FileReader();
     reader.onload = () => {
       const result = reader.result as string;
-      // Strip the data:...;base64, prefix
       resolve(result.split(",")[1]);
     };
     reader.onerror = reject;
@@ -48,6 +56,7 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
   const [step, setStep] = useState(1);
   const [uploadMethod, setUploadMethod] = useState<string | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadedPreviewUrl, setUploadedPreviewUrl] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
   const [category, setCategory] = useState<string | null>(null);
@@ -55,11 +64,18 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
   const [answers, setAnswers] = useState<string[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [expandedSection, setExpandedSection] = useState<string | null>("causes");
-  const [showSignup, setShowSignup] = useState(false);
+  const [showSavePrompt, setShowSavePrompt] = useState<"upgrade" | "auth" | null>(null);
   const [isAnalysing, setIsAnalysing] = useState(false);
   const [diagnosis, setDiagnosis] = useState<any>(null);
   const [triage, setTriage] = useState<any>(null);
   const [aiError, setAiError] = useState<string | null>(null);
+
+  // Ad state
+  const [showAd, setShowAd] = useState(false);
+  const [adCountdown, setAdCountdown] = useState(0);
+  const [adDone, setAdDone] = useState(false);
+  const [pendingResults, setPendingResults] = useState<{ triage: any; diagnosis: any } | null>(null);
+  const isPremium = false; // TODO: check real subscription status
 
   const handleUploadOption = (id: string) => {
     setUploadMethod(id);
@@ -76,7 +92,14 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
     }
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) setUploadedFile(file);
+      if (file) {
+        setUploadedFile(file);
+        if (file.type.startsWith("image/")) {
+          setUploadedPreviewUrl(URL.createObjectURL(file));
+        } else if (file.type.startsWith("video/")) {
+          setUploadedPreviewUrl(URL.createObjectURL(file));
+        }
+      }
     };
     input.click();
   };
@@ -92,7 +115,6 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
     if (questionIndex < FOLLOW_UP_QUESTIONS.length - 1) {
       setQuestionIndex(questionIndex + 1);
     } else {
-      // All questions answered — run AI analysis
       setStep(4);
       runAIAnalysis(newAnswers);
     }
@@ -136,17 +158,27 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
       const data = await response.json();
       if (!data.success) {
         if (data.error === "not_home_issue") {
-          setAiError("The uploaded image doesn't appear to show a home maintenance issue. Please try again with a clearer photo of the problem.");
+          setAiError("The uploaded image doesn't appear to show a home maintenance issue. Please try again with a clearer photo.");
           setStep(1);
-          toast.error("That doesn't look like a home issue. Please upload a relevant photo.");
+          toast.error("That doesn't look like a home issue.");
           return;
         }
         throw new Error(data.error || "Analysis failed");
       }
 
-      setTriage(data.triage);
-      setDiagnosis(data.diagnosis);
-      setStep(5);
+      // If free user, show ad before results
+      if (!isPremium) {
+        setPendingResults({ triage: data.triage, diagnosis: data.diagnosis });
+        const adTime = Math.floor(Math.random() * 6) + 15; // 15-20
+        setAdCountdown(adTime);
+        setAdDone(false);
+        setShowAd(true);
+        setIsAnalysing(false);
+      } else {
+        setTriage(data.triage);
+        setDiagnosis(data.diagnosis);
+        setStep(5);
+      }
     } catch (err: any) {
       console.error("AI analysis error:", err);
       setAiError(err.message);
@@ -157,8 +189,38 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
     }
   };
 
+  // Ad countdown timer
+  useEffect(() => {
+    if (!showAd || adCountdown <= 0) return;
+    const timer = setTimeout(() => {
+      if (adCountdown <= 1) {
+        setAdDone(true);
+        setAdCountdown(0);
+      } else {
+        setAdCountdown(adCountdown - 1);
+      }
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [showAd, adCountdown]);
+
+  const handleAdContinue = () => {
+    if (pendingResults) {
+      setTriage(pendingResults.triage);
+      setDiagnosis(pendingResults.diagnosis);
+      setPendingResults(null);
+    }
+    setShowAd(false);
+    setStep(5);
+  };
+
   const handleSave = () => {
-    setShowSignup(true);
+    if (isPremium) {
+      // TODO: actually save to database
+      toast.success("Diagnosis Saved ✓");
+    } else {
+      // Show upgrade prompt
+      setShowSavePrompt("upgrade");
+    }
   };
 
   const slideVariants = {
@@ -170,6 +232,17 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
   const navy = "#00172F";
   const textSecondary = "#5A6A7A";
   const showLavaBg = step === 5 || step === 6;
+
+  // Gradient progress bar color
+  const getProgressColor = (index: number, currentStep: number) => {
+    if (index >= currentStep) return "rgba(0,23,47,0.1)";
+    const t = index / Math.max(totalSteps - 1, 1);
+    // Interpolate from #E8530A (orange) to #D93870 (pink)
+    const r = Math.round(232 + (217 - 232) * t);
+    const g = Math.round(83 + (56 - 83) * t);
+    const b = Math.round(10 + (112 - 10) * t);
+    return `rgb(${r},${g},${b})`;
+  };
 
   // Build results sections from real AI data
   const resultSections = diagnosis ? [
@@ -187,13 +260,13 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
       ),
     },
     {
-      id: "diagnostic", title: "How to Check What's Wrong", icon: Stethoscope,
+      id: "diagnostic", title: "How to Check", icon: Stethoscope,
       content: (
         <div className="space-y-3">
           {diagnosis.diagnostic_steps?.map((s: any, i: number) => (
             <div key={i} className="p-4 rounded-xl" style={{ background: "rgba(0,23,47,0.03)", border: "1px solid rgba(0,23,47,0.06)" }}>
               <p className="text-base font-semibold mb-1" style={{ color: navy }}>Step {s.step_number}: {s.action}</p>
-              <p className="text-sm" style={{ color: textSecondary }}>Look for: {s.what_to_look_for}</p>
+              <p className="text-sm" style={{ color: textSecondary }}>{s.what_to_look_for}</p>
               {s.safety_note && (
                 <p className="text-sm mt-2 flex items-center gap-1" style={{ color: "#F59E0B" }}>
                   <AlertTriangle className="w-3.5 h-3.5" /> {s.safety_note}
@@ -205,7 +278,7 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
       ),
     },
     {
-      id: "diy", title: "Quick Fixes to Try", icon: Wrench,
+      id: "diy", title: "Quick Fixes", icon: Wrench,
       content: (
         <div className="space-y-4">
           {diagnosis.diy_quick_fixes?.map((fix: any, i: number) => (
@@ -242,7 +315,6 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                 </a>
               </div>
               {p.estimated_cost && <p className="text-sm" style={{ color: textSecondary }}>{p.estimated_cost}</p>}
-              {p.reason_needed && <p className="text-xs mt-1" style={{ color: textSecondary }}>{p.reason_needed}</p>}
             </div>
           ))}
         </div>
@@ -278,18 +350,75 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
       ),
     },
     {
-      id: "pro", title: "When to Call a Professional", icon: AlertTriangle,
+      id: "pro", title: "When to Call a Pro", icon: AlertTriangle,
       content: (
         <div className="space-y-2">
           {diagnosis.call_pro_if?.map((c: string, i: number) => (
             <div key={i} className="p-4 rounded-xl" style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.15)" }}>
-              <p className="text-base leading-relaxed" style={{ color: "#DC2626" }}>{c}</p>
+              <p className="text-base leading-relaxed" style={{ color: "#DC2626" }}>• {c}</p>
             </div>
           ))}
         </div>
       ),
     },
   ] : [];
+
+  // --- AD OVERLAY ---
+  if (showAd) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="fixed inset-0 z-50 flex flex-col items-center justify-center"
+        style={{ background: "var(--color-bg)" }}
+      >
+        <LavaLampBackground />
+        <div className="relative z-10 w-full max-w-md px-6 space-y-6 text-center">
+          <div className="rounded-2xl p-8 space-y-5" style={{ background: "rgba(255,255,255,0.95)", backdropFilter: "blur(12px)", border: "1px solid rgba(0,23,47,0.08)", boxShadow: "var(--shadow-card)" }}>
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto" style={{ background: "var(--gradient-primary)" }}>
+              <Crown className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold tracking-tight" style={{ color: navy }}>Upgrade to Premium</h2>
+            <p className="text-base" style={{ color: textSecondary }}>No ads, unlimited scans, save forever.</p>
+            <div className="space-y-2 text-left">
+              {["No ads during diagnosis", "Save unlimited scans", "Priority AI analysis", "Export as PDF"].map((b) => (
+                <div key={b} className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: "var(--color-success)" }} />
+                  <span className="text-sm" style={{ color: navy }}>{b}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-lg font-bold" style={{ background: "var(--gradient-primary)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              Just £3.99/month
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {!adDone ? (
+              <div className="py-4">
+                <p className="text-sm font-semibold" style={{ color: textSecondary }}>
+                  Ad closes in {adCountdown}s...
+                </p>
+                <div className="mt-2 w-full h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(0,23,47,0.08)" }}>
+                  <motion.div
+                    className="h-full rounded-full"
+                    style={{ background: "var(--gradient-primary)" }}
+                    initial={{ width: "100%" }}
+                    animate={{ width: "0%" }}
+                    transition={{ duration: adCountdown, ease: "linear" }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <GradientButton size="lg" onClick={handleAdContinue}>
+                Continue to Results →
+              </GradientButton>
+            )}
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -303,7 +432,7 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
 
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 relative z-10" style={{ minHeight: 56 }}>
-        {step > 1 && !showSignup ? (
+        {step > 1 && !showSavePrompt ? (
           <button onClick={() => { if (step === 4 && isAnalysing) return; setStep(step - 1); }} className="flex items-center justify-center" style={{ minWidth: 44, minHeight: 44, color: navy }}>
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -314,12 +443,12 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
         </button>
       </div>
 
-      {/* Progress */}
-      {!showSignup && (
+      {/* Progress Bar — orange to pink gradient */}
+      {!showSavePrompt && (
         <div className="px-6 pb-5 relative z-10">
           <div className="flex gap-1.5">
             {Array.from({ length: totalSteps }).map((_, i) => (
-              <div key={i} className="h-1 flex-1 rounded-full" style={{ background: i < step ? "var(--color-primary)" : "rgba(0,23,47,0.1)" }} />
+              <div key={i} className="h-1 flex-1 rounded-full" style={{ background: getProgressColor(i, step) }} />
             ))}
           </div>
         </div>
@@ -329,46 +458,38 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
       <div className="flex-1 overflow-y-auto px-6 pb-6 relative z-10">
         <AnimatePresence mode="wait">
 
-          {/* Signup Prompt */}
-          {showSignup && (
-            <motion.div key="signup" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.2 }} className="space-y-8 py-8">
+          {/* PREMIUM UPGRADE PROMPT */}
+          {showSavePrompt === "upgrade" && (
+            <motion.div key="upgrade" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.2 }} className="space-y-7 py-6">
               <div className="text-center space-y-3">
                 <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto" style={{ background: "var(--gradient-primary)" }}>
-                  <UserPlus className="w-10 h-10 text-white" />
+                  <Lock className="w-10 h-10 text-white" />
                 </div>
-                <h2 className="text-3xl tracking-tight" style={{ color: navy, letterSpacing: "-0.02em" }}>Save Your Diagnosis</h2>
-                <p className="text-base leading-relaxed max-w-sm mx-auto" style={{ color: textSecondary }}>
-                  Create a free account to save this diagnosis for 45 days, track your issues, and access your repair history.
-                </p>
+                <h2 className="text-3xl tracking-tight font-bold" style={{ color: navy }}>Save Your Diagnosis</h2>
+                <p className="text-base" style={{ color: textSecondary }}>Saving scans is a Premium feature</p>
               </div>
 
               <div className="space-y-3">
-                {[
-                  { icon: CheckCircle2, text: "Save unlimited diagnostics" },
-                  { icon: Clock, text: "Access history for 45 days" },
-                  { icon: Bot, text: "AI-powered repair guidance" },
-                ].map(({ icon: Icon, text }) => (
+                {PREMIUM_BENEFITS.map(({ icon: Icon, text }) => (
                   <div key={text} className="flex items-center gap-4 p-4 rounded-2xl" style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)" }}>
-                    <Icon className="w-5 h-5 flex-shrink-0" style={{ color: "var(--color-primary)" }} />
-                    <span className="text-base" style={{ color: navy }}>{text}</span>
+                    <CheckCircle2 className="w-5 h-5 flex-shrink-0" style={{ color: "var(--color-success)" }} />
+                    <span className="text-base" style={{ color: navy }}>✓ {text}</span>
                   </div>
                 ))}
               </div>
 
-              <div className="space-y-3">
-                <input type="email" placeholder="Email address" className="w-full rounded-2xl p-4 text-base" style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: navy }} />
-                <input type="password" placeholder="Create a password" className="w-full rounded-2xl p-4 text-base" style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: navy }} />
-                <GradientButton size="lg">Create Account & Save</GradientButton>
-              </div>
+              <GradientButton size="lg" onClick={() => { onClose(); window.location.href = "/upgrade"; }}>
+                Upgrade to Premium
+              </GradientButton>
 
-              <button onClick={() => setShowSignup(false)} className="w-full text-center py-3 text-base" style={{ color: textSecondary }}>
-                ← Back to results
+              <button onClick={() => setShowSavePrompt(null)} className="w-full text-center py-3 text-base" style={{ color: textSecondary }}>
+                Close without saving
               </button>
             </motion.div>
           )}
 
           {/* STEP 1 — Describe & Upload */}
-          {!showSignup && step === 1 && (
+          {!showSavePrompt && step === 1 && (
             <motion.div key="s1" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.2 }} className="space-y-7">
               <div className="space-y-2">
                 <h2 className="text-3xl tracking-tight" style={{ color: navy, letterSpacing: "-0.02em" }}>Describe Your Issue</h2>
@@ -418,6 +539,17 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                   ))}
                 </div>
               </div>
+
+              {/* Image Preview */}
+              {uploadedPreviewUrl && uploadedFile && (
+                <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(0,23,47,0.08)" }}>
+                  {uploadedFile.type.startsWith("image/") ? (
+                    <img src={uploadedPreviewUrl} alt="Uploaded preview" className="w-full h-auto max-h-64 object-cover" />
+                  ) : uploadedFile.type.startsWith("video/") ? (
+                    <video src={uploadedPreviewUrl} controls className="w-full max-h-64" />
+                  ) : null}
+                </div>
+              )}
 
               {/* Tips */}
               <div className="rounded-2xl p-4 space-y-2" style={{ background: "rgba(232,83,10,0.06)", border: "1px solid rgba(232,83,10,0.12)" }}>
@@ -485,7 +617,7 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
           )}
 
           {/* STEP 2 — AI Triage loading */}
-          {!showSignup && step === 2 && (
+          {!showSavePrompt && step === 2 && (
             <motion.div
               key="s2"
               variants={slideVariants} initial="enter" animate="center" exit="exit"
@@ -508,13 +640,17 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
             </motion.div>
           )}
 
-          {/* STEP 3 — Questions */}
-          {!showSignup && step === 3 && (
+          {/* STEP 3 — Questions with gradient progress dots */}
+          {!showSavePrompt && step === 3 && (
             <motion.div key="s3" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.2 }} className="space-y-7">
               <div className="flex justify-center gap-2.5">
-                {FOLLOW_UP_QUESTIONS.map((_, i) => (
-                  <div key={i} className="w-3 h-3 rounded-full" style={{ background: i <= questionIndex ? "var(--color-primary)" : "rgba(0,23,47,0.12)" }} />
-                ))}
+                {FOLLOW_UP_QUESTIONS.map((_, i) => {
+                  const t = i / Math.max(FOLLOW_UP_QUESTIONS.length - 1, 1);
+                  const dotColor = i <= questionIndex
+                    ? `rgb(${Math.round(232 + (217 - 232) * t)},${Math.round(83 + (56 - 83) * t)},${Math.round(10 + (112 - 10) * t)})`
+                    : "rgba(0,23,47,0.12)";
+                  return <div key={i} className="w-3 h-3 rounded-full" style={{ background: dotColor }} />;
+                })}
               </div>
 
               <div className="flex gap-3 items-start">
@@ -553,7 +689,7 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
           )}
 
           {/* STEP 4 — Loading results (AI is running) */}
-          {!showSignup && step === 4 && (
+          {!showSavePrompt && step === 4 && (
             <motion.div
               key="s4"
               variants={slideVariants} initial="enter" animate="center" exit="exit"
@@ -568,24 +704,32 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                   <Loader2 className="w-10 h-10 mx-auto" style={{ color: "var(--color-primary)" }} />
                 </motion.div>
                 <h2 className="text-2xl tracking-tight" style={{ color: navy }}>Generating Your Diagnosis</h2>
-                <p className="text-base" style={{ color: textSecondary }}>Our AI is analysing the image and building a full repair guide...</p>
+                <p className="text-base" style={{ color: textSecondary }}>Our AI is analysing the image and building a repair guide...</p>
                 <p className="text-sm" style={{ color: textSecondary }}>This usually takes 10–20 seconds</p>
               </div>
             </motion.div>
           )}
 
           {/* STEP 5 — Real AI Results */}
-          {!showSignup && step === 5 && diagnosis && (
+          {!showSavePrompt && step === 5 && diagnosis && (
             <motion.div key="s5" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.2 }} className="space-y-5 pb-6">
+              {/* Uploaded image preview */}
+              {uploadedPreviewUrl && uploadedFile?.type.startsWith("image/") && (
+                <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(0,23,47,0.08)" }}>
+                  <img src={uploadedPreviewUrl} alt="Scanned issue" className="w-full h-auto max-h-56 object-cover" />
+                </div>
+              )}
+
               {/* Result header */}
               <div className="rounded-2xl p-6 space-y-3" style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(12px)", border: "1px solid rgba(0,23,47,0.08)", boxShadow: "var(--shadow-card)" }}>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-5 h-5" style={{ color: "var(--color-success)" }} />
                   <span className="text-sm font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(29,158,117,0.1)", color: "var(--color-success)" }}>AI Diagnosis Complete</span>
                 </div>
-                <h2 className="text-2xl tracking-tight" style={{ color: navy }}>{triage?.brief_description || description || "Home Issue Detected"}</h2>
-                <p className="text-base leading-relaxed" style={{ color: textSecondary }}>
-                  Category: {triage?.category} • Confidence: {triage?.confidence}
+                <h2 className="text-2xl tracking-tight font-bold" style={{ color: navy }}>{triage?.issue_title || triage?.brief_description || "Issue Detected"}</h2>
+                <p className="text-base" style={{ color: textSecondary }}>{triage?.brief_description}</p>
+                <p className="text-sm" style={{ color: textSecondary }}>
+                  {triage?.category} • {triage?.confidence} confidence
                 </p>
 
                 {/* Urgency badge */}
