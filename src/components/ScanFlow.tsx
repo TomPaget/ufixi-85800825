@@ -249,13 +249,33 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
     setStep(5);
   };
 
-  const handleSave = () => {
-    if (isPremium) {
-      // TODO: actually save to database
-      toast.success("Diagnosis Saved ✓");
-    } else {
-      // Show upgrade prompt
+  const handleSave = async () => {
+    if (!isPremium) {
       setShowSavePrompt("upgrade");
+      return;
+    }
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setShowSavePrompt("auth");
+        return;
+      }
+      const { error } = await supabase.from("saved_issues").insert({
+        user_id: user.id,
+        issue_title: triage?.issue_title || "Untitled Issue",
+        brief_description: triage?.brief_description || "",
+        category: triage?.category || category || "other",
+        urgency: diagnosis?.urgency_assessment?.level || null,
+        diagnosis_data: diagnosis,
+        triage_data: triage,
+        image_url: uploadedPreviewUrl || null,
+        status: "active",
+      });
+      if (error) throw error;
+      toast.success("Diagnosis saved to your account ✓");
+    } catch (err: any) {
+      console.error("Save error:", err);
+      toast.error(err.message || "Failed to save diagnosis");
     }
   };
 
