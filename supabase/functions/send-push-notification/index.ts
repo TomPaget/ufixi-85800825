@@ -14,6 +14,84 @@ interface PushPayload {
   data?: Record<string, string>;
 }
 
+/** Create a signed JWT for Google OAuth2 using the service account. */
+async function createSignedJwt(serviceAccount: {
+  client_email: string;
+  private_key: string;
+  token_uri: string;
+}): Promise<string> {
+  const header = { alg: "RS256", typ: "JWT" };
+  const now = Math.floor(Date.now() / 1000);
+  const payload = {
+    iss: serviceAccount.client_email,
+    sub: serviceAccount.client_email,
+    aud: serviceAccount.token_uri,
+    iat: now,
+    exp: now + 3600,
+    scope: "https://www.googleapis.com/auth/firebase.messaging",
+  };
+
+  const encode = (obj: unknown) =>
+    btoa(JSON.stringify(obj))
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
+
+  const unsignedToken = `${encode(header)}.${encode(payload)}`;
+
+  // Import the RSA private key
+  const pemContents = serviceAccount.private_key
+    .replace("-----BEGIN PRIVATE KEY-----", "")
+    .replace("-----END PRIVATE KEY-----", "")
+    .replace(/\n/g, "");
+
+  const binaryKey = Uint8Array.from(atob(pemContents), (c) => c.charCodeAt(0));
+
+  const cryptoKey = await crypto.subtle.importKey(
+    "pkcs8",
+    binaryKey,
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+
+  const signature = await crypto.subtle.sign(
+    "RSASSA-PKCS1-v1_5",
+    cryptoKey,
+    new TextEncoder().encode(unsignedToken)
+  );
+
+  const sig = btoa(String.fromCharCode(...new Uint8Array(signature)))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+
+  return `${unsignedToken}.${sig}`;
+}
+
+/** Exchange a signed JWT for a short-lived Google OAuth2 access token. */
+async function getAccessToken(serviceAccount: {
+  client_email: string;
+  private_key: string;
+  token_uri: string;
+}): Promise<string> {
+  const jwt = await createSignedJwt(serviceAccount);
+
+  const res = await fetch(serviceAccount.token_uri, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`,
+  });
+
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`Token exchange failed: ${res.status} ${txt}`);
+  }
+
+  const data = await res.json();
+  return data.access_token;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -56,47 +134,71 @@ serve(async (req) => {
       action_url: data?.action_url || null,
     });
 
-    // Send via FCM HTTP v1 API
-    // For production, you need a Firebase service account key stored as a secret.
-    // This function prepares the FCM payload — actual sending requires FCM_SERVER_KEY.
-    const fcmServerKey = Deno.env.get("FCM_SERVER_KEY");
-
-    if (!fcmServerKey) {
-      console.warn("FCM_SERVER_KEY not set — push tokens stored but notifications not sent to devices");
+    // Parse the Firebase service account from secrets
+    const serviceAccountJson = Deno.env.get("FIREBASE_SERVICE_ACCOUNT");
+    if (!serviceAccountJson) {
+      console.warn("FIREBASE_SERVICE_ACCOUNT not set — notification saved but not sent to devices");
       return new Response(
         JSON.stringify({
           sent: 0,
           stored: tokens.length,
-          message: "Notification saved. FCM_SERVER_KEY not configured for device delivery.",
+          message: "Notification saved. FIREBASE_SERVICE_ACCOUNT not configured for device delivery.",
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    const serviceAccount = JSON.parse(serviceAccountJson);
+    const projectId = serviceAccount.project_id;
+
+    // Get a short-lived OAuth2 access token
+    const accessToken = await getAccessToken(serviceAccount);
+
     let sent = 0;
     const staleTokens: string[] = [];
 
-    for (const { token } of tokens) {
+    for (const { token, platform } of tokens) {
       try {
-        const fcmRes = await fetch("https://fcm.googleapis.com/fcm/send", {
-          method: "POST",
-          headers: {
-            Authorization: `key=${fcmServerKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            to: token,
-            notification: { title, body },
-            data: data || {},
-          }),
-        });
+        const message: Record<string, unknown> = {
+          token,
+          notification: { title, body },
+          data: data || {},
+        };
 
-        const fcmData = await fcmRes.json();
+        // Platform-specific config
+        if (platform === "android") {
+          message.android = {
+            priority: "high",
+            notification: { channel_id: "ufixi_default", sound: "default" },
+          };
+        } else if (platform === "ios") {
+          message.apns = {
+            payload: { aps: { sound: "default", badge: 1 } },
+          };
+        }
 
-        if (fcmData.success === 1) {
+        const fcmRes = await fetch(
+          `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ message }),
+          }
+        );
+
+        if (fcmRes.ok) {
           sent++;
-        } else if (fcmData.results?.[0]?.error === "NotRegistered" || fcmData.results?.[0]?.error === "InvalidRegistration") {
-          staleTokens.push(token);
+        } else {
+          const errBody = await fcmRes.json();
+          const errorCode = errBody?.error?.details?.[0]?.errorCode || errBody?.error?.status;
+          console.error("FCM v1 error:", JSON.stringify(errBody));
+
+          if (errorCode === "UNREGISTERED" || errorCode === "INVALID_ARGUMENT") {
+            staleTokens.push(token);
+          }
         }
       } catch (err) {
         console.error("FCM send error for token:", err);
