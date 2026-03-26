@@ -6,6 +6,7 @@ import {
   BookOpen, MessageSquare, PoundSterling, Shield, FileText, Mail
 } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
+import LavaLampBackground from "@/components/LavaLampBackground";
 import PageHeader from "@/components/PageHeader";
 import GradientButton from "@/components/GradientButton";
 import { MOCK_ISSUES } from "@/data/mockData";
@@ -74,9 +75,9 @@ export default function IssueDetail() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen pb-8" style={{ background: "var(--color-bg)" }}>
+      <div className="min-h-screen pb-8 relative overflow-hidden" style={{ background: "transparent" }}>
+        <LavaLampBackground />
         <PageHeader title="Issue Detail" />
-
         <main className="max-w-lg mx-auto px-5 py-4 space-y-4">
           {/* Header card */}
           <div className="rounded-2xl p-5 space-y-3" style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", boxShadow: "var(--shadow-card)" }}>
