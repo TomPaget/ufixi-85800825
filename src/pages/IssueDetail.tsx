@@ -10,7 +10,9 @@ import LavaLampBackground from "@/components/LavaLampBackground";
 import PageHeader from "@/components/PageHeader";
 import GradientButton from "@/components/GradientButton";
 import { MOCK_ISSUES } from "@/data/mockData";
-import { generateTradesmanPdf } from "@/lib/generateTradesmanPdf";
+import { generateTradesmanPdf, generateTradesmanEmail } from "@/lib/generateTradesmanPdf";
+import { getTradeNameForCategory } from "@/lib/tradeNameMap";
+import { useSubscription } from "@/hooks/useSubscription";
 
 const priorityColors: Record<string, { bg: string; text: string }> = {
   low: { bg: "rgba(107,122,141,0.1)", text: "#6B7A8D" },
@@ -23,6 +25,8 @@ export default function IssueDetail() {
   const { id } = useParams();
   const issue = MOCK_ISSUES.find((i) => i.id === id);
   const [expanded, setExpanded] = useState<string | null>("causes");
+  const { isPremium } = useSubscription();
+  const tradeName = issue ? getTradeNameForCategory(issue.category) : "Specialist";
 
   if (!issue) return <div className="p-6 text-center" style={{ color: "var(--color-text-secondary)" }}>Issue not found</div>;
 
@@ -158,9 +162,28 @@ export default function IssueDetail() {
             >
               <FileText className="w-4 h-4" style={{ color: "var(--color-primary)" }} /> Export PDF
             </button>
+            {isPremium && (
+              <button
+                onClick={() => {
+                  const triageData = { issue_title: issue.title, brief_description: issue.description, category: issue.category };
+                  const diagnosisData = {
+                    likely_causes: issue.causes?.map(c => ({ cause: c, details: "" })) || [],
+                    urgency_assessment: { level: issue.urgency, reason: "" },
+                  };
+                  const { subject, body } = generateTradesmanEmail(triageData, diagnosisData);
+                  window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, "_self");
+                }}
+                className="flex-1 flex items-center justify-center gap-2 p-3 rounded-2xl text-xs font-semibold transition-all active:scale-95"
+                style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", color: "var(--color-navy)", minHeight: 44 }}
+              >
+                <Mail className="w-4 h-4" style={{ color: "var(--color-primary)" }} /> Email {tradeName}
+              </button>
+            )}
+            {!isPremium && (
             <button className="flex-1 flex items-center justify-center gap-2 p-3 rounded-2xl text-xs font-semibold" style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", color: "var(--color-navy)", minHeight: 44 }}>
               <Mail className="w-4 h-4" style={{ color: "var(--color-primary)" }} /> Email Report
             </button>
+            )}
           </div>
         </main>
       </div>

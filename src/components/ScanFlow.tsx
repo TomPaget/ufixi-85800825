@@ -130,7 +130,10 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
     }
   };
 
-  const canContinueStep1 = description.trim().length > 0 && !!category && !!uploadedFile;
+  const wordCount = description.trim().split(/\s+/).filter(Boolean).length;
+  const hasFile = !!uploadedFile;
+  const hasEnoughDescription = hasFile || wordCount >= 20;
+  const canContinueStep1 = description.trim().length > 0 && !!category && hasEnoughDescription;
 
   const handleNextQuestion = () => {
     if (!selectedAnswer) return;
@@ -542,11 +545,15 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                 </div>
               ) : (
                 <div className="rounded-2xl p-4 space-y-2" style={{ background: "rgba(232,83,10,0.06)", border: "1px solid rgba(232,83,10,0.12)" }}>
-                  <p className="text-sm font-semibold" style={{ color: "var(--color-primary)" }}>Tips for best results</p>
+                  <p className="text-sm font-semibold" style={{ color: "var(--color-primary)" }}>No photo? No problem!</p>
+                  <p className="text-sm" style={{ color: textSecondary }}>
+                    If you can't upload a photo, please describe the issue in detail below (at least 20 words). Include:
+                  </p>
                   <ul className="text-sm space-y-1.5" style={{ color: textSecondary }}>
-                    <li>• Good lighting helps AI accuracy</li>
-                    <li>• Capture the full affected area</li>
-                    <li>• Include close-ups of damage</li>
+                    <li>• What does the problem look like?</li>
+                    <li>• Where exactly is it located?</li>
+                    <li>• When did you first notice it?</li>
+                    <li>• Has it changed or worsened over time?</li>
                   </ul>
                 </div>
               )}
@@ -557,11 +564,16 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Describe what you see..."
+                  placeholder={hasFile ? "Describe what you see..." : "Describe the issue in detail — what does it look like, where is it, when did it start, and has it changed over time?"}
                   className="w-full rounded-2xl p-4 text-base resize-none focus:outline-none focus:ring-2"
                   style={{ background: "white", border: "1px solid rgba(232,83,10,0.25)", color: navy, minHeight: 110, boxShadow: "0 0 0 0px transparent", "--tw-ring-color": "rgba(232,83,10,0.4)" } as React.CSSProperties}
                   rows={4}
                 />
+                {!hasFile && (
+                  <p className="text-xs" style={{ color: wordCount >= 20 ? "var(--color-success)" : textSecondary }}>
+                    {wordCount}/20 words minimum {wordCount >= 20 ? "✓" : "(no photo uploaded)"}
+                  </p>
+                )}
               </div>
 
               {/* Location */}

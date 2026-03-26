@@ -7,8 +7,10 @@ import {
 } from "lucide-react";
 import GradientButton from "./GradientButton";
 import DiagnosisChatbot from "./DiagnosisChatbot";
-import { generateTradesmanPdf } from "@/lib/generateTradesmanPdf";
-import { FileText } from "lucide-react";
+import { generateTradesmanPdf, generateTradesmanEmail } from "@/lib/generateTradesmanPdf";
+import { getTradeNameForCategory } from "@/lib/tradeNameMap";
+import { useSubscription } from "@/hooks/useSubscription";
+import { FileText, Mail } from "lucide-react";
 
 interface DiagnosisResultsProps {
   triage: any;
@@ -89,6 +91,8 @@ export default function DiagnosisResults({
   onClose,
 }: DiagnosisResultsProps) {
   const [expandedSection, setExpandedSection] = useState<string | null>("causes");
+  const { isPremium } = useSubscription();
+  const tradeName = getTradeNameForCategory(triage?.category);
 
   const issueTitle = triage?.issue_title || "Issue Detected";
   const briefDescription = triage?.brief_description || "";
@@ -614,13 +618,28 @@ export default function DiagnosisResults({
 
       {/* Export PDF */}
       <button
-        onClick={() => generateTradesmanPdf(triage, diagnosis)}
+        onClick={() => generateTradesmanPdf(triage, diagnosis, uploadedPreviewUrl)}
         className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl text-base font-semibold transition-all active:scale-95"
-        style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", color: "var(--color-navy)", minHeight: 52 }}
+        style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", color: navy, minHeight: 52 }}
       >
         <FileText className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
-        Export Report for Tradesman
+        Export Report for {tradeName}
       </button>
+
+      {/* Email tradesman — premium only */}
+      {isPremium && (
+        <button
+          onClick={() => {
+            const { subject, body } = generateTradesmanEmail(triage, diagnosis);
+            window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, "_self");
+          }}
+          className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl text-base font-semibold transition-all active:scale-95"
+          style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", color: navy, minHeight: 52 }}
+        >
+          <Mail className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
+          Email {tradeName}
+        </button>
+      )}
 
       {/* Save / Close buttons */}
       <GradientButton size="lg" onClick={onSave}>
