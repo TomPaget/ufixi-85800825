@@ -453,7 +453,7 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                   <p className="text-lg font-bold" style={{ color: navy }}>Go Premium</p>
                   <p className="text-sm" style={{ color: textSecondary }}>No ads, unlimited scans, save forever.</p>
                   <p className="text-lg font-bold" style={{ background: "var(--gradient-primary)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                    Just £3.99/month
+                    Just £0.99/month
                   </p>
                 </div>
               </div>
@@ -554,7 +554,7 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
               </div>
 
               <GradientButton size="lg" onClick={startCheckout}>
-                Upgrade to Premium — £3.99/mo
+                Upgrade to Premium — £0.99/mo
               </GradientButton>
 
               <button onClick={() => setShowSavePrompt(null)} className="w-full text-center py-3 text-base" style={{ color: textSecondary }}>

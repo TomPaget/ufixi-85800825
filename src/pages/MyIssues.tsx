@@ -91,7 +91,7 @@ export default function MyIssues() {
               <div className="space-y-3">
                 <GradientButton size="lg" onClick={startCheckout}>
                   <span className="flex items-center justify-center gap-2">
-                    <Crown className="w-5 h-5" /> Upgrade to Premium — £3.99/mo
+                    <Crown className="w-5 h-5" /> Upgrade to Premium — £0.99/mo
                   </span>
                 </GradientButton>
                 <p className="text-xs" style={{ color: textSec }}>Cancel anytime. No commitments.</p>

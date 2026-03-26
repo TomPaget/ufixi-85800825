@@ -53,7 +53,7 @@ function getSupportResponse(input: string, msgCount: number): { text: string; es
     return { text: "Sorry to hear your scan isn't working! Try these steps:\n\n1. Make sure your photo is well-lit and in focus\n2. Ensure the image is at least 500x500 pixels\n3. Try uploading a different format (JPG or PNG work best)\n4. Check your internet connection\n\nIf it's still not working after these steps, let me know and I can look into it further.", escalate: false };
 
   if (lower.includes("subscription") || lower.includes("premium") || lower.includes("upgrade") || lower.includes("plan"))
-    return { text: "Our Premium plan is £3.99/month and includes unlimited scans, priority AI analysis, and 90-day scan history. You can upgrade from the home page by tapping 'Go Premium'. If you're having trouble with your subscription, could you tell me more about what's happening?", escalate: false };
+    return { text: "Our Premium plan is £0.99/month and includes unlimited scans, priority AI analysis, and 90-day scan history. You can upgrade from the home page by tapping 'Go Premium'. If you're having trouble with your subscription, could you tell me more about what's happening?", escalate: false };
 
   if (lower.includes("cancel") || lower.includes("refund"))
     return { text: "To cancel your subscription, go to Settings → Subscription → Manage. Cancellation takes effect at the end of your billing period. For refund requests, I'll need a bit more detail — when did you subscribe and what's the reason for the refund?", escalate: false };
@@ -62,7 +62,7 @@ function getSupportResponse(input: string, msgCount: number): { text: string; es
     return { text: "To delete your account and all associated data, go to Settings → Privacy → Delete Account. This action is permanent and cannot be undone. All your scans, saved issues, and personal data will be removed within 30 days. Is there anything specific about this process I can clarify?", escalate: false };
 
   if (lower.includes("scan") && (lower.includes("limit") || lower.includes("how many")))
-    return { text: "Free users get 3 scans per month. Your scan count resets on the 1st of each month. For unlimited scans, consider upgrading to Premium at £3.99/month. Would you like to know more about Premium features?", escalate: false };
+    return { text: "Free users get 3 scans per month. Your scan count resets on the 1st of each month. For unlimited scans, consider upgrading to Premium at £0.99/month. Would you like to know more about Premium features?", escalate: false };
 
   if (lower.includes("save") || lower.includes("history") || lower.includes("expire"))
     return { text: "Saved scans are kept for 45 days (90 days for Premium users), after which they're automatically deleted. You can export a PDF report of any scan before it expires from the issue detail page. Is there a specific scan you're trying to find?", escalate: false };
