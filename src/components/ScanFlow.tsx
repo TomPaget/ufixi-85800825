@@ -545,11 +545,15 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                 </div>
               ) : (
                 <div className="rounded-2xl p-4 space-y-2" style={{ background: "rgba(232,83,10,0.06)", border: "1px solid rgba(232,83,10,0.12)" }}>
-                  <p className="text-sm font-semibold" style={{ color: "var(--color-primary)" }}>Tips for best results</p>
+                  <p className="text-sm font-semibold" style={{ color: "var(--color-primary)" }}>No photo? No problem!</p>
+                  <p className="text-sm" style={{ color: textSecondary }}>
+                    If you can't upload a photo, please describe the issue in detail below (at least 20 words). Include:
+                  </p>
                   <ul className="text-sm space-y-1.5" style={{ color: textSecondary }}>
-                    <li>• Good lighting helps AI accuracy</li>
-                    <li>• Capture the full affected area</li>
-                    <li>• Include close-ups of damage</li>
+                    <li>• What does the problem look like?</li>
+                    <li>• Where exactly is it located?</li>
+                    <li>• When did you first notice it?</li>
+                    <li>• Has it changed or worsened over time?</li>
                   </ul>
                 </div>
               )}
