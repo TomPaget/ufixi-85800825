@@ -55,7 +55,6 @@ function AnimatedRoutes() {
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/cancel-subscription" element={<CancelSubscription />} />
         <Route path="*" element={<NotFound />} />
-        <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
   );
