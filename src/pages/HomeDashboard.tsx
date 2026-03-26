@@ -222,7 +222,7 @@ export default function HomeDashboard() {
                       {["Save unlimited diagnoses", "Access 45-day scan history", "No ads during diagnosis", "Export as PDF"].map((b) => (
                         <div key={b} className="flex items-center gap-2">
                           <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: "var(--color-success)" }} />
-                          <span className="text-sm" style={{ color: "var(--color-navy)" }}>✓ {b}</span>
+                          <span className="text-sm" style={{ color: "var(--color-navy)" }}>{b}</span>
                         </div>
                       ))}
                     </div>
