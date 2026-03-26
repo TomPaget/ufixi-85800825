@@ -500,8 +500,8 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
 
               {/* Upload section */}
               <div className="space-y-2">
-                <label className="text-base font-semibold flex items-center gap-2" style={{ color: navy }}>
-                  <Camera className="w-4 h-4" style={{ color: "var(--color-primary)" }} /> Upload Evidence
+              <label className="text-base font-semibold flex items-center gap-2" style={{ color: navy }}>
+                  <Camera className="w-4 h-4" style={{ color: "var(--color-primary)" }} /> Upload Issue
                 </label>
                 <button
                   onClick={handleUploadMedia}
