@@ -33,8 +33,16 @@ export default function TermsOfService() {
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold text-foreground">4. Free and Premium tiers</h2>
-              <p>Ufixi offers a free tier with limited features and a Premium subscription with enhanced capabilities. Premium subscriptions are billed monthly and can be cancelled at any time. Refunds are handled in accordance with UK consumer law.</p>
+              <h2 className="text-lg font-semibold text-foreground">4. Subscriptions &amp; auto-renewal</h2>
+              <p>Ufixi offers a free tier and a Premium subscription (£0.99/month). By subscribing to Premium:</p>
+              <ul className="list-disc pl-5 space-y-1 mt-2">
+                <li>Payment will be charged to your account at confirmation of purchase</li>
+                <li>Your subscription automatically renews unless cancelled at least 24 hours before the end of the current billing period</li>
+                <li>Your account will be charged for renewal within 24 hours prior to the end of the current period at the same price</li>
+                <li>You can manage and cancel your subscription at any time from the Settings page within the app</li>
+                <li>No refunds will be granted for any unused portion of a subscription period, except where required by applicable law</li>
+              </ul>
+              <p className="mt-3">For subscriptions purchased via the Apple App Store or Google Play Store, the store's payment terms and cancellation policies apply. You must cancel through the respective store's subscription management.</p>
             </section>
 
             <section>
