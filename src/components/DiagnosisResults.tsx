@@ -497,7 +497,7 @@ export default function DiagnosisResults({
               style={{ background: "rgba(29,158,117,0.08)", border: "1px solid rgba(29,158,117,0.15)" }}
             >
               <p className="text-sm font-semibold" style={{ color: "var(--color-success)" }}>
-                💰 You could save ~£{savings} by doing this yourself
+                You could save ~£{savings} by doing this yourself
               </p>
             </div>
           )}
