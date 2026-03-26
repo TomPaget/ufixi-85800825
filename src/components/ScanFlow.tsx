@@ -106,6 +106,37 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
   };
 
   const totalSteps = 7;
+
+  const collectAnonymisedData = async (triageData: any, diagnosisData: any) => {
+    try {
+      const sessionHash = crypto.randomUUID();
+      const urgency = diagnosisData?.urgency_assessment?.level;
+      const diyMin = diagnosisData?.estimated_costs?.diy_min || 0;
+      const diyMax = diagnosisData?.estimated_costs?.diy_max || 0;
+      const proMin = diagnosisData?.estimated_costs?.professional_min || 0;
+      const proMax = diagnosisData?.estimated_costs?.professional_max || 0;
+      const hasDiy = diagnosisData?.diy_quick_fixes?.length > 0;
+      const priority = urgency === "fix_now" ? "critical" : urgency === "fix_soon" ? "high" : urgency === "monitor" ? "medium" : "low";
+
+      await supabase.from("anonymised_insights").insert({
+        issue_type: triageData?.category || category || "other",
+        issue_title: triageData?.issue_title || triageData?.brief_description || "Unknown",
+        category: triageData?.category || category || "other",
+        urgency,
+        severity_score: urgency === "fix_now" ? 9 : urgency === "fix_soon" ? 6 : urgency === "monitor" ? 3 : 1,
+        priority,
+        diy_safe: hasDiy,
+        diy_cost_estimate: Math.round((diyMin + diyMax) / 2),
+        pro_cost_estimate: Math.round((proMin + proMax) / 2),
+        user_tier: isPremium ? "premium" : "free",
+        session_id: sessionHash,
+        status: "active",
+      } as any);
+    } catch (err) {
+      console.error("Anonymised data collection error:", err);
+    }
+  };
+
   const canContinueStep1 = description.trim().length > 0 && !!category && !!uploadMethod;
 
   const handleNextQuestion = () => {
