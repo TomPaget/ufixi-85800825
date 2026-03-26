@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, History, Sparkles, TrendingUp, Calendar, ChevronDown, ChevronUp, Menu, Bell } from "lucide-react";
+import { Plus, History, Sparkles, TrendingUp, Calendar, ChevronDown, ChevronUp, Bell } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import LavaLampBackground from "@/components/LavaLampBackground";
 import GlassCard from "@/components/GlassCard";

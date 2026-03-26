@@ -1,5 +1,5 @@
-import Landing from "./Landing";
+import HomeDashboard from "./HomeDashboard";
 
 export default function Index() {
-  return <Landing />;
+  return <HomeDashboard />;
 }
