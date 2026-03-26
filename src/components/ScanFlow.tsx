@@ -161,6 +161,21 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
   const runAIAnalysis = async (finalAnswers: string[]) => {
     setIsAnalysing(true);
     setAiError(null);
+
+    // For free users on web, show the ad screen immediately WHILE analysing
+    if (!isPremium && !isNative) {
+      const adTime = Math.floor(Math.random() * 6) + 15;
+      setAdCountdown(adTime);
+      setAdDone(false);
+      setShowAd(true);
+    }
+
+    // For free users on native, fire the interstitial in parallel
+    let nativeAdPromise: Promise<boolean> | null = null;
+    if (!isPremium && isNative) {
+      nativeAdPromise = showInterstitial();
+    }
+
     try {
       let imageBase64: string | undefined;
       let imageMimeType: string | undefined;
@@ -197,6 +212,7 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
       if (!data.success) {
         if (data.error === "not_home_issue") {
           setAiError("The uploaded image doesn't appear to show a home maintenance issue. Please try again with a clearer photo.");
+          setShowAd(false);
           setStep(1);
           toast.error("That doesn't look like a home issue.");
           return;
@@ -207,24 +223,16 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
       // Silently collect anonymised data
       collectAnonymisedData(data.triage, data.diagnosis);
 
-      // If free user, show ad before results
       if (!isPremium) {
-        // Try native AdMob interstitial first
         if (isNative) {
-          setIsAnalysing(false);
-          const shown = await showInterstitial();
-          // Whether ad shown or not, proceed to results
+          // Wait for native ad to finish (it was already showing during analysis)
+          if (nativeAdPromise) await nativeAdPromise;
           setTriage(data.triage);
           setDiagnosis(data.diagnosis);
           setStep(5);
         } else {
-          // Web fallback: countdown ad screen
+          // Web: store results — user sees them after ad countdown finishes
           setPendingResults({ triage: data.triage, diagnosis: data.diagnosis });
-          const adTime = Math.floor(Math.random() * 6) + 15;
-          setAdCountdown(adTime);
-          setAdDone(false);
-          setShowAd(true);
-          setIsAnalysing(false);
         }
       } else {
         setTriage(data.triage);
@@ -234,6 +242,7 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
     } catch (err: any) {
       console.error("AI analysis error:", err);
       setAiError(err.message);
+      setShowAd(false);
       toast.error(err.message || "Analysis failed. Please try again.");
       setStep(1);
     } finally {
@@ -369,10 +378,14 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
           </div>
 
           <div className="space-y-3">
-            {!adDone ? (
+            {(!adDone || !pendingResults) ? (
               <div className="py-4">
                 <p className="text-sm font-semibold" style={{ color: textSecondary }}>
-                  Your results are ready in {adCountdown}s...
+                  {isAnalysing
+                    ? "Analysing your issue..."
+                    : adCountdown > 0
+                    ? `Results ready in ${adCountdown}s...`
+                    : "Preparing your results..."}
                 </p>
                 <div className="mt-2 w-full h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(0,23,47,0.08)" }}>
                   <motion.div
