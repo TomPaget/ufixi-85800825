@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, History, Sparkles, TrendingUp, Calendar, ChevronDown, ChevronUp, Menu, Bell } from "lucide-react";
+import { Plus, History, Sparkles, TrendingUp, Calendar, ChevronDown, ChevronUp, Bell } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import LavaLampBackground from "@/components/LavaLampBackground";
 import GlassCard from "@/components/GlassCard";
@@ -32,13 +32,7 @@ export default function HomeDashboard() {
           className="sticky top-0 z-30 py-3"
         >
           <div className="max-w-lg mx-auto px-4 flex items-center relative" style={{ padding: "10px 16px" }}>
-            <button
-              onClick={() => navigate("/contractors")}
-              className="rounded-xl flex items-center justify-center transition-all active:scale-90"
-              style={{ color: "var(--color-navy)", minWidth: 44, minHeight: 44 }}
-            >
-              <Menu className="w-5 h-5" />
-            </button>
+            <div style={{ minWidth: 44 }} />
 
             <div className="absolute left-0 right-0 flex justify-center pointer-events-none">
               <img src={ufixiLogo} alt="Ufixi" className="h-8 object-contain" />

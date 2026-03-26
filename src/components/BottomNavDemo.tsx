@@ -34,13 +34,13 @@ export default function BottomNavDemo() {
             style={{ minWidth: 56, minHeight: 48, background: "transparent", border: "none", cursor: "pointer", padding: "4px 8px" }}
           >
             <Icon
-              className="w-5 h-5 transition-colors"
+              className="w-6 h-6 transition-colors"
               style={{ color: isActive ? "var(--color-primary)" : "#9aa5b4" }}
               strokeWidth={isActive ? 2.5 : 1.8}
             />
             <span
-              className="text-[10px] font-semibold transition-colors"
-              style={{ color: isActive ? "var(--color-primary)" : "#9aa5b4" }}
+              className="text-xs font-semibold transition-colors"
+              style={{ color: isActive ? "var(--color-primary)" : "#9aa5b4", letterSpacing: "0.04em" }}
             >
               {label}
             </span>
