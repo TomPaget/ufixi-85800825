@@ -27,6 +27,7 @@ import CreatePost from "./pages/CreatePost";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import CancelSubscription from "./pages/CancelSubscription";
+import Unsubscribe from "./pages/Unsubscribe";
 
 const queryClient = new QueryClient();
 
