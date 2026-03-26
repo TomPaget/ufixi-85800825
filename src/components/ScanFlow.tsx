@@ -469,7 +469,7 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                 {PREMIUM_BENEFITS.map(({ icon: Icon, text }) => (
                   <div key={text} className="flex items-center gap-4 p-4 rounded-2xl" style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)" }}>
                     <CheckCircle2 className="w-5 h-5 flex-shrink-0" style={{ color: "var(--color-success)" }} />
-                    <span className="text-base" style={{ color: navy }}>✓ {text}</span>
+                    <span className="text-base" style={{ color: navy }}>{text}</span>
                   </div>
                 ))}
               </div>
