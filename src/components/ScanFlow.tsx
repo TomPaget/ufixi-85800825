@@ -8,6 +8,7 @@ import {
   Stethoscope, ShieldAlert, PoundSterling, Crown, Lock, FileText, Mail
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import ufixiLogo from "@/assets/ufixi-logo.svg";
 import GradientButton from "./GradientButton";
 import LavaLampBackground from "./LavaLampBackground";
