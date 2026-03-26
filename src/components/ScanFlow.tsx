@@ -78,7 +78,12 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
   const [adDone, setAdDone] = useState(false);
   const [pendingResults, setPendingResults] = useState<{ triage: any; diagnosis: any } | null>(null);
   const { isPremium, startCheckout } = useSubscription();
+  const { initialize: initAdMob, showInterstitial, isNative } = useAdMob();
 
+  // Initialize AdMob on mount for native platforms
+  useEffect(() => {
+    if (!isPremium) initAdMob();
+  }, [isPremium, initAdMob]);
   const handleUploadOption = (id: string) => {
     setUploadMethod(id);
     const input = document.createElement("input");
