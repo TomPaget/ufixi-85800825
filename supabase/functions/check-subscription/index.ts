@@ -11,6 +11,28 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CHECK-SUBSCRIPTION] ${step}${details ? ` - ${JSON.stringify(details)}` : ''}`);
 };
 
+function calculatePeriodEnd(anchorTimestamp: number, intervalUnit: string): string | null {
+  // Calculate the next period end from billing_cycle_anchor
+  const anchor = new Date(anchorTimestamp * 1000);
+  const now = new Date();
+  const d = new Date(anchor);
+
+  // Advance periods until we're past now
+  while (d <= now) {
+    if (intervalUnit === "year") {
+      d.setFullYear(d.getFullYear() + 1);
+    } else if (intervalUnit === "week") {
+      d.setDate(d.getDate() + 7);
+    } else if (intervalUnit === "day") {
+      d.setDate(d.getDate() + 1);
+    } else {
+      // default monthly
+      d.setMonth(d.getMonth() + 1);
+    }
+  }
+  return d.toISOString();
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -59,12 +81,17 @@ serve(async (req) => {
     let subscriptionEnd: string | null = null;
 
     if (hasActiveSub) {
-      const sub = subscriptions.data[0];
-      const endTimestamp = sub.current_period_end;
-      // current_period_end is Unix seconds — safely convert
-      if (typeof endTimestamp === "number" && endTimestamp > 0) {
-        subscriptionEnd = new Date(endTimestamp * 1000).toISOString();
+      const sub = subscriptions.data[0] as any;
+
+      // In basil API, current_period_end was removed.
+      // Calculate from billing_cycle_anchor + plan interval.
+      const anchor = sub.billing_cycle_anchor;
+      const interval = sub.plan?.interval || sub.items?.data?.[0]?.price?.recurring?.interval || "month";
+
+      if (typeof anchor === "number") {
+        subscriptionEnd = calculatePeriodEnd(anchor, interval);
       }
+
       logStep("Active subscription found", { subscriptionId: sub.id, subscriptionEnd });
     } else {
       logStep("No active subscription found");
