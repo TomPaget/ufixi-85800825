@@ -60,11 +60,32 @@ serve(async (req) => {
 
     if (hasActiveSub) {
       const sub = subscriptions.data[0];
-      const endTimestamp = sub.current_period_end;
-      // current_period_end is Unix seconds — safely convert
-      if (typeof endTimestamp === "number" && endTimestamp > 0) {
-        subscriptionEnd = new Date(endTimestamp * 1000).toISOString();
+      logStep("Raw subscription data", {
+        current_period_end: sub.current_period_end,
+        type: typeof sub.current_period_end,
+      });
+
+      // Handle current_period_end in any format:
+      // - Unix timestamp (number in seconds)
+      // - ISO string
+      // - Already a Date-parseable value
+      const endVal = sub.current_period_end;
+      try {
+        if (typeof endVal === "number") {
+          // Unix seconds if < 1e12, milliseconds if >= 1e12
+          const ms = endVal < 1e12 ? endVal * 1000 : endVal;
+          subscriptionEnd = new Date(ms).toISOString();
+        } else if (typeof endVal === "string") {
+          subscriptionEnd = new Date(endVal).toISOString();
+        } else if (endVal && typeof endVal === "object") {
+          // Some Stripe versions return objects; try to stringify
+          subscriptionEnd = null;
+        }
+      } catch {
+        logStep("Could not parse subscription end date, setting to null");
+        subscriptionEnd = null;
       }
+
       logStep("Active subscription found", { subscriptionId: sub.id, subscriptionEnd });
     } else {
       logStep("No active subscription found");
