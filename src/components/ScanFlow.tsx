@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useSubscription } from "@/hooks/useSubscription";
 import ufixiLogo from "@/assets/ufixi-logo.svg";
 import GradientButton from "./GradientButton";
 import LavaLampBackground from "./LavaLampBackground";
@@ -76,7 +77,7 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
   const [adCountdown, setAdCountdown] = useState(0);
   const [adDone, setAdDone] = useState(false);
   const [pendingResults, setPendingResults] = useState<{ triage: any; diagnosis: any } | null>(null);
-  const isPremium = false; // TODO: check real subscription status
+  const { isPremium, startCheckout } = useSubscription();
 
   const handleUploadOption = (id: string) => {
     setUploadMethod(id);
@@ -248,13 +249,33 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
     setStep(5);
   };
 
-  const handleSave = () => {
-    if (isPremium) {
-      // TODO: actually save to database
-      toast.success("Diagnosis Saved ✓");
-    } else {
-      // Show upgrade prompt
+  const handleSave = async () => {
+    if (!isPremium) {
       setShowSavePrompt("upgrade");
+      return;
+    }
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setShowSavePrompt("auth");
+        return;
+      }
+      const { error } = await supabase.from("saved_issues").insert({
+        user_id: user.id,
+        issue_title: triage?.issue_title || "Untitled Issue",
+        brief_description: triage?.brief_description || "",
+        category: triage?.category || category || "other",
+        urgency: diagnosis?.urgency_assessment?.level || null,
+        diagnosis_data: diagnosis,
+        triage_data: triage,
+        image_url: uploadedPreviewUrl || null,
+        status: "active",
+      });
+      if (error) throw error;
+      toast.success("Diagnosis saved to your account ✓");
+    } catch (err: any) {
+      console.error("Save error:", err);
+      toast.error(err.message || "Failed to save diagnosis");
     }
   };
 
@@ -409,30 +430,41 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
       >
         <LavaLampBackground />
         <div className="relative z-10 w-full max-w-md px-6 space-y-6 text-center">
-          <div className="rounded-2xl p-8 space-y-5" style={{ background: "rgba(255,255,255,0.95)", backdropFilter: "blur(12px)", border: "1px solid rgba(0,23,47,0.08)", boxShadow: "var(--shadow-card)" }}>
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto" style={{ background: "var(--gradient-primary)" }}>
-              <Crown className="w-8 h-8 text-white" />
-            </div>
-            <h2 className="text-2xl font-bold tracking-tight" style={{ color: navy }}>Upgrade to Premium</h2>
-            <p className="text-base" style={{ color: textSecondary }}>No ads, unlimited scans, save forever.</p>
-            <div className="space-y-2 text-left">
-              {["No ads during diagnosis", "Save unlimited scans", "Priority AI analysis", "Export as PDF"].map((b) => (
-                <div key={b} className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: "var(--color-success)" }} />
-                  <span className="text-sm" style={{ color: navy }}>{b}</span>
+          {/* Ad unit placeholder */}
+          <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.95)", border: "1px solid rgba(0,23,47,0.08)", boxShadow: "var(--shadow-card)" }}>
+            <div className="p-2">
+              <p className="text-[10px] uppercase tracking-wider mb-1" style={{ color: textSecondary }}>Advertisement</p>
+              {/* Google AdSense ad slot — replace data-ad-slot with your real slot ID */}
+              <div
+                className="w-full flex items-center justify-center rounded-xl"
+                style={{ minHeight: 250, background: "rgba(0,23,47,0.03)" }}
+              >
+                <ins
+                  className="adsbygoogle"
+                  style={{ display: "block", width: "100%", height: 250 }}
+                  data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+                  data-ad-slot="XXXXXXXXXX"
+                  data-ad-format="auto"
+                  data-full-width-responsive="true"
+                />
+                {/* Fallback when AdSense not loaded */}
+                <div className="text-center p-6 space-y-3">
+                  <Crown className="w-10 h-10 mx-auto" style={{ color: "var(--color-primary)" }} />
+                  <p className="text-lg font-bold" style={{ color: navy }}>Go Premium</p>
+                  <p className="text-sm" style={{ color: textSecondary }}>No ads, unlimited scans, save forever.</p>
+                  <p className="text-lg font-bold" style={{ background: "var(--gradient-primary)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                    Just £3.99/month
+                  </p>
                 </div>
-              ))}
+              </div>
             </div>
-            <p className="text-lg font-bold" style={{ background: "var(--gradient-primary)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              Just £3.99/month
-            </p>
           </div>
 
           <div className="space-y-3">
             {!adDone ? (
               <div className="py-4">
                 <p className="text-sm font-semibold" style={{ color: textSecondary }}>
-                  Ad closes in {adCountdown}s...
+                  Your results are ready in {adCountdown}s...
                 </p>
                 <div className="mt-2 w-full h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(0,23,47,0.08)" }}>
                   <motion.div
@@ -449,6 +481,14 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                 Continue to Results →
               </GradientButton>
             )}
+
+            <button
+              onClick={startCheckout}
+              className="w-full text-center py-2 text-sm font-semibold"
+              style={{ color: "var(--color-primary)" }}
+            >
+              Skip ads forever — Go Premium
+            </button>
           </div>
         </div>
       </motion.div>
@@ -513,8 +553,8 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                 ))}
               </div>
 
-              <GradientButton size="lg" onClick={() => { onClose(); window.location.href = "/upgrade"; }}>
-                Upgrade to Premium
+              <GradientButton size="lg" onClick={startCheckout}>
+                Upgrade to Premium — £3.99/mo
               </GradientButton>
 
               <button onClick={() => setShowSavePrompt(null)} className="w-full text-center py-3 text-base" style={{ color: textSecondary }}>

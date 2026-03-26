@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, History, Sparkles, TrendingUp, Calendar, ChevronDown, ChevronUp, Bell, Crown, CheckCircle2, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,17 +9,35 @@ import ScanFlow from "@/components/ScanFlow";
 import PageTransition from "@/components/PageTransition";
 import GradientButton from "@/components/GradientButton";
 import ufixiLogo from "@/assets/ufixi-logo.svg";
+import { useSubscription } from "@/hooks/useSubscription";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function HomeDashboard() {
   const [showRecentIssues, setShowRecentIssues] = useState(false);
   const [showScanFlow, setShowScanFlow] = useState(false);
   const [showPremiumPrompt, setShowPremiumPrompt] = useState(false);
+  const [savedIssues, setSavedIssues] = useState<any[]>([]);
   const navigate = useNavigate();
+  const { isPremium, startCheckout } = useSubscription();
 
-  const isPremium = false; // TODO: check real subscription
-  const activeCount = 0;
-  const fixSoonCount = 0;
-  const resolvedCount = 0;
+  const [activeCount, setActiveCount] = useState(0);
+  const [fixSoonCount, setFixSoonCount] = useState(0);
+  const [resolvedCount, setResolvedCount] = useState(0);
+
+  useEffect(() => {
+    if (isPremium) loadCounts();
+  }, [isPremium]);
+
+  const loadCounts = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data } = await supabase.from("saved_issues").select("status, urgency").eq("user_id", user.id);
+    if (!data) return;
+    setActiveCount(data.filter(i => i.status === "active").length);
+    setFixSoonCount(data.filter(i => i.urgency === "fix_now" || i.urgency === "fix_soon").length);
+    setResolvedCount(data.filter(i => i.status === "resolved").length);
+    setSavedIssues(data);
+  };
 
   const handleRecentScansClick = () => {
     if (!isPremium) {
@@ -209,7 +227,7 @@ export default function HomeDashboard() {
                       ))}
                     </div>
 
-                    <GradientButton onClick={() => navigate("/upgrade")}>
+                    <GradientButton onClick={startCheckout}>
                       <span className="flex items-center justify-center gap-2"><Crown className="w-4 h-4" /> Upgrade to Premium — £3.99/mo</span>
                     </GradientButton>
                   </div>
