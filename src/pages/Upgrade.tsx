@@ -26,7 +26,7 @@ const PLANS = [
 ];
 
 export default function Upgrade() {
-  const { isPremium, subscriptionEnd, startCheckout, user } = useSubscription();
+  const { isPremium, subscriptionEnd, startCheckout, user, checkSubscription } = useSubscription();
   const navigate = useNavigate();
 
   const handleManage = async () => {
@@ -114,14 +114,43 @@ export default function Upgrade() {
           })}
 
           {isPremium && (
+            <div className="space-y-2">
+              <button
+                onClick={handleManage}
+                className="w-full text-center py-3 text-base font-semibold"
+                style={{ color: "var(--color-primary)" }}
+              >
+                Manage Subscription
+              </button>
+              <button
+                onClick={() => navigate("/cancel-subscription")}
+                className="w-full text-center py-2 text-sm"
+                style={{ color: "#DC2626" }}
+              >
+                Cancel Subscription
+              </button>
+            </div>
+          )}
+
+          {/* Restore purchases — required by Apple App Store */}
+          {!isPremium && (
             <button
-              onClick={handleManage}
-              className="w-full text-center py-3 text-base font-semibold"
-              style={{ color: "var(--color-primary)" }}
+              onClick={async () => {
+                await checkSubscription();
+                toast.info(isPremium ? "Subscription restored!" : "No active subscription found.");
+              }}
+              className="w-full text-center py-2 text-sm"
+              style={{ color: "var(--color-text-secondary)" }}
             >
-              Manage Subscription
+              Restore Purchases
             </button>
           )}
+
+          {/* Legal links — required by app stores */}
+          <div className="flex gap-4 justify-center text-xs pt-2" style={{ color: "rgba(0,23,47,0.38)" }}>
+            <a href="/terms" className="underline">Terms of Service</a>
+            <a href="/privacy" className="underline">Privacy Policy</a>
+          </div>
         </main>
       </div>
     </PageTransition>

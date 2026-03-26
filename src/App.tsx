@@ -25,6 +25,7 @@ import ForumPost from "./pages/ForumPost";
 import CreatePost from "./pages/CreatePost";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import CancelSubscription from "./pages/CancelSubscription";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,8 @@ function AnimatedRoutes() {
         <Route path="/forum/create" element={<CreatePost />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/cancel-subscription" element={<CancelSubscription />} />
+        <Route path="*" element={<NotFound />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>

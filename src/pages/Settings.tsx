@@ -1,5 +1,5 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { User, CreditCard, Bell, Shield, HelpCircle, LogOut, ChevronRight, Crown } from "lucide-react";
+import { User, CreditCard, Bell, Shield, HelpCircle, LogOut, ChevronRight, Crown, XCircle } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
 import PageHeader from "@/components/PageHeader";
 import BottomNavDemo from "@/components/BottomNavDemo";
@@ -45,6 +45,7 @@ export default function Settings() {
   const MENU_ITEMS = [
     { icon: User, label: "Profile", sub: `${displayName}`, path: null },
     { icon: Crown, label: "Subscription", sub: subDescription, action: handleManageSubscription },
+    ...(isPremium ? [{ icon: XCircle, label: "Cancel Subscription", sub: "Cancel your Premium plan", path: "/cancel-subscription" }] : []),
     { icon: Bell, label: "Notifications", sub: "Push & email preferences", path: "/notifications" },
     { icon: Shield, label: "Privacy", sub: "Data & privacy settings", path: null },
     { icon: HelpCircle, label: "Support", sub: "Help centre & contact", path: "/support" },
