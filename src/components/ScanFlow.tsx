@@ -210,6 +210,19 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
       // Silently collect anonymised data
       collectAnonymisedData(data.triage, data.diagnosis);
 
+      // Record follow-up for 1-week push notification
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        await supabase.from("scan_follow_ups").insert({
+          user_id: user?.id || null,
+          session_id: crypto.randomUUID(),
+          issue_title: data.triage?.issue_title || "Unknown Issue",
+          category: data.triage?.category || category,
+        } as any);
+      } catch (e) {
+        console.warn("Follow-up recording failed:", e);
+      }
+
       if (!isPremium) {
         if (isNative) {
           // Wait for native ad to finish (it was already showing during analysis)
