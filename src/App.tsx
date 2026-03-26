@@ -22,6 +22,7 @@ import Auth from "./pages/Auth";
 import Forum from "./pages/Forum";
 import ForumPost from "./pages/ForumPost";
 import CreatePost from "./pages/CreatePost";
+import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
