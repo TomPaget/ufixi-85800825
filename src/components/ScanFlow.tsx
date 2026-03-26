@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  X, Camera, Video, Upload, ArrowLeft, MapPin, Tag,
+  X, Camera, Upload, ArrowLeft, MapPin, Tag,
   Droplets, Zap, Building2, Wind, Cpu, Wrench,
   Bot, ChevronDown, ChevronUp, AlertTriangle,
   Loader2, CheckCircle2, UserPlus, Crown, Lock, FileText, Mail
