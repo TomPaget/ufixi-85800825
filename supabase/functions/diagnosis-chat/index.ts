@@ -24,7 +24,7 @@ Safety warnings: ${context.safetyWarnings?.join("; ") || "None"}
 Estimated DIY cost: ${context.diyCostRange}
 Estimated professional cost: ${context.proCostRange}
 
-Answer the user's follow-up questions about this specific issue only. Be concise — max 3 sentences. Use plain English. If the user asks something outside the scope of this issue, redirect them back to it.`;
+Answer the user's follow-up questions about this specific issue only. Be concise — max 3 sentences. Use plain English. Never use emojis. If the user asks something outside the scope of this issue, redirect them back to it.`;
 
     const messages = [
       { role: "system", content: systemPrompt },
