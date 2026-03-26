@@ -4,10 +4,11 @@ import {
   X, Camera, Video, Upload, ArrowLeft, MapPin, Tag,
   Droplets, Zap, Building2, Wind, Cpu, Wrench,
   Bot, ChevronDown, ChevronUp, ExternalLink, AlertTriangle,
-  Loader2, CheckCircle2, Lightbulb
+  Loader2, CheckCircle2, Lightbulb, UserPlus, Clock
 } from "lucide-react";
 import ufixiLogo from "@/assets/ufixi-logo.svg";
 import GradientButton from "./GradientButton";
+import LavaLampBackground from "./LavaLampBackground";
 
 const CATEGORIES = [
   { id: "plumbing", label: "Plumbing", icon: Droplets },
@@ -38,10 +39,10 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
   const [answers, setAnswers] = useState<string[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [expandedSection, setExpandedSection] = useState<string | null>("causes");
+  const [showSignup, setShowSignup] = useState(false);
 
-  const totalSteps = 6;
-  const canContinueStep1 = !!uploadMethod;
-  const canContinueStep2 = description.trim().length > 0 && !!category;
+  const totalSteps = 7;
+  const canContinueStep1 = description.trim().length > 0 && !!category && !!uploadMethod;
 
   const handleNextQuestion = () => {
     if (!selectedAnswer) return;
@@ -51,9 +52,13 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
     if (questionIndex < MOCK_QUESTIONS.length - 1) {
       setQuestionIndex(questionIndex + 1);
     } else {
-      setStep(5);
-      setTimeout(() => setStep(6), 2500);
+      setStep(4);
+      setTimeout(() => setStep(5), 2500);
     }
+  };
+
+  const handleSave = () => {
+    setShowSignup(true);
   };
 
   const slideVariants = {
@@ -61,6 +66,10 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
     center: { x: 0, opacity: 1 },
     exit: { x: -60, opacity: 0 },
   };
+
+  const navy = "#00172F";
+  const textSecondary = "#5A6A7A";
+  const showLavaBg = step === 5 || step === 6;
 
   return (
     <motion.div
@@ -70,120 +79,170 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
       className="fixed inset-0 z-50 flex flex-col"
       style={{ background: "var(--color-bg)" }}
     >
+      {showLavaBg && <LavaLampBackground />}
+
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3" style={{ minHeight: 56 }}>
-        {step > 1 ? (
-          <button onClick={() => setStep(step - 1)} className="flex items-center justify-center" style={{ minWidth: 44, minHeight: 44, color: "var(--color-navy)" }}>
+      <div className="flex items-center justify-between px-4 py-3 relative z-10" style={{ minHeight: 56 }}>
+        {step > 1 && !showSignup ? (
+          <button onClick={() => setStep(step - 1)} className="flex items-center justify-center" style={{ minWidth: 44, minHeight: 44, color: navy }}>
             <ArrowLeft className="w-5 h-5" />
           </button>
         ) : <div style={{ minWidth: 44 }} />}
         <img src={ufixiLogo} alt="Ufixi" className="h-7 object-contain" />
-        <button onClick={onClose} className="flex items-center justify-center" style={{ minWidth: 44, minHeight: 44, color: "var(--color-navy)" }}>
+        <button onClick={onClose} className="flex items-center justify-center" style={{ minWidth: 44, minHeight: 44, color: navy }}>
           <X className="w-5 h-5" />
         </button>
       </div>
 
       {/* Progress */}
-      <div className="px-6 pb-4">
-        <div className="flex gap-1.5">
-          {Array.from({ length: totalSteps }).map((_, i) => (
-            <div key={i} className="h-1 flex-1 rounded-full" style={{ background: i < step ? "var(--color-primary)" : "rgba(0,23,47,0.1)" }} />
-          ))}
+      {!showSignup && (
+        <div className="px-6 pb-5 relative z-10">
+          <div className="flex gap-1.5">
+            {Array.from({ length: totalSteps }).map((_, i) => (
+              <div key={i} className="h-1 flex-1 rounded-full" style={{ background: i < step ? "var(--color-primary)" : "rgba(0,23,47,0.1)" }} />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-6 pb-6">
+      <div className="flex-1 overflow-y-auto px-6 pb-6 relative z-10">
         <AnimatePresence mode="wait">
-          {/* STEP 1 — Upload Method */}
-          {step === 1 && (
-            <motion.div key="s1" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.2 }} className="space-y-6">
-              <div>
-                <h2 className="text-2xl" style={{ color: "var(--color-navy)", letterSpacing: "-0.02em" }}>Upload Your Issue</h2>
-                <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>Choose how you'd like to capture the problem</p>
+
+          {/* Signup Prompt */}
+          {showSignup && (
+            <motion.div key="signup" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.2 }} className="space-y-8 py-8">
+              <div className="text-center space-y-3">
+                <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto" style={{ background: "var(--gradient-primary)" }}>
+                  <UserPlus className="w-10 h-10 text-white" />
+                </div>
+                <h2 className="text-3xl tracking-tight" style={{ color: navy, letterSpacing: "-0.02em" }}>Save Your Diagnosis</h2>
+                <p className="text-base leading-relaxed max-w-sm mx-auto" style={{ color: textSecondary }}>
+                  Create a free account to save this diagnosis for 45 days, track your issues, and access your repair history.
+                </p>
               </div>
 
+              <div className="space-y-3">
+                {[
+                  { icon: CheckCircle2, text: "Save unlimited diagnostics" },
+                  { icon: Clock, text: "Access history for 45 days" },
+                  { icon: Bot, text: "AI-powered repair guidance" },
+                ].map(({ icon: Icon, text }) => (
+                  <div key={text} className="flex items-center gap-4 p-4 rounded-2xl" style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)" }}>
+                    <Icon className="w-5 h-5 flex-shrink-0" style={{ color: "var(--color-primary)" }} />
+                    <span className="text-base" style={{ color: navy }}>{text}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-3">
+                <input
+                  type="email"
+                  placeholder="Email address"
+                  className="w-full rounded-2xl p-4 text-base"
+                  style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: navy }}
+                />
+                <input
+                  type="password"
+                  placeholder="Create a password"
+                  className="w-full rounded-2xl p-4 text-base"
+                  style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: navy }}
+                />
+                <GradientButton size="lg">Create Account & Save</GradientButton>
+              </div>
+
+              <button
+                onClick={() => setShowSignup(false)}
+                className="w-full text-center py-3 text-base"
+                style={{ color: textSecondary }}
+              >
+                ← Back to results
+              </button>
+            </motion.div>
+          )}
+
+          {/* STEP 1 — Describe & Upload */}
+          {!showSignup && step === 1 && (
+            <motion.div key="s1" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.2 }} className="space-y-7">
+              <div className="space-y-2">
+                <h2 className="text-3xl tracking-tight" style={{ color: navy, letterSpacing: "-0.02em" }}>Describe Your Issue</h2>
+                <p className="text-base" style={{ color: textSecondary }}>Upload media and tell us about the problem</p>
+              </div>
+
+              {/* Upload section */}
+              <div className="space-y-2">
+                <label className="text-base font-semibold flex items-center gap-2" style={{ color: navy }}>
+                  <Camera className="w-4 h-4" style={{ color: "var(--color-primary)" }} /> Upload Evidence
+                </label>
+                <div className="space-y-3">
+                  {[
+                    { id: "photo", label: "Take Photo", sub: "Use your camera", icon: Camera },
+                    { id: "video", label: "Record Video", sub: "Up to 30 seconds", icon: Video },
+                    { id: "upload", label: "Upload Media", sub: "From your gallery", icon: Upload },
+                  ].map(({ id, label, sub, icon: Icon }) => (
+                    <button
+                      key={id}
+                      onClick={() => setUploadMethod(id)}
+                      className="w-full flex items-center gap-4 p-4 rounded-2xl transition-all active:scale-[0.98]"
+                      style={{
+                        background: uploadMethod === id ? "rgba(232,83,10,0.08)" : "white",
+                        border: `2px solid ${uploadMethod === id ? "var(--color-primary)" : "rgba(0,23,47,0.08)"}`,
+                        minHeight: 56,
+                      }}
+                    >
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(232,83,10,0.08)" }}>
+                        <Icon className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-base font-semibold" style={{ color: navy }}>{label}</p>
+                        <p className="text-sm" style={{ color: textSecondary }}>{sub}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tips */}
               <div className="rounded-2xl p-4 space-y-2" style={{ background: "rgba(232,83,10,0.06)", border: "1px solid rgba(232,83,10,0.12)" }}>
-                <p className="text-xs font-semibold" style={{ color: "var(--color-primary)" }}>💡 Tips for best results</p>
-                <ul className="text-xs space-y-1" style={{ color: "var(--color-text-secondary)" }}>
+                <p className="text-sm font-semibold" style={{ color: "var(--color-primary)" }}>💡 Tips for best results</p>
+                <ul className="text-sm space-y-1.5" style={{ color: textSecondary }}>
                   <li>• Good lighting helps AI accuracy</li>
                   <li>• Capture the full affected area</li>
                   <li>• Include close-ups of damage</li>
                 </ul>
               </div>
 
-              <div className="space-y-3">
-                {[
-                  { id: "photo", label: "Take Photo", sub: "Use your camera", icon: Camera },
-                  { id: "video", label: "Record Video", sub: "Up to 30 seconds", icon: Video },
-                  { id: "upload", label: "Upload Media", sub: "From your gallery", icon: Upload },
-                ].map(({ id, label, sub, icon: Icon }) => (
-                  <button
-                    key={id}
-                    onClick={() => setUploadMethod(id)}
-                    className="w-full flex items-center gap-4 p-4 rounded-2xl transition-all active:scale-[0.98]"
-                    style={{
-                      background: uploadMethod === id ? "rgba(232,83,10,0.08)" : "white",
-                      border: `2px solid ${uploadMethod === id ? "var(--color-primary)" : "rgba(0,23,47,0.08)"}`,
-                      minHeight: 56,
-                    }}
-                  >
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(232,83,10,0.08)" }}>
-                      <Icon className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
-                    </div>
-                    <div className="text-left">
-                      <p className="text-sm font-semibold" style={{ color: "var(--color-navy)" }}>{label}</p>
-                      <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>{sub}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              <GradientButton disabled={!canContinueStep1} onClick={() => setStep(2)} size="lg">Continue</GradientButton>
-            </motion.div>
-          )}
-
-          {/* STEP 2 — Describe */}
-          {step === 2 && (
-            <motion.div key="s2" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.2 }} className="space-y-6">
-              <div>
-                <h2 className="text-2xl" style={{ color: "var(--color-navy)", letterSpacing: "-0.02em" }}>Describe the Issue</h2>
-                <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>Tell us more details to help our AI</p>
-              </div>
-
-              {/* Media preview placeholder */}
-              <div className="w-full h-32 rounded-2xl flex items-center justify-center" style={{ background: "rgba(0,23,47,0.04)", border: "1px dashed rgba(0,23,47,0.15)" }}>
-                <Camera className="w-8 h-8" style={{ color: "rgba(0,23,47,0.2)" }} />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-sm font-semibold" style={{ color: "var(--color-navy)" }}>What's the problem?</label>
+              {/* Description */}
+              <div className="space-y-2">
+                <label className="text-base font-semibold" style={{ color: navy }}>What's the problem?</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Describe what you see..."
-                  className="w-full rounded-2xl p-4 text-sm resize-none"
-                  style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: "var(--color-navy)", minHeight: 100 }}
+                  className="w-full rounded-2xl p-4 text-base resize-none"
+                  style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: navy, minHeight: 110 }}
                   rows={4}
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="text-sm font-semibold flex items-center gap-1.5" style={{ color: "var(--color-navy)" }}>
-                  <MapPin className="w-3.5 h-3.5" style={{ color: "var(--color-primary)" }} /> Where is it located?
+              {/* Location */}
+              <div className="space-y-2">
+                <label className="text-base font-semibold flex items-center gap-2" style={{ color: navy }}>
+                  <MapPin className="w-4 h-4" style={{ color: "var(--color-primary)" }} /> Where is it located?
                 </label>
                 <input
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   placeholder="e.g., Kitchen, Bathroom, Living Room..."
-                  className="w-full rounded-2xl p-4 text-sm"
-                  style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: "var(--color-navy)" }}
+                  className="w-full rounded-2xl p-4 text-base"
+                  style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: navy }}
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-semibold flex items-center gap-1.5" style={{ color: "var(--color-navy)" }}>
-                  <Tag className="w-3.5 h-3.5" style={{ color: "var(--color-primary)" }} /> Issue Category
+              {/* Category */}
+              <div className="space-y-3">
+                <label className="text-base font-semibold flex items-center gap-2" style={{ color: navy }}>
+                  <Tag className="w-4 h-4" style={{ color: "var(--color-primary)" }} /> Issue Category
                 </label>
                 <div className="space-y-2">
                   {CATEGORIES.map(({ id, label, icon: Icon }) => (
@@ -197,25 +256,25 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                         minHeight: 52,
                       }}
                     >
-                      <Icon className="w-5 h-5" style={{ color: category === id ? "var(--color-primary)" : "var(--color-text-secondary)" }} />
-                      <span className="text-sm font-semibold" style={{ color: "var(--color-navy)" }}>{label}</span>
+                      <Icon className="w-5 h-5" style={{ color: category === id ? "var(--color-primary)" : textSecondary }} />
+                      <span className="text-base font-semibold" style={{ color: navy }}>{label}</span>
                     </button>
                   ))}
                 </div>
               </div>
 
-              <GradientButton disabled={!canContinueStep2} onClick={() => setStep(3)} size="lg">Continue</GradientButton>
+              <GradientButton disabled={!canContinueStep1} onClick={() => setStep(2)} size="lg">Continue</GradientButton>
             </motion.div>
           )}
 
-          {/* STEP 3 — AI Triage loading */}
-          {step === 3 && (
+          {/* STEP 2 — AI Triage loading */}
+          {!showSignup && step === 2 && (
             <motion.div
-              key="s3"
+              key="s2"
               variants={slideVariants} initial="enter" animate="center" exit="exit"
               transition={{ duration: 0.2 }}
-              className="flex flex-col items-center justify-center text-center py-20 space-y-6"
-              onAnimationComplete={() => setTimeout(() => setStep(4), 2000)}
+              className="flex flex-col items-center justify-center text-center py-20 space-y-7"
+              onAnimationComplete={() => setTimeout(() => setStep(3), 2000)}
             >
               <motion.div
                 animate={{ rotate: 360 }}
@@ -225,47 +284,47 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
               >
                 <Loader2 className="w-8 h-8 text-white" />
               </motion.div>
-              <h2 className="text-2xl" style={{ color: "var(--color-navy)" }}>Analysing Your Issue</h2>
-              <p className="text-sm max-w-xs" style={{ color: "var(--color-text-secondary)" }}>
+              <h2 className="text-3xl tracking-tight" style={{ color: navy }}>Analysing Your Issue</h2>
+              <p className="text-base max-w-xs" style={{ color: textSecondary }}>
                 Our AI is examining your upload and generating diagnostic questions...
               </p>
             </motion.div>
           )}
 
-          {/* STEP 4 — Questions */}
-          {step === 4 && (
-            <motion.div key="s4" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.2 }} className="space-y-6">
+          {/* STEP 3 — Questions */}
+          {!showSignup && step === 3 && (
+            <motion.div key="s3" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.2 }} className="space-y-7">
               {/* Progress dots */}
-              <div className="flex justify-center gap-2">
+              <div className="flex justify-center gap-2.5">
                 {MOCK_QUESTIONS.map((_, i) => (
-                  <div key={i} className="w-2.5 h-2.5 rounded-full" style={{ background: i <= questionIndex ? "var(--color-primary)" : "rgba(0,23,47,0.12)" }} />
+                  <div key={i} className="w-3 h-3 rounded-full" style={{ background: i <= questionIndex ? "var(--color-primary)" : "rgba(0,23,47,0.12)" }} />
                 ))}
               </div>
 
               {/* Bot message */}
               <div className="flex gap-3 items-start">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "var(--gradient-primary)" }}>
+                <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "var(--gradient-primary)" }}>
                   <Bot className="w-5 h-5 text-white" />
                 </div>
                 <div className="rounded-2xl rounded-tl-md p-4 flex-1" style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)" }}>
-                  <p className="text-sm" style={{ color: "var(--color-navy)" }}>
+                  <p className="text-base leading-relaxed" style={{ color: navy }}>
                     {MOCK_QUESTIONS[questionIndex].q}
                   </p>
                 </div>
               </div>
 
               {/* Options */}
-              <div className="space-y-2 pl-13">
+              <div className="space-y-3 pl-14">
                 {MOCK_QUESTIONS[questionIndex].options.map((opt) => (
                   <button
                     key={opt}
                     onClick={() => setSelectedAnswer(opt)}
-                    className="w-full text-left p-4 rounded-2xl text-sm transition-all active:scale-[0.98]"
+                    className="w-full text-left p-4 rounded-2xl text-base transition-all active:scale-[0.98]"
                     style={{
                       background: selectedAnswer === opt ? "rgba(232,83,10,0.08)" : "white",
                       border: `2px solid ${selectedAnswer === opt ? "var(--color-primary)" : "rgba(0,23,47,0.08)"}`,
-                      color: "var(--color-navy)",
-                      minHeight: 48,
+                      color: navy,
+                      minHeight: 52,
                     }}
                   >
                     {opt}
@@ -279,38 +338,38 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
             </motion.div>
           )}
 
-          {/* STEP 5 — Loading results */}
-          {step === 5 && (
+          {/* STEP 4 — Loading results */}
+          {!showSignup && step === 4 && (
             <motion.div
-              key="s5"
+              key="s4"
               variants={slideVariants} initial="enter" animate="center" exit="exit"
               transition={{ duration: 0.2 }}
-              className="flex flex-col items-center justify-center text-center py-20 space-y-6"
+              className="flex flex-col items-center justify-center text-center py-20 space-y-7"
             >
-              <div className="rounded-2xl p-8 text-center space-y-4" style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", boxShadow: "var(--shadow-card)" }}>
+              <div className="rounded-2xl p-8 text-center space-y-5" style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", boxShadow: "var(--shadow-card)" }}>
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
                 >
                   <Loader2 className="w-10 h-10 mx-auto" style={{ color: "var(--color-primary)" }} />
                 </motion.div>
-                <h2 className="text-xl" style={{ color: "var(--color-navy)" }}>Your Results Are Ready</h2>
-                <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>Generating your full AI diagnosis...</p>
+                <h2 className="text-2xl tracking-tight" style={{ color: navy }}>Your Results Are Ready</h2>
+                <p className="text-base" style={{ color: textSecondary }}>Generating your full AI diagnosis...</p>
               </div>
             </motion.div>
           )}
 
-          {/* STEP 6 — Results */}
-          {step === 6 && (
-            <motion.div key="s6" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.2 }} className="space-y-4 pb-6">
+          {/* STEP 5 — Results */}
+          {!showSignup && step === 5 && (
+            <motion.div key="s5" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.2 }} className="space-y-5 pb-6">
               {/* Result header */}
-              <div className="rounded-2xl p-5 space-y-2" style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", boxShadow: "var(--shadow-card)" }}>
+              <div className="rounded-2xl p-6 space-y-3" style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(12px)", border: "1px solid rgba(0,23,47,0.08)", boxShadow: "var(--shadow-card)" }}>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-5 h-5" style={{ color: "var(--color-success)" }} />
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(29,158,117,0.1)", color: "var(--color-success)" }}>AI Diagnosis Complete</span>
+                  <span className="text-sm font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(29,158,117,0.1)", color: "var(--color-success)" }}>AI Diagnosis Complete</span>
                 </div>
-                <h2 className="text-xl" style={{ color: "var(--color-navy)" }}>{description || "Home Issue Detected"}</h2>
-                <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                <h2 className="text-2xl tracking-tight" style={{ color: navy }}>{description || "Home Issue Detected"}</h2>
+                <p className="text-base leading-relaxed" style={{ color: textSecondary }}>
                   Based on your description and our AI analysis, here's what we've found.
                 </p>
               </div>
@@ -320,9 +379,9 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                 {
                   id: "causes", title: "What Caused This?", icon: Lightbulb,
                   content: (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {["Worn components due to regular use", "Mineral buildup affecting seals", "Age-related degradation of materials"].map((c, i) => (
-                        <div key={i} className="p-3 rounded-xl text-sm" style={{ background: "rgba(0,23,47,0.03)", borderLeft: "3px solid rgba(59,130,246,0.5)", color: "var(--color-navy)" }}>{c}</div>
+                        <div key={i} className="p-4 rounded-xl text-base leading-relaxed" style={{ background: "rgba(0,23,47,0.03)", borderLeft: "3px solid rgba(59,130,246,0.5)", color: navy }}>{c}</div>
                       ))}
                     </div>
                   ),
@@ -330,7 +389,7 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                 {
                   id: "diagnostic", title: "How to Check What's Wrong", icon: CheckCircle2,
                   content: (
-                    <ol className="space-y-2 list-decimal list-inside text-sm" style={{ color: "var(--color-navy)" }}>
+                    <ol className="space-y-3 list-decimal list-inside text-base leading-relaxed" style={{ color: navy }}>
                       <li>Inspect the affected area carefully</li>
                       <li>Check for any visible damage or wear</li>
                       <li>Test related systems (water pressure, electrical, etc.)</li>
@@ -341,18 +400,18 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                 {
                   id: "products", title: "What You'll Need", icon: ExternalLink,
                   content: (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {[
                         { name: "Repair Kit", term: "home+repair+kit" },
                         { name: "Sealant", term: "waterproof+sealant" },
                       ].map((p, i) => (
-                        <div key={i} className="flex items-center justify-between p-3 rounded-xl" style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)" }}>
-                          <span className="text-sm" style={{ color: "var(--color-navy)" }}>{p.name}</span>
+                        <div key={i} className="flex items-center justify-between p-4 rounded-xl" style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)" }}>
+                          <span className="text-base" style={{ color: navy }}>{p.name}</span>
                           <a
                             href={`https://amazon.co.uk/s?k=${p.term}&tag=ufixi-21`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold"
+                            className="px-3 py-2 rounded-lg text-sm font-semibold"
                             style={{ background: "#FFD814", color: "#0F1111" }}
                           >
                             Buy on Amazon
@@ -365,11 +424,11 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                 {
                   id: "diy", title: "Quick Fixes to Try", icon: Wrench,
                   content: (
-                    <div className="space-y-2">
-                      <div className="flex gap-2 mb-2">
-                        <span className="text-xs px-2 py-1 rounded-full" style={{ background: "rgba(29,158,117,0.1)", color: "var(--color-success)" }}>Easy • 30 min</span>
+                    <div className="space-y-3">
+                      <div className="flex gap-2 mb-3">
+                        <span className="text-sm px-3 py-1 rounded-full" style={{ background: "rgba(29,158,117,0.1)", color: "var(--color-success)" }}>Easy • 30 min</span>
                       </div>
-                      <ol className="space-y-2 list-decimal list-inside text-sm" style={{ color: "var(--color-navy)" }}>
+                      <ol className="space-y-3 list-decimal list-inside text-base leading-relaxed" style={{ color: navy }}>
                         <li>Turn off the relevant supply (water/electricity)</li>
                         <li>Inspect and clean the affected component</li>
                         <li>Replace worn parts if necessary</li>
@@ -382,24 +441,24 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                   id: "pro", title: "When to Call a Professional", icon: AlertTriangle,
                   content: (
                     <div className="p-4 rounded-xl" style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.15)" }}>
-                      <p className="text-sm" style={{ color: "#DC2626" }}>
+                      <p className="text-base leading-relaxed" style={{ color: "#DC2626" }}>
                         If the issue persists after attempting DIY fixes, or if you notice the problem worsening, contact a qualified professional immediately. Safety-critical issues should never be delayed.
                       </p>
                     </div>
                   ),
                 },
               ].map(({ id, title, icon: Icon, content }) => (
-                <div key={id} className="rounded-2xl overflow-hidden" style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)" }}>
+                <div key={id} className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(12px)", border: "1px solid rgba(0,23,47,0.08)" }}>
                   <button
                     onClick={() => setExpandedSection(expandedSection === id ? null : id)}
-                    className="w-full flex items-center justify-between p-4 text-left"
-                    style={{ minHeight: 52 }}
+                    className="w-full flex items-center justify-between p-5 text-left"
+                    style={{ minHeight: 56 }}
                   >
-                    <span className="flex items-center gap-2 text-sm font-semibold" style={{ color: "var(--color-navy)" }}>
-                      <Icon className="w-4 h-4" style={{ color: "var(--color-primary)" }} />
+                    <span className="flex items-center gap-2.5 text-base font-semibold" style={{ color: navy }}>
+                      <Icon className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
                       {title}
                     </span>
-                    {expandedSection === id ? <ChevronUp className="w-4 h-4" style={{ color: "#9aa5b4" }} /> : <ChevronDown className="w-4 h-4" style={{ color: "#9aa5b4" }} />}
+                    {expandedSection === id ? <ChevronUp className="w-5 h-5" style={{ color: "#9aa5b4" }} /> : <ChevronDown className="w-5 h-5" style={{ color: "#9aa5b4" }} />}
                   </button>
                   <AnimatePresence>
                     {expandedSection === id && (
@@ -410,18 +469,18 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                         transition={{ duration: 0.2 }}
                         className="overflow-hidden"
                       >
-                        <div className="px-4 pb-4">{content}</div>
+                        <div className="px-5 pb-5">{content}</div>
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
               ))}
 
-              <GradientButton size="lg" onClick={onClose}>Save Full Diagnosis</GradientButton>
+              <GradientButton size="lg" onClick={handleSave}>Save Full Diagnosis</GradientButton>
               <button
                 onClick={onClose}
-                className="w-full text-center py-3 text-sm"
-                style={{ color: "var(--color-text-secondary)" }}
+                className="w-full text-center py-3 text-base"
+                style={{ color: textSecondary }}
               >
                 Close without saving
               </button>
