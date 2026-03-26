@@ -472,7 +472,7 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
                 <p className="text-xs" style={{ color: textSecondary }}>
                   Automatically save your progress and resume any scan where you left off.
                 </p>
-                <GradientButton size="sm" onClick={startCheckout}>
+                <GradientButton onClick={startCheckout}>
                   <span className="flex items-center gap-2"><Crown className="w-4 h-4" /> Upgrade Now</span>
                 </GradientButton>
               </div>
