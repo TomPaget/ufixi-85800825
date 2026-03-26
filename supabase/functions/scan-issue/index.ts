@@ -5,36 +5,33 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const STAGE1_PROMPT = `You are a professional UK home inspector and building surveyor with 20+ years of experience.
+const STAGE1_PROMPT = `You are a professional UK home inspector. Be EXTREMELY concise.
 
-A user has uploaded a photo/video of a home maintenance issue and provided this description: "{user_description}" located in their "{location}".
+User description: "{user_description}" in "{location}".
 
-First, carefully examine the uploaded image/video.
+Examine the image. Determine:
+1. Is this a genuine home/property/appliance maintenance issue? (NOT person, landscape, food, screenshot, vehicle)
+2. If yes, category from: plumbing, electrical, structural, appliance, hvac, roofing, carpentry, painting, flooring, walls, doors_windows, heating, cooling, damp, mould, other
+3. Write a brief_description of max 15 words describing the specific visible symptom.
+4. Write an issue_title of max 5 words describing the core symptom (e.g. "Ceiling Water Damage Leak", "Mould Behind Bathroom Tiles", "Boiler Pressure Too Low").
 
-Determine:
-1. Does this image clearly show a genuine home, property or appliance maintenance issue? (NOT a person, landscape, food, screenshot, vehicle, etc.)
-2. If yes, identify the EXACT issue category from: plumbing, electrical, structural, appliance, hvac, roofing, carpentry, painting, flooring, walls, doors_windows, heating, cooling, damp, mould, other
-3. Write a precise one-sentence technical description of the SPECIFIC visible symptom you can see (e.g. "Brown water stain patch approximately 30cm diameter on plasterboard ceiling consistent with slow leak above", NOT generic descriptions)
+Be specific about what you ACTUALLY SEE.`;
 
-Be specific about what you ACTUALLY SEE in the image — colour, size, location, pattern, material affected.`;
+const STAGE2_PROMPT = `You are a UK home repair diagnostician. Be EXTREMELY CONCISE throughout.
 
-const STAGE2_PROMPT = `You are a master UK home repair diagnostician, chartered surveyor, and experienced tradesperson.
+Issue: {category} — {brief_description}
+User says: {user_description} in {location}
+Answers: {answers}
 
-You have visually inspected the following issue:
-- Category: {category}
-- What you observed: {brief_description}
-- User's description: {user_description}
-- Location in property: {location}
-- User answers to follow-up questions: {answers}
-
-Now produce a COMPREHENSIVE, SPECIFIC, ACTIONABLE diagnosis. Do NOT give generic advice. Everything must be specific to THIS exact issue as observed.
-
-IMPORTANT RULES:
-- Every field must be specific to the image observed, NOT generic boilerplate
-- UK spelling, UK product brands, UK costs in GBP
-- If the issue could be dangerous (electrical, structural, gas), make safety_warnings prominent
-- Costs should reflect 2024-2025 UK market rates
-- Amazon search_terms should find real, purchasable UK products`;
+Produce a SPECIFIC, ACTIONABLE diagnosis. STRICT RULES:
+- Cause descriptions: 1 sentence max each.
+- DIY fix descriptions: 2 sentences max each.
+- Diagnostic steps: 1 sentence action per step.
+- call_pro_if items: 1 short bullet each.
+- safety_warnings: 1 sentence each.
+- No waffle, no repetition, no padding.
+- UK spelling, UK brands, GBP costs (2024-2025 rates).
+- Amazon search_terms must find real UK products.`;
 
 const STAGE1_TOOL = {
   type: "function",
@@ -46,10 +43,11 @@ const STAGE1_TOOL = {
       properties: {
         is_home_issue: { type: "boolean" },
         category: { type: "string" },
+        issue_title: { type: "string" },
         brief_description: { type: "string" },
         confidence: { type: "string", enum: ["high", "medium", "low"] },
       },
-      required: ["is_home_issue", "category", "brief_description", "confidence"],
+      required: ["is_home_issue", "category", "issue_title", "brief_description", "confidence"],
       additionalProperties: false,
     },
   },
