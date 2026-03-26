@@ -91,6 +91,8 @@ export default function DiagnosisResults({
   onClose,
 }: DiagnosisResultsProps) {
   const [expandedSection, setExpandedSection] = useState<string | null>("causes");
+  const { isPremium } = useSubscription();
+  const tradeName = getTradeNameForCategory(triage?.category);
 
   const issueTitle = triage?.issue_title || "Issue Detected";
   const briefDescription = triage?.brief_description || "";
