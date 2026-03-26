@@ -8,9 +8,7 @@ import Index from "./pages/Index";
 import HomeDashboard from "./pages/HomeDashboard";
 import MyIssues from "./pages/MyIssues";
 import IssueDetail from "./pages/IssueDetail";
-import Forum from "./pages/Forum";
-import ForumPost from "./pages/ForumPost";
-import CreatePost from "./pages/CreatePost";
+import AIHelp from "./pages/AIHelp";
 import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
 import History from "./pages/History";
@@ -31,9 +29,7 @@ function AnimatedRoutes() {
         <Route path="/issues" element={<MyIssues />} />
         <Route path="/issue/:id" element={<IssueDetail />} />
         <Route path="/history" element={<History />} />
-        <Route path="/forum" element={<Forum />} />
-        <Route path="/forum/:id" element={<ForumPost />} />
-        <Route path="/forum/create" element={<CreatePost />} />
+        <Route path="/ai-help" element={<AIHelp />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/contractors" element={<Contractors />} />
