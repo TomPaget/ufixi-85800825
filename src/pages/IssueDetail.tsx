@@ -6,6 +6,7 @@ import {
   BookOpen, MessageSquare, PoundSterling, Shield, FileText, Mail
 } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
+import LavaLampBackground from "@/components/LavaLampBackground";
 import PageHeader from "@/components/PageHeader";
 import GradientButton from "@/components/GradientButton";
 import { MOCK_ISSUES } from "@/data/mockData";

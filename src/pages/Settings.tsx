@@ -1,6 +1,7 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { User, CreditCard, Bell, Shield, HelpCircle, LogOut, ChevronRight, Crown, XCircle } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
+import LavaLampBackground from "@/components/LavaLampBackground";
 import PageHeader from "@/components/PageHeader";
 import BottomNavDemo from "@/components/BottomNavDemo";
 import { useSubscription } from "@/hooks/useSubscription";
