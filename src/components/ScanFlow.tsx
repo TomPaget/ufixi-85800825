@@ -32,6 +32,7 @@ interface ScanFlowProps {
 export default function ScanFlow({ onClose }: ScanFlowProps) {
   const [step, setStep] = useState(1);
   const [uploadMethod, setUploadMethod] = useState<string | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
   const [category, setCategory] = useState<string | null>(null);
@@ -40,6 +41,29 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [expandedSection, setExpandedSection] = useState<string | null>("causes");
   const [showSignup, setShowSignup] = useState(false);
+
+  const fileInputRef = useState<HTMLInputElement | null>(null);
+
+  const handleUploadOption = (id: string) => {
+    setUploadMethod(id);
+    // Trigger the hidden file input
+    const input = document.createElement("input");
+    input.type = "file";
+    if (id === "photo") {
+      input.accept = "image/*";
+      input.capture = "environment";
+    } else if (id === "video") {
+      input.accept = "video/*";
+      input.capture = "environment";
+    } else {
+      input.accept = "image/*,video/*";
+    }
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) setUploadedFile(file);
+    };
+    input.click();
+  };
 
   const totalSteps = 7;
   const canContinueStep1 = description.trim().length > 0 && !!category && !!uploadMethod;
@@ -182,7 +206,7 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                   ].map(({ id, label, sub, icon: Icon }) => (
                     <button
                       key={id}
-                      onClick={() => setUploadMethod(id)}
+                      onClick={() => handleUploadOption(id)}
                       className="w-full flex items-center gap-4 p-4 rounded-2xl transition-all active:scale-[0.98]"
                       style={{
                         background: uploadMethod === id ? "rgba(232,83,10,0.08)" : "white",
@@ -197,6 +221,11 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                         <p className="text-base font-semibold" style={{ color: navy }}>{label}</p>
                         <p className="text-sm" style={{ color: textSecondary }}>{sub}</p>
                       </div>
+                      {uploadMethod === id && uploadedFile && (
+                        <span className="ml-auto text-xs px-2 py-1 rounded-full" style={{ background: "rgba(29,158,117,0.1)", color: "var(--color-success)" }}>
+                          ✓ {uploadedFile.name.slice(0, 15)}
+                        </span>
+                      )}
                     </button>
                   ))}
                 </div>
