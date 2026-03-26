@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Plus, History, Sparkles, TrendingUp, Calendar, ChevronDown, ChevronUp, Bell, Crown, CheckCircle2, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import LavaLampBackground from "@/components/LavaLampBackground";
@@ -10,6 +10,7 @@ import PageTransition from "@/components/PageTransition";
 import GradientButton from "@/components/GradientButton";
 import ufixiLogo from "@/assets/ufixi-logo.svg";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useNotifications } from "@/hooks/useNotifications";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function HomeDashboard() {
@@ -17,8 +18,32 @@ export default function HomeDashboard() {
   const [showScanFlow, setShowScanFlow] = useState(false);
   const [showPremiumPrompt, setShowPremiumPrompt] = useState(false);
   const [savedIssues, setSavedIssues] = useState<any[]>([]);
+  const [resumeScanId, setResumeScanId] = useState<string | null>(null);
+  const [resumeData, setResumeData] = useState<any>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { isPremium, startCheckout } = useSubscription();
+  const { unreadCount } = useNotifications();
+
+  // Handle resume from My Issues
+  useEffect(() => {
+    const state = location.state as any;
+    if (state?.resumeScanId) {
+      setResumeScanId(state.resumeScanId);
+      setResumeData({
+        step: state.resumeData?.step || 1,
+        description: state.resumeData?.description || "",
+        location: state.resumeData?.location || "",
+        category: state.resumeData?.category || null,
+        answers: state.resumeData?.answers || [],
+        triageData: state.resumeData?.triage_data || null,
+        diagnosisData: state.resumeData?.diagnosis_data || null,
+      });
+      setShowScanFlow(true);
+      // Clear location state
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const [activeCount, setActiveCount] = useState(0);
   const [fixSoonCount, setFixSoonCount] = useState(0);
@@ -67,7 +92,7 @@ export default function HomeDashboard() {
               style={{ color: "var(--color-navy)", minWidth: 44, minHeight: 44 }}
             >
               <Bell className="w-5 h-5" />
-              <div className="absolute top-2 right-2 w-2 h-2 rounded-full" style={{ background: "#DC2626" }} />
+              {unreadCount > 0 && <div className="absolute top-2 right-2 w-2 h-2 rounded-full" style={{ background: "#DC2626" }} />}
             </button>
 
             <div className="absolute left-0 right-0 flex justify-center pointer-events-none">
@@ -248,7 +273,13 @@ export default function HomeDashboard() {
         <BottomNavDemo />
 
         <AnimatePresence>
-          {showScanFlow && <ScanFlow onClose={() => setShowScanFlow(false)} />}
+          {showScanFlow && (
+            <ScanFlow
+              onClose={() => { setShowScanFlow(false); setResumeScanId(null); setResumeData(null); }}
+              resumeScanId={resumeScanId || undefined}
+              resumeData={resumeData || undefined}
+            />
+          )}
         </AnimatePresence>
       </div>
     </PageTransition>

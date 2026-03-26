@@ -173,6 +173,90 @@ export type Database = {
         }
         Relationships: []
       }
+      in_progress_scans: {
+        Row: {
+          answers: Json | null
+          category: string | null
+          created_at: string
+          description: string | null
+          diagnosis_data: Json | null
+          expires_at: string
+          id: string
+          location: string | null
+          step: number
+          triage_data: Json | null
+          updated_at: string
+          uploaded_file_url: string | null
+          user_id: string
+        }
+        Insert: {
+          answers?: Json | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          diagnosis_data?: Json | null
+          expires_at?: string
+          id?: string
+          location?: string | null
+          step?: number
+          triage_data?: Json | null
+          updated_at?: string
+          uploaded_file_url?: string | null
+          user_id: string
+        }
+        Update: {
+          answers?: Json | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          diagnosis_data?: Json | null
+          expires_at?: string
+          id?: string
+          location?: string | null
+          step?: number
+          triage_data?: Json | null
+          updated_at?: string
+          uploaded_file_url?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          action_url: string | null
+          created_at: string
+          id: string
+          message: string
+          priority: string
+          read: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          priority?: string
+          read?: boolean
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          priority?: string
+          read?: boolean
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

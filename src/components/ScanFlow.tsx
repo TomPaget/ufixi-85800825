@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, Camera, Upload, ArrowLeft, MapPin, Tag,
@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAdMob } from "@/hooks/useAdMob";
+import { useInProgressScan } from "@/hooks/useInProgressScan";
 import ufixiLogo from "@/assets/ufixi-logo.svg";
 import GradientButton from "./GradientButton";
 import LavaLampBackground from "./LavaLampBackground";
@@ -38,8 +39,23 @@ const PREMIUM_BENEFITS = [
   { icon: FileText, text: "Export diagnosis as PDF" },
 ];
 
+// Minimum 15s, max 20s ad duration
+const AD_MIN_SECONDS = 15;
+const AD_MAX_SECONDS = 20;
+
 interface ScanFlowProps {
   onClose: () => void;
+  resumeScanId?: string;
+  resumeData?: {
+    step: number;
+    description?: string;
+    location?: string;
+    category?: string;
+    uploadedFileUrl?: string;
+    answers?: string[];
+    triageData?: any;
+    diagnosisData?: any;
+  };
 }
 
 async function fileToBase64(file: File): Promise<string> {
@@ -54,35 +70,41 @@ async function fileToBase64(file: File): Promise<string> {
   });
 }
 
-export default function ScanFlow({ onClose }: ScanFlowProps) {
-  const [step, setStep] = useState(1);
+export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlowProps) {
+  const [step, setStep] = useState(resumeData?.step || 1);
   const [uploadMethod, setUploadMethod] = useState<string | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [uploadedPreviewUrl, setUploadedPreviewUrl] = useState<string | null>(null);
-  const [description, setDescription] = useState("");
-  const [location, setLocation] = useState("");
-  const [category, setCategory] = useState<string | null>(null);
+  const [uploadedPreviewUrl, setUploadedPreviewUrl] = useState<string | null>(resumeData?.uploadedFileUrl || null);
+  const [description, setDescription] = useState(resumeData?.description || "");
+  const [location, setLocation] = useState(resumeData?.location || "");
+  const [category, setCategory] = useState<string | null>(resumeData?.category || null);
   const [questionIndex, setQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<string[]>([]);
+  const [answers, setAnswers] = useState<string[]>(resumeData?.answers || []);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showSavePrompt, setShowSavePrompt] = useState<"upgrade" | "auth" | null>(null);
   const [isAnalysing, setIsAnalysing] = useState(false);
-  const [diagnosis, setDiagnosis] = useState<any>(null);
-  const [triage, setTriage] = useState<any>(null);
+  const [diagnosis, setDiagnosis] = useState<any>(resumeData?.diagnosisData || null);
+  const [triage, setTriage] = useState<any>(resumeData?.triageData || null);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [showExitWarning, setShowExitWarning] = useState(false);
+  const [currentScanId, setCurrentScanId] = useState<string | null>(resumeScanId || null);
 
   // Ad state
   const [showAd, setShowAd] = useState(false);
   const [adCountdown, setAdCountdown] = useState(0);
+  const [adTotalTime, setAdTotalTime] = useState(0);
+  const [adElapsed, setAdElapsed] = useState(0);
   const [adDone, setAdDone] = useState(false);
   const [pendingResults, setPendingResults] = useState<{ triage: any; diagnosis: any } | null>(null);
-  const { isPremium, startCheckout } = useSubscription();
+  const { isPremium, startCheckout, user } = useSubscription();
   const { initialize: initAdMob, showInterstitial, isNative } = useAdMob();
+  const { saveScanProgress, deleteScan } = useInProgressScan();
 
   // Initialize AdMob on mount for native platforms
   useEffect(() => {
     if (!isPremium) initAdMob();
   }, [isPremium, initAdMob]);
+
   const handleUploadMedia = () => {
     const input = document.createElement("input");
     input.type = "file";
@@ -99,6 +121,47 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
   };
 
   const totalSteps = 7;
+
+  // Auto-save progress for premium users
+  const autoSaveProgress = useCallback(async () => {
+    if (!isPremium || !user) return;
+    const id = await saveScanProgress({
+      scanId: currentScanId || undefined,
+      step,
+      description,
+      location: location || undefined,
+      category: category || undefined,
+      uploadedFile,
+      answers,
+      triageData: triage,
+      diagnosisData: diagnosis,
+    });
+    if (id && !currentScanId) setCurrentScanId(id);
+  }, [isPremium, user, step, description, location, category, uploadedFile, answers, triage, diagnosis, currentScanId, saveScanProgress]);
+
+  // Save progress when step changes (premium only)
+  useEffect(() => {
+    if (isPremium && step >= 1 && step < 5) {
+      const timer = setTimeout(autoSaveProgress, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [step, isPremium, autoSaveProgress]);
+
+  const handleClose = () => {
+    if (!isPremium && step > 1 && step < 5) {
+      setShowExitWarning(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const confirmExit = async () => {
+    if (isPremium) {
+      await autoSaveProgress();
+      toast.success("Progress saved — resume anytime from My Issues");
+    }
+    onClose();
+  };
 
   const collectAnonymisedData = async (triageData: any, diagnosisData: any) => {
     try {
@@ -131,7 +194,7 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
   };
 
   const wordCount = description.trim().split(/\s+/).filter(Boolean).length;
-  const hasFile = !!uploadedFile;
+  const hasFile = !!uploadedFile || !!uploadedPreviewUrl;
   const hasEnoughDescription = hasFile || wordCount >= 20;
   const canContinueStep1 = description.trim().length > 0 && !!category && hasEnoughDescription;
 
@@ -152,10 +215,12 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
     setIsAnalysing(true);
     setAiError(null);
 
-    // For free users on web, show the ad screen immediately WHILE analysing
+    // For free users on web, show the ad screen with enforced minimum time
     if (!isPremium && !isNative) {
-      const adTime = Math.floor(Math.random() * 6) + 15;
+      const adTime = Math.floor(Math.random() * (AD_MAX_SECONDS - AD_MIN_SECONDS + 1)) + AD_MIN_SECONDS;
+      setAdTotalTime(adTime);
       setAdCountdown(adTime);
+      setAdElapsed(0);
       setAdDone(false);
       setShowAd(true);
     }
@@ -215,9 +280,9 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
 
       // Record follow-up for 1-week push notification
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user: authUser } } = await supabase.auth.getUser();
         await supabase.from("scan_follow_ups").insert({
-          user_id: user?.id || null,
+          user_id: authUser?.id || null,
           session_id: crypto.randomUUID(),
           issue_title: data.triage?.issue_title || "Unknown Issue",
           category: data.triage?.category || category,
@@ -226,21 +291,40 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
         console.warn("Follow-up recording failed:", e);
       }
 
+      // Send notification for premium users
+      if (isPremium && user) {
+        try {
+          await supabase.from("notifications").insert({
+            user_id: user.id,
+            title: "Scan Complete",
+            message: `Your diagnosis for "${data.triage?.issue_title || "your issue"}" is ready to view.`,
+            type: "scan_complete",
+            priority: data.diagnosis?.urgency_assessment?.level === "fix_now" ? "urgent" : "normal",
+            action_url: null,
+          } as any);
+        } catch (e) {
+          console.warn("Notification insert failed:", e);
+        }
+      }
+
       if (!isPremium) {
         if (isNative) {
-          // Wait for native ad to finish (it was already showing during analysis)
           if (nativeAdPromise) await nativeAdPromise;
           setTriage(data.triage);
           setDiagnosis(data.diagnosis);
           setStep(5);
         } else {
-          // Web: store results — user sees them after ad countdown finishes
           setPendingResults({ triage: data.triage, diagnosis: data.diagnosis });
         }
       } else {
         setTriage(data.triage);
         setDiagnosis(data.diagnosis);
         setStep(5);
+        // Delete in-progress scan since it's now complete
+        if (currentScanId) {
+          deleteScan(currentScanId);
+          setCurrentScanId(null);
+        }
       }
     } catch (err: any) {
       console.error("AI analysis error:", err);
@@ -253,10 +337,12 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
     }
   };
 
-  // Ad countdown timer
+  // Ad countdown timer — enforced minimum 15s
   useEffect(() => {
     if (!showAd || adCountdown <= 0) return;
     const timer = setTimeout(() => {
+      const newElapsed = adElapsed + 1;
+      setAdElapsed(newElapsed);
       if (adCountdown <= 1) {
         setAdDone(true);
         setAdCountdown(0);
@@ -265,7 +351,23 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
       }
     }, 1000);
     return () => clearTimeout(timer);
-  }, [showAd, adCountdown]);
+  }, [showAd, adCountdown, adElapsed]);
+
+  // Handle ad close attempt — restart if under 15s
+  const handleAdCloseAttempt = () => {
+    if (adElapsed < AD_MIN_SECONDS) {
+      // Restart the ad timer
+      const newTime = Math.floor(Math.random() * (AD_MAX_SECONDS - AD_MIN_SECONDS + 1)) + AD_MIN_SECONDS;
+      setAdTotalTime(newTime);
+      setAdCountdown(newTime);
+      setAdElapsed(0);
+      setAdDone(false);
+      toast.error("Please watch the full ad to see your results");
+      try {
+        ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+      } catch (e) {}
+    }
+  };
 
   const handleAdContinue = () => {
     if (pendingResults) {
@@ -283,13 +385,13 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
       return;
     }
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) {
         setShowSavePrompt("auth");
         return;
       }
       const { error } = await supabase.from("saved_issues").insert({
-        user_id: user.id,
+        user_id: authUser.id,
         issue_title: triage?.issue_title || "Untitled Issue",
         brief_description: triage?.brief_description || "",
         category: triage?.category || category || "other",
@@ -317,20 +419,15 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
   const textSecondary = "#5A6A7A";
   const showLavaBg = step === 5 || step === 6;
 
-  // Gradient progress bar color
   const getProgressColor = (index: number, currentStep: number) => {
     if (index >= currentStep) return "rgba(0,23,47,0.1)";
     const t = index / Math.max(totalSteps - 1, 1);
-    // Interpolate from #E8530A (orange) to #D93870 (pink)
     const r = Math.round(232 + (217 - 232) * t);
     const g = Math.round(83 + (56 - 83) * t);
     const b = Math.round(10 + (112 - 10) * t);
     return `rgb(${r},${g},${b})`;
   };
 
-  // Results sections moved to DiagnosisResults component
-
-  // --- AD OVERLAY ---
   // Push AdSense ad when ad overlay mounts
   useEffect(() => {
     if (showAd && !isNative) {
@@ -342,6 +439,68 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
     }
   }, [showAd, isNative]);
 
+  // --- EXIT WARNING OVERLAY (free users) ---
+  if (showExitWarning) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="fixed inset-0 z-50 flex flex-col items-center justify-center"
+        style={{ background: "var(--color-bg)" }}
+      >
+        <LavaLampBackground />
+        <div className="relative z-10 w-full max-w-md px-6 space-y-6">
+          <div className="rounded-2xl p-8 space-y-6 text-center" style={{ background: "rgba(255,255,255,0.95)", border: "1px solid rgba(0,23,47,0.08)", boxShadow: "var(--shadow-card)" }}>
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto" style={{ background: "rgba(220,38,38,0.1)" }}>
+              <AlertTriangle className="w-8 h-8" style={{ color: "#DC2626" }} />
+            </div>
+            <h2 className="text-2xl font-bold" style={{ color: navy }}>
+              {isPremium ? "Save & Exit?" : "Your progress will be lost!"}
+            </h2>
+            <p className="text-base" style={{ color: textSecondary }}>
+              {isPremium
+                ? "Your progress will be saved automatically. You can resume from My Issues anytime."
+                : "Free users cannot save scan progress. If you leave now, you'll need to start over."}
+            </p>
+
+            {!isPremium && (
+              <div className="rounded-2xl p-4 space-y-3" style={{ background: "rgba(232,83,10,0.04)", border: "1px solid rgba(232,83,10,0.15)" }}>
+                <p className="text-sm font-semibold" style={{ color: navy }}>
+                  <Crown className="w-4 h-4 inline mr-1" style={{ color: "var(--color-primary)" }} />
+                  Upgrade to Premium for £0.99/mo
+                </p>
+                <p className="text-xs" style={{ color: textSecondary }}>
+                  Automatically save your progress and resume any scan where you left off.
+                </p>
+                <GradientButton onClick={startCheckout}>
+                  <span className="flex items-center gap-2"><Crown className="w-4 h-4" /> Upgrade Now</span>
+                </GradientButton>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <button
+                onClick={() => setShowExitWarning(false)}
+                className="w-full p-3 rounded-2xl text-base font-semibold"
+                style={{ background: "var(--gradient-primary)", color: "#fff" }}
+              >
+                Continue Scanning
+              </button>
+              <button
+                onClick={confirmExit}
+                className="w-full text-center py-2 text-sm"
+                style={{ color: textSecondary }}
+              >
+                {isPremium ? "Save & Exit" : "Exit Anyway"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // --- AD OVERLAY ---
   if (showAd) {
     return (
       <motion.div
@@ -352,6 +511,17 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
       >
         <LavaLampBackground />
         <div className="relative z-10 w-full max-w-md px-6 space-y-6 text-center">
+          {/* Close attempt handler */}
+          {!adDone && (
+            <button
+              onClick={handleAdCloseAttempt}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center"
+              style={{ background: "rgba(0,23,47,0.1)", color: textSecondary }}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+
           {/* Ad unit */}
           <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.95)", border: "1px solid rgba(0,23,47,0.08)", boxShadow: "var(--shadow-card)" }}>
             <div className="p-2">
@@ -369,7 +539,6 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                   data-full-width-responsive="true"
                 />
               </div>
-              {/* Fallback promo when no ad fills */}
               <div className="text-center p-4 space-y-2">
                 <Crown className="w-8 h-8 mx-auto" style={{ color: "var(--color-primary)" }} />
                 <p className="text-sm font-bold" style={{ color: navy }}>Go Premium — No ads, unlimited scans</p>
@@ -397,8 +566,12 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                     initial={{ width: "100%" }}
                     animate={{ width: "0%" }}
                     transition={{ duration: adCountdown, ease: "linear" }}
+                    key={adTotalTime}
                   />
                 </div>
+                <p className="text-[10px] mt-1" style={{ color: textSecondary }}>
+                  Minimum {AD_MIN_SECONDS}s viewing required
+                </p>
               </div>
             ) : (
               <GradientButton size="lg" onClick={handleAdContinue}>
@@ -437,12 +610,12 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
           </button>
         ) : <div style={{ minWidth: 44 }} />}
         <img src={ufixiLogo} alt="Ufixi" className="h-7 object-contain" />
-        <button onClick={onClose} className="flex items-center justify-center" style={{ minWidth: 44, minHeight: 44, color: navy }}>
+        <button onClick={handleClose} className="flex items-center justify-center" style={{ minWidth: 44, minHeight: 44, color: navy }}>
           <X className="w-5 h-5" />
         </button>
       </div>
 
-      {/* Progress Bar — orange to pink gradient */}
+      {/* Progress Bar */}
       {!showSavePrompt && (
         <div className="px-6 pb-5 relative z-10">
           <div className="flex gap-1.5">
@@ -503,7 +676,7 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
 
               {/* Upload section */}
               <div className="space-y-2">
-              <label className="text-base font-semibold flex items-center gap-2" style={{ color: navy }}>
+                <label className="text-base font-semibold flex items-center gap-2" style={{ color: navy }}>
                   <Camera className="w-4 h-4" style={{ color: "var(--color-primary)" }} /> Upload Issue
                 </label>
                 <button
@@ -535,11 +708,11 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
               </div>
 
               {/* Image/Video Preview OR Tips */}
-              {uploadedPreviewUrl && uploadedFile ? (
+              {uploadedPreviewUrl && (uploadedFile || resumeData?.uploadedFileUrl) ? (
                 <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(0,23,47,0.08)" }}>
-                  {uploadedFile.type.startsWith("image/") ? (
+                  {uploadedFile?.type?.startsWith("image/") || (!uploadedFile && uploadedPreviewUrl) ? (
                     <img src={uploadedPreviewUrl} alt="Uploaded preview" className="w-full h-auto max-h-64 object-cover" />
-                  ) : uploadedFile.type.startsWith("video/") ? (
+                  ) : uploadedFile?.type?.startsWith("video/") ? (
                     <video src={uploadedPreviewUrl} controls className="w-full max-h-64" />
                   ) : null}
                 </div>
@@ -642,7 +815,7 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
             </motion.div>
           )}
 
-          {/* STEP 3 — Questions with gradient progress dots */}
+          {/* STEP 3 — Questions */}
           {!showSavePrompt && step === 3 && (
             <motion.div key="s3" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.2 }} className="space-y-7">
               <div className="flex justify-center gap-2.5">
@@ -690,7 +863,7 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
             </motion.div>
           )}
 
-          {/* STEP 4 — Loading results (AI is running) */}
+          {/* STEP 4 — Loading results */}
           {!showSavePrompt && step === 4 && (
             <motion.div
               key="s4"
@@ -708,6 +881,11 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                 <h2 className="text-2xl tracking-tight" style={{ color: navy }}>Generating Your Diagnosis</h2>
                 <p className="text-base" style={{ color: textSecondary }}>Our AI is analysing the image and building a repair guide...</p>
                 <p className="text-sm" style={{ color: textSecondary }}>This usually takes 10–20 seconds</p>
+                {isPremium && (
+                  <p className="text-xs" style={{ color: "var(--color-success)" }}>
+                    ✓ You can close the app — we'll notify you when it's done
+                  </p>
+                )}
               </div>
             </motion.div>
           )}

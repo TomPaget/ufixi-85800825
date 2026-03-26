@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Lock, Crown, CheckCircle2 } from "lucide-react";
+import { Search, Lock, Crown, CheckCircle2, Play, Clock, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
 import PageHeader from "@/components/PageHeader";
@@ -8,6 +8,7 @@ import BottomNavDemo from "@/components/BottomNavDemo";
 import GradientButton from "@/components/GradientButton";
 import LavaLampBackground from "@/components/LavaLampBackground";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useInProgressScan, InProgressScan } from "@/hooks/useInProgressScan";
 import { supabase } from "@/integrations/supabase/client";
 
 const PREMIUM_BENEFITS = [
@@ -18,12 +19,18 @@ const PREMIUM_BENEFITS = [
   "Export diagnosis as PDF",
 ];
 
+function daysUntilExpiry(expiresAt: string): number {
+  return Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86400000));
+}
+
 export default function MyIssues() {
   const [issues, setIssues] = useState<any[]>([]);
+  const [inProgressScans, setInProgressScans] = useState<InProgressScan[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { isPremium, startCheckout } = useSubscription();
+  const { loadInProgressScans, deleteScan } = useInProgressScan();
 
   useEffect(() => {
     loadIssues();
@@ -37,17 +44,27 @@ export default function MyIssues() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
-      const { data } = await supabase
-        .from("saved_issues")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+
+      const [{ data }, scans] = await Promise.all([
+        supabase
+          .from("saved_issues")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false }),
+        loadInProgressScans(),
+      ]);
       setIssues(data || []);
+      setInProgressScans(scans);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDeleteInProgress = async (scanId: string) => {
+    await deleteScan(scanId);
+    setInProgressScans((prev) => prev.filter((s) => s.id !== scanId));
   };
 
   const navy = "#00172F";
@@ -105,7 +122,7 @@ export default function MyIssues() {
     );
   }
 
-  // Premium user — show real saved issues
+  // Premium user — show real saved issues + in-progress scans
   const filtered = issues.filter((i) =>
     i.issue_title?.toLowerCase().includes(search.toLowerCase())
   );
@@ -129,11 +146,61 @@ export default function MyIssues() {
             </div>
           </div>
 
+          {/* In-progress scans */}
+          {inProgressScans.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: textSec }}>In Progress</p>
+              {inProgressScans.map((scan) => (
+                <div
+                  key={scan.id}
+                  className="rounded-2xl p-4 space-y-2"
+                  style={{ background: "rgba(232,83,10,0.04)", border: "1px solid rgba(232,83,10,0.15)" }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4" style={{ color: "var(--color-primary)" }} />
+                      <h3 className="text-sm font-semibold" style={{ color: navy }}>
+                        {scan.category ? `${scan.category.charAt(0).toUpperCase() + scan.category.slice(1)} Issue` : "Unfinished Scan"}
+                      </h3>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: "rgba(232,83,10,0.1)", color: "var(--color-primary)" }}>
+                      Step {scan.step}/5
+                    </span>
+                  </div>
+                  {scan.description && (
+                    <p className="text-xs line-clamp-2" style={{ color: textSec }}>{scan.description}</p>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px]" style={{ color: textSec }}>
+                      Expires in {daysUntilExpiry(scan.expires_at)} days
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleDeleteInProgress(scan.id)}
+                        className="p-1.5 rounded-lg"
+                        style={{ color: textSec }}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => navigate("/home", { state: { resumeScanId: scan.id, resumeData: scan } })}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
+                        style={{ background: "var(--gradient-primary)", color: "#fff" }}
+                      >
+                        <Play className="w-3 h-3" /> Resume
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           {loading ? (
             <div className="text-center py-12">
               <p className="text-sm" style={{ color: textSec }}>Loading...</p>
             </div>
-          ) : filtered.length === 0 ? (
+          ) : filtered.length === 0 && inProgressScans.length === 0 ? (
             <div className="text-center py-12 space-y-2">
               <p className="text-base font-semibold" style={{ color: navy }}>No saved issues yet</p>
               <p className="text-sm" style={{ color: textSec }}>
@@ -142,6 +209,9 @@ export default function MyIssues() {
             </div>
           ) : (
             <div className="space-y-3">
+              {filtered.length > 0 && (
+                <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: textSec }}>Saved Issues</p>
+              )}
               {filtered.map((issue) => (
                 <div
                   key={issue.id}
