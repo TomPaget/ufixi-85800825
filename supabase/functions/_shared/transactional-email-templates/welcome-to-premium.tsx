@@ -69,7 +69,7 @@ const WelcomeToPremiumEmail = ({ name }: WelcomeToPremiumProps) => (
 
 export const template = {
   component: WelcomeToPremiumEmail,
-  subject: 'Welcome to Ufixi Premium — you legend',
+  subject: 'Welcome to Ufixi Premium',
   displayName: 'Welcome to Premium',
   previewData: { name: 'Tom' },
 } satisfies TemplateEntry
