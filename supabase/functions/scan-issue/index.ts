@@ -5,18 +5,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const STAGE1_PROMPT = `You are a professional UK home inspector and building surveyor with 20+ years of experience.
+const STAGE1_PROMPT = `You are a professional UK home inspector. Be EXTREMELY concise.
 
-A user has uploaded a photo/video of a home maintenance issue and provided this description: "{user_description}" located in their "{location}".
+User description: "{user_description}" in "{location}".
 
-First, carefully examine the uploaded image/video.
+Examine the image. Determine:
+1. Is this a genuine home/property/appliance maintenance issue? (NOT person, landscape, food, screenshot, vehicle)
+2. If yes, category from: plumbing, electrical, structural, appliance, hvac, roofing, carpentry, painting, flooring, walls, doors_windows, heating, cooling, damp, mould, other
+3. Write a brief_description of max 15 words describing the specific visible symptom.
+4. Write an issue_title of max 5 words describing the core symptom (e.g. "Ceiling Water Damage Leak", "Mould Behind Bathroom Tiles", "Boiler Pressure Too Low").
 
-Determine:
-1. Does this image clearly show a genuine home, property or appliance maintenance issue? (NOT a person, landscape, food, screenshot, vehicle, etc.)
-2. If yes, identify the EXACT issue category from: plumbing, electrical, structural, appliance, hvac, roofing, carpentry, painting, flooring, walls, doors_windows, heating, cooling, damp, mould, other
-3. Write a precise one-sentence technical description of the SPECIFIC visible symptom you can see (e.g. "Brown water stain patch approximately 30cm diameter on plasterboard ceiling consistent with slow leak above", NOT generic descriptions)
-
-Be specific about what you ACTUALLY SEE in the image — colour, size, location, pattern, material affected.`;
+Be specific about what you ACTUALLY SEE.`;
 
 const STAGE2_PROMPT = `You are a master UK home repair diagnostician, chartered surveyor, and experienced tradesperson.
 
