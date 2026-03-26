@@ -92,7 +92,7 @@ export default function HomeDashboard() {
               style={{ color: "var(--color-navy)", minWidth: 44, minHeight: 44 }}
             >
               <Bell className="w-5 h-5" />
-              <div className="absolute top-2 right-2 w-2 h-2 rounded-full" style={{ background: "#DC2626" }} />
+              {unreadCount > 0 && <div className="absolute top-2 right-2 w-2 h-2 rounded-full" style={{ background: "#DC2626" }} />}
             </button>
 
             <div className="absolute left-0 right-0 flex justify-center pointer-events-none">
