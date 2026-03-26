@@ -206,7 +206,7 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                   ].map(({ id, label, sub, icon: Icon }) => (
                     <button
                       key={id}
-                      onClick={() => setUploadMethod(id)}
+                      onClick={() => handleUploadOption(id)}
                       className="w-full flex items-center gap-4 p-4 rounded-2xl transition-all active:scale-[0.98]"
                       style={{
                         background: uploadMethod === id ? "rgba(232,83,10,0.08)" : "white",
@@ -221,6 +221,11 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                         <p className="text-base font-semibold" style={{ color: navy }}>{label}</p>
                         <p className="text-sm" style={{ color: textSecondary }}>{sub}</p>
                       </div>
+                      {uploadMethod === id && uploadedFile && (
+                        <span className="ml-auto text-xs px-2 py-1 rounded-full" style={{ background: "rgba(29,158,117,0.1)", color: "var(--color-success)" }}>
+                          ✓ {uploadedFile.name.slice(0, 15)}
+                        </span>
+                      )}
                     </button>
                   ))}
                 </div>
