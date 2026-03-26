@@ -58,7 +58,7 @@ export default function Auth() {
         });
         if (error) throw error;
         toast.success("Logged in!");
-        navigate("/home");
+        navigate(redirect ? `/${redirect}` : "/home");
       }
     } catch (err: any) {
       toast.error(err.message || "Authentication failed");
