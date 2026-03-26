@@ -18,8 +18,32 @@ export default function HomeDashboard() {
   const [showScanFlow, setShowScanFlow] = useState(false);
   const [showPremiumPrompt, setShowPremiumPrompt] = useState(false);
   const [savedIssues, setSavedIssues] = useState<any[]>([]);
+  const [resumeScanId, setResumeScanId] = useState<string | null>(null);
+  const [resumeData, setResumeData] = useState<any>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { isPremium, startCheckout } = useSubscription();
+  const { unreadCount } = useNotifications();
+
+  // Handle resume from My Issues
+  useEffect(() => {
+    const state = location.state as any;
+    if (state?.resumeScanId) {
+      setResumeScanId(state.resumeScanId);
+      setResumeData({
+        step: state.resumeData?.step || 1,
+        description: state.resumeData?.description || "",
+        location: state.resumeData?.location || "",
+        category: state.resumeData?.category || null,
+        answers: state.resumeData?.answers || [],
+        triageData: state.resumeData?.triage_data || null,
+        diagnosisData: state.resumeData?.diagnosis_data || null,
+      });
+      setShowScanFlow(true);
+      // Clear location state
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const [activeCount, setActiveCount] = useState(0);
   const [fixSoonCount, setFixSoonCount] = useState(0);
