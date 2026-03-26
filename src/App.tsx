@@ -37,7 +37,9 @@ function AnimatedRoutes() {
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<Index />} />
         <Route path="/home" element={<HomeDashboard />} />
+        <Route path="/landing" element={<Landing />} />
         <Route path="/issues" element={<MyIssues />} />
+        <Route path="/my-issues" element={<MyIssues />} />
         <Route path="/issue/:id" element={<IssueDetail />} />
         <Route path="/history" element={<History />} />
         <Route path="/ai-help" element={<AIHelp />} />
