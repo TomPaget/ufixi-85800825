@@ -167,10 +167,13 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
         throw new Error(data.error || "Analysis failed");
       }
 
+      // Silently collect anonymised data
+      collectAnonymisedData(data.triage, data.diagnosis);
+
       // If free user, show ad before results
       if (!isPremium) {
         setPendingResults({ triage: data.triage, diagnosis: data.diagnosis });
-        const adTime = Math.floor(Math.random() * 6) + 15; // 15-20
+        const adTime = Math.floor(Math.random() * 6) + 15;
         setAdCountdown(adTime);
         setAdDone(false);
         setShowAd(true);
