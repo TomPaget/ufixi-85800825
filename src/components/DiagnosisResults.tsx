@@ -7,8 +7,10 @@ import {
 } from "lucide-react";
 import GradientButton from "./GradientButton";
 import DiagnosisChatbot from "./DiagnosisChatbot";
-import { generateTradesmanPdf } from "@/lib/generateTradesmanPdf";
-import { FileText } from "lucide-react";
+import { generateTradesmanPdf, generateTradesmanEmail } from "@/lib/generateTradesmanPdf";
+import { getTradeNameForCategory } from "@/lib/tradeNameMap";
+import { useSubscription } from "@/hooks/useSubscription";
+import { FileText, Mail } from "lucide-react";
 
 interface DiagnosisResultsProps {
   triage: any;
