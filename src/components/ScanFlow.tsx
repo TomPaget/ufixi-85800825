@@ -79,7 +79,7 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
   const [adCountdown, setAdCountdown] = useState(0);
   const [adDone, setAdDone] = useState(false);
   const [pendingResults, setPendingResults] = useState<{ triage: any; diagnosis: any } | null>(null);
-  const isPremium = false; // TODO: check real subscription status
+  const { isPremium, startCheckout } = useSubscription();
 
   const handleUploadOption = (id: string) => {
     setUploadMethod(id);
