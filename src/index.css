@@ -74,7 +74,7 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    font-size: 22px;
+    font-size: 14px;
     letter-spacing: 0.03em;
     background: var(--color-bg);
     min-height: 100vh;

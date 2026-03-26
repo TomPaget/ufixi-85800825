@@ -46,6 +46,7 @@ function AnimatedRoutes() {
         <Route path="/settings" element={<Settings />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/contractors" element={<Contractors />} />
+        <Route path="/find-tradesman" element={<Contractors />} />
         <Route path="/support" element={<Support />} />
         <Route path="/upgrade" element={<Upgrade />} />
         <Route path="/auth" element={<Auth />} />
