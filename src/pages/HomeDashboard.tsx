@@ -11,6 +11,7 @@ import GradientButton from "@/components/GradientButton";
 import ufixiLogo from "@/assets/ufixi-logo.svg";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useNotifications } from "@/hooks/useNotifications";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function HomeDashboard() {
@@ -24,6 +25,9 @@ export default function HomeDashboard() {
   const location = useLocation();
   const { isPremium, startCheckout } = useSubscription();
   const { unreadCount } = useNotifications();
+
+  // Register native push notifications — navigate on tap
+  usePushNotifications((actionUrl) => navigate(actionUrl));
 
   // Handle resume from My Issues
   useEffect(() => {
