@@ -84,28 +84,16 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
   useEffect(() => {
     if (!isPremium) initAdMob();
   }, [isPremium, initAdMob]);
-  const handleUploadOption = (id: string) => {
-    setUploadMethod(id);
+  const handleUploadMedia = () => {
     const input = document.createElement("input");
     input.type = "file";
-    if (id === "photo") {
-      input.accept = "image/*";
-      input.capture = "environment";
-    } else if (id === "video") {
-      input.accept = "video/*";
-      input.capture = "environment";
-    } else {
-      input.accept = "image/*,video/*";
-    }
+    input.accept = "image/*,video/*";
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
         setUploadedFile(file);
-        if (file.type.startsWith("image/")) {
-          setUploadedPreviewUrl(URL.createObjectURL(file));
-        } else if (file.type.startsWith("video/")) {
-          setUploadedPreviewUrl(URL.createObjectURL(file));
-        }
+        setUploadedPreviewUrl(URL.createObjectURL(file));
+        setUploadMethod("upload");
       }
     };
     input.click();
