@@ -248,6 +248,45 @@ export type Database = {
         }
         Relationships: []
       }
+      scan_follow_ups: {
+        Row: {
+          category: string | null
+          created_at: string
+          follow_up_at: string
+          id: string
+          issue_resolved: boolean | null
+          issue_title: string
+          notification_sent: boolean
+          scanned_at: string
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          follow_up_at?: string
+          id?: string
+          issue_resolved?: boolean | null
+          issue_title: string
+          notification_sent?: boolean
+          scanned_at?: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          follow_up_at?: string
+          id?: string
+          issue_resolved?: boolean | null
+          issue_title?: string
+          notification_sent?: boolean
+          scanned_at?: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
