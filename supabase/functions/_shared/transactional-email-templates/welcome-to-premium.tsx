@@ -27,7 +27,7 @@ interface WelcomeToPremiumProps {
 const WelcomeToPremiumEmail = ({ name }: WelcomeToPremiumProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Welcome to Ufixi Premium — you absolute legend</Preview>
+    <Preview>Welcome to Ufixi Premium</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={headerSection}>
@@ -35,24 +35,24 @@ const WelcomeToPremiumEmail = ({ name }: WelcomeToPremiumProps) => (
         </Section>
         <Section style={contentSection}>
           <Heading style={h1}>
-            {name ? `Welcome aboard, ${name}!` : 'Welcome aboard!'}
+            Welcome aboard, {name ? <span style={gradientName}>{name}</span> : 'friend'}!
           </Heading>
           <Text style={text}>
-            You just upgraded to Ufixi Premium and honestly, we're chuffed.
-            Your DIY disasters are about to become a lot less... disastrous.
+            You've just upgraded to Ufixi Premium — great choice.
+            You now have access to our full suite of home diagnosis tools.
           </Text>
           <Text style={textBold}>Here's what you've unlocked:</Text>
           <Text style={featureList}>
-            Unlimited saved diagnoses — hoard away{'\n'}
-            45-day scan history — because memory is overrated{'\n'}
-            Zero ads — just you and your dodgy plumbing{'\n'}
-            Priority AI analysis — skip the queue like a VIP{'\n'}
-            Landlord letter generator — polite but firm, just like you{'\n'}
-            PDF exports — for when you need receipts (literally)
+            ✦ Unlimited saved diagnoses{'\n'}
+            ✦ 45-day scan history{'\n'}
+            ✦ Ad-free experience{'\n'}
+            ✦ Priority AI analysis{'\n'}
+            ✦ Landlord letter generator{'\n'}
+            ✦ PDF exports
           </Text>
           <Text style={text}>
-            Now go forth and diagnose something. That mysterious damp patch
-            isn't going to identify itself.
+            Ready to get started? Scan your first issue and let Ufixi
+            do the hard work for you.
           </Text>
           <Button style={button} href="https://ufixi.lovable.app/home">
             Start Diagnosing
@@ -60,7 +60,7 @@ const WelcomeToPremiumEmail = ({ name }: WelcomeToPremiumProps) => (
         </Section>
         <Text style={footer}>
           Thanks for supporting Ufixi. If you have any questions,
-          we're always here to help — unlike that leaky tap.
+          we're always here to help.
         </Text>
       </Container>
     </Body>
