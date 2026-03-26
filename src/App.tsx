@@ -16,6 +16,7 @@ import Contractors from "./pages/Contractors";
 import Support from "./pages/Support";
 import Upgrade from "./pages/Upgrade";
 import NotFound from "./pages/NotFound";
+import AdminDashboard from "./pages/AdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ function AnimatedRoutes() {
         <Route path="/contractors" element={<Contractors />} />
         <Route path="/support" element={<Support />} />
         <Route path="/upgrade" element={<Upgrade />} />
+        <Route path="/admin" element={<AdminDashboard />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>

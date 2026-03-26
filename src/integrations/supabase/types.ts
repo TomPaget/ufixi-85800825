@@ -14,16 +14,186 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      anonymised_insights: {
+        Row: {
+          actual_cost: number | null
+          category: string
+          diy_cost_estimate: number | null
+          diy_safe: boolean | null
+          id: string
+          issue_date: string
+          issue_title: string
+          issue_type: string
+          postcode_area: string | null
+          priority: string | null
+          pro_cost_estimate: number | null
+          property_category: string | null
+          region: string | null
+          repair_method_chosen: string | null
+          responsibility: string | null
+          session_id: string
+          severity_score: number | null
+          status: string | null
+          trade_type: string | null
+          urgency: string | null
+          user_tier: string | null
+        }
+        Insert: {
+          actual_cost?: number | null
+          category: string
+          diy_cost_estimate?: number | null
+          diy_safe?: boolean | null
+          id?: string
+          issue_date?: string
+          issue_title: string
+          issue_type: string
+          postcode_area?: string | null
+          priority?: string | null
+          pro_cost_estimate?: number | null
+          property_category?: string | null
+          region?: string | null
+          repair_method_chosen?: string | null
+          responsibility?: string | null
+          session_id: string
+          severity_score?: number | null
+          status?: string | null
+          trade_type?: string | null
+          urgency?: string | null
+          user_tier?: string | null
+        }
+        Update: {
+          actual_cost?: number | null
+          category?: string
+          diy_cost_estimate?: number | null
+          diy_safe?: boolean | null
+          id?: string
+          issue_date?: string
+          issue_title?: string
+          issue_type?: string
+          postcode_area?: string | null
+          priority?: string | null
+          pro_cost_estimate?: number | null
+          property_category?: string | null
+          region?: string | null
+          repair_method_chosen?: string | null
+          responsibility?: string | null
+          session_id?: string
+          severity_score?: number | null
+          status?: string | null
+          trade_type?: string | null
+          urgency?: string | null
+          user_tier?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          last_active: string | null
+          total_scans: number
+          user_tier: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          last_active?: string | null
+          total_scans?: number
+          user_tier?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          last_active?: string | null
+          total_scans?: number
+          user_tier?: string
+        }
+        Relationships: []
+      }
+      saved_issues: {
+        Row: {
+          brief_description: string | null
+          category: string
+          created_at: string | null
+          diagnosis_data: Json | null
+          id: string
+          image_url: string | null
+          issue_title: string
+          status: string | null
+          triage_data: Json | null
+          urgency: string | null
+          user_id: string
+        }
+        Insert: {
+          brief_description?: string | null
+          category: string
+          created_at?: string | null
+          diagnosis_data?: Json | null
+          id?: string
+          image_url?: string | null
+          issue_title: string
+          status?: string | null
+          triage_data?: Json | null
+          urgency?: string | null
+          user_id: string
+        }
+        Update: {
+          brief_description?: string | null
+          category?: string
+          created_at?: string | null
+          diagnosis_data?: Json | null
+          id?: string
+          image_url?: string | null
+          issue_title?: string
+          status?: string | null
+          triage_data?: Json | null
+          urgency?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +320,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const
