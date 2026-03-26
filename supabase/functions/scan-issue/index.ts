@@ -47,7 +47,7 @@ const STAGE1_TOOL = {
         brief_description: { type: "string" },
         confidence: { type: "string", enum: ["high", "medium", "low"] },
       },
-      required: ["is_home_issue", "category", "brief_description", "confidence"],
+      required: ["is_home_issue", "category", "issue_title", "brief_description", "confidence"],
       additionalProperties: false,
     },
   },
