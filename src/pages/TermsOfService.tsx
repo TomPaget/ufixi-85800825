@@ -78,12 +78,22 @@ export default function TermsOfService() {
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold text-foreground">10. Governing law</h2>
+              <h2 className="text-lg font-semibold text-foreground">10. Third-party services</h2>
+              <p>Ufixi uses third-party services including payment processors (Stripe), cloud infrastructure, and AI models. Your use of these services is subject to their respective terms and privacy policies. Ufixi displays advertisements via Google AdMob (mobile) and Google AdSense (web) to free-tier users. Ad personalisation is governed by Google's advertising policies.</p>
+            </section>
+
+            <section>
+              <h2 className="text-lg font-semibold text-foreground">11. End User Licence Agreement (EULA)</h2>
+              <p>This agreement serves as the End User Licence Agreement for the Ufixi application. By downloading, installing, or using Ufixi, you agree to these terms. The app is licensed, not sold, to you. We reserve all rights not expressly granted. You may not reverse engineer, decompile, or disassemble the app except as permitted by applicable law.</p>
+            </section>
+
+            <section>
+              <h2 className="text-lg font-semibold text-foreground">12. Governing law</h2>
               <p>These terms are governed by the laws of England and Wales. Any disputes shall be subject to the exclusive jurisdiction of the courts of England and Wales.</p>
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold text-foreground">11. Contact</h2>
+              <h2 className="text-lg font-semibold text-foreground">13. Contact</h2>
               <p>For questions about these terms, contact us at <a href="mailto:legal@ufixi.app" className="text-primary underline">legal@ufixi.app</a>.</p>
             </section>
           </div>
