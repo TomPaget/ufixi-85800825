@@ -131,7 +131,7 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
     }
   };
 
-  const canContinueStep1 = description.trim().length > 0 && !!category && !!uploadMethod;
+  const canContinueStep1 = description.trim().length > 0 && !!category && !!uploadedFile;
 
   const handleNextQuestion = () => {
     if (!selectedAnswer) return;
