@@ -106,8 +106,13 @@ export default function PrivacyPolicy() {
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold text-foreground">9. Changes to this policy</h2>
+              <h2 className="text-lg font-semibold text-foreground">10. Changes to this policy</h2>
               <p>We may update this policy from time to time. We will notify you of significant changes via email or in-app notification.</p>
+            </section>
+
+            <section>
+              <h2 className="text-lg font-semibold text-foreground">11. Contact</h2>
+              <p>For privacy-related enquiries, contact us at <a href="mailto:privacy@ufixi.app" className="text-primary underline">privacy@ufixi.app</a>.</p>
             </section>
           </div>
         </div>
