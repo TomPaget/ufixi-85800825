@@ -291,17 +291,30 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
         console.warn("Follow-up recording failed:", e);
       }
 
-      // Send notification for premium users
+      // Send notification + push for premium users
       if (isPremium && user) {
+        const issueTitle = data.triage?.issue_title || "your issue";
+        const priority = data.diagnosis?.urgency_assessment?.level === "fix_now" ? "urgent" : "normal";
         try {
+          // In-app notification (also handled by the edge function, but this ensures immediate display)
           await supabase.from("notifications").insert({
             user_id: user.id,
             title: "Scan Complete",
-            message: `Your diagnosis for "${data.triage?.issue_title || "your issue"}" is ready to view.`,
+            message: `Your diagnosis for "${issueTitle}" is ready to view.`,
             type: "scan_complete",
-            priority: data.diagnosis?.urgency_assessment?.level === "fix_now" ? "urgent" : "normal",
+            priority,
             action_url: null,
           } as any);
+
+          // Native push notification (for when app is in background/closed)
+          supabase.functions.invoke("send-push-notification", {
+            body: {
+              user_id: user.id,
+              title: "Scan Complete ✓",
+              body: `Your diagnosis for "${issueTitle}" is ready to view.`,
+              data: { type: "scan_complete", priority, action_url: "/notifications" },
+            },
+          }).catch((e) => console.warn("Push notification failed:", e));
         } catch (e) {
           console.warn("Notification insert failed:", e);
         }
