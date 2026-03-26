@@ -91,8 +91,18 @@ export default function PrivacyPolicy() {
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold text-foreground">8. Cookies</h2>
-              <p>We use essential cookies for authentication and session management only. We do not use third-party tracking cookies.</p>
+              <h2 className="text-lg font-semibold text-foreground">8. Advertising</h2>
+              <p>Free-tier users see advertisements served by Google AdMob (mobile app) and Google AdSense (website). These services may use device identifiers and cookies to serve relevant ads. You can opt out of personalised ads via your device settings:</p>
+              <ul className="list-disc pl-5 space-y-1 mt-2">
+                <li>iOS: Settings → Privacy & Security → Tracking</li>
+                <li>Android: Settings → Google → Ads → Opt out of Ads Personalisation</li>
+              </ul>
+              <p className="mt-2">Premium subscribers do not see advertisements.</p>
+            </section>
+
+            <section>
+              <h2 className="text-lg font-semibold text-foreground">9. Cookies</h2>
+              <p>We use essential cookies for authentication and session management only. Third-party advertising cookies may be used by our ad providers (Google). See section 8 for opt-out instructions.</p>
             </section>
 
             <section>
