@@ -1,24 +1,35 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, History, Sparkles, TrendingUp, Calendar, ChevronDown, ChevronUp, Bell } from "lucide-react";
+import { Plus, History, Sparkles, TrendingUp, Calendar, ChevronDown, ChevronUp, Bell, Crown, CheckCircle2, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import LavaLampBackground from "@/components/LavaLampBackground";
 import GlassCard from "@/components/GlassCard";
-import IssueCardDemo from "@/components/IssueCardDemo";
 import BottomNavDemo from "@/components/BottomNavDemo";
 import ScanFlow from "@/components/ScanFlow";
 import PageTransition from "@/components/PageTransition";
+import GradientButton from "@/components/GradientButton";
 import ufixiLogo from "@/assets/ufixi-logo.svg";
-import { MOCK_ISSUES } from "@/data/mockData";
 
 export default function HomeDashboard() {
   const [showRecentIssues, setShowRecentIssues] = useState(false);
   const [showScanFlow, setShowScanFlow] = useState(false);
+  const [showPremiumPrompt, setShowPremiumPrompt] = useState(false);
   const navigate = useNavigate();
 
-  const activeCount = MOCK_ISSUES.filter((i) => i.status === "active").length;
-  const fixSoonCount = MOCK_ISSUES.filter((i) => i.urgency === "fix_soon" || i.urgency === "fix_now").length;
-  const resolvedCount = MOCK_ISSUES.filter((i) => i.status === "resolved").length;
+  const isPremium = false; // TODO: check real subscription
+  const activeCount = 0;
+  const fixSoonCount = 0;
+  const resolvedCount = 0;
+
+  const handleRecentScansClick = () => {
+    if (!isPremium) {
+      setShowPremiumPrompt(!showPremiumPrompt);
+      setShowRecentIssues(false);
+    } else {
+      setShowRecentIssues(!showRecentIssues);
+      setShowPremiumPrompt(false);
+    }
+  };
 
   return (
     <PageTransition>
@@ -99,7 +110,7 @@ export default function HomeDashboard() {
             </p>
           </motion.div>
 
-          {/* Quick Stats */}
+          {/* Quick Stats — all zeroed */}
           <motion.div
             className="grid grid-cols-3 gap-3"
             initial={{ opacity: 0, y: 20 }}
@@ -142,14 +153,14 @@ export default function HomeDashboard() {
             <p className="text-sm mt-4" style={{ color: "#6B6A8E" }}>Tap to scan a new issue</p>
           </motion.div>
 
-          {/* Recent Issues */}
+          {/* Recent Issues / Premium Gate */}
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
           >
             <button
-              onClick={() => setShowRecentIssues(!showRecentIssues)}
+              onClick={handleRecentScansClick}
               className="w-full flex items-center justify-between p-4 rounded-2xl transition-all hover:shadow-md active:scale-[0.99]"
               style={{
                 background: "var(--glass-bg)",
@@ -162,14 +173,15 @@ export default function HomeDashboard() {
                 <History className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
                 Recent Scans
                 <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(232,83,10,0.1)", color: "var(--color-primary)" }}>
-                  {MOCK_ISSUES.length}
+                  0
                 </span>
               </span>
-              {showRecentIssues ? <ChevronUp className="w-5 h-5" style={{ color: "#9aa5b4" }} /> : <ChevronDown className="w-5 h-5" style={{ color: "#9aa5b4" }} />}
+              {(showRecentIssues || showPremiumPrompt) ? <ChevronUp className="w-5 h-5" style={{ color: "#9aa5b4" }} /> : <ChevronDown className="w-5 h-5" style={{ color: "#9aa5b4" }} />}
             </button>
 
             <AnimatePresence>
-              {showRecentIssues && (
+              {/* Premium upsell for free users */}
+              {showPremiumPrompt && !isPremium && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
@@ -177,19 +189,29 @@ export default function HomeDashboard() {
                   transition={{ duration: 0.2 }}
                   className="overflow-hidden"
                 >
-                  <div className="pt-3 space-y-3">
-                    {MOCK_ISSUES.map((issue) => (
-                      <div key={issue.id} onClick={() => navigate(`/issue/${issue.id}`)}>
-                        <IssueCardDemo key={issue.id} issue={issue} />
+                  <div className="mt-3 rounded-2xl p-6 space-y-4" style={{ background: "rgba(255,255,255,0.95)", border: "1px solid rgba(0,23,47,0.08)", boxShadow: "var(--shadow-card)" }}>
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "var(--gradient-primary)" }}>
+                        <Lock className="w-6 h-6 text-white" />
                       </div>
-                    ))}
-                    <button
-                      onClick={() => navigate("/issues")}
-                      className="block w-full text-center text-sm py-2"
-                      style={{ color: "var(--color-primary)" }}
-                    >
-                      View All Issues →
-                    </button>
+                      <div>
+                        <h3 className="text-lg font-bold" style={{ color: "var(--color-navy)" }}>Premium Feature</h3>
+                        <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>Scan history requires Premium</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      {["Save unlimited diagnoses", "Access 45-day scan history", "No ads during diagnosis", "Export as PDF"].map((b) => (
+                        <div key={b} className="flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: "var(--color-success)" }} />
+                          <span className="text-sm" style={{ color: "var(--color-navy)" }}>✓ {b}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <GradientButton onClick={() => navigate("/upgrade")}>
+                      <span className="flex items-center justify-center gap-2"><Crown className="w-4 h-4" /> Upgrade to Premium — £3.99/mo</span>
+                    </GradientButton>
                   </div>
                 </motion.div>
               )}
@@ -207,7 +229,6 @@ export default function HomeDashboard() {
 
         <BottomNavDemo />
 
-        {/* Scan Flow Overlay */}
         <AnimatePresence>
           {showScanFlow && <ScanFlow onClose={() => setShowScanFlow(false)} />}
         </AnimatePresence>
