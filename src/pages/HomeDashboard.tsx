@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Plus, History, Sparkles, TrendingUp, Calendar, ChevronDown, ChevronUp, Bell, Crown, CheckCircle2, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import LavaLampBackground from "@/components/LavaLampBackground";
@@ -10,6 +10,7 @@ import PageTransition from "@/components/PageTransition";
 import GradientButton from "@/components/GradientButton";
 import ufixiLogo from "@/assets/ufixi-logo.svg";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useNotifications } from "@/hooks/useNotifications";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function HomeDashboard() {
