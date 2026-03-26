@@ -9,7 +9,7 @@ import GradientButton from "@/components/GradientButton";
 import LavaLampBackground from "@/components/LavaLampBackground";
 
 export default function Auth() {
-  const [mode, setMode] = useState<"login" | "signup">("signup");
+  const [mode, setMode] = useState<"login" | "signup" | "forgot">("signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
