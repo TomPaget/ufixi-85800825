@@ -351,7 +351,7 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                 <ins
                   className="adsbygoogle"
                   style={{ display: "block", width: "100%", height: 250 }}
-                  data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+                  data-ad-client="ca-pub-9591380465147865"
                   data-ad-slot="XXXXXXXXXX"
                   data-ad-format="auto"
                   data-full-width-responsive="true"
