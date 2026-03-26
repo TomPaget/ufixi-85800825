@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, Camera, Video, Upload, ArrowLeft, MapPin, Tag,
   Droplets, Zap, Building2, Wind, Cpu, Wrench,
   Bot, ChevronDown, ChevronUp, ExternalLink, AlertTriangle,
-  Loader2, CheckCircle2, Lightbulb, UserPlus, Clock
+  Loader2, CheckCircle2, Lightbulb, UserPlus, Clock,
+  Stethoscope, ShieldAlert, PoundSterling
 } from "lucide-react";
+import { toast } from "sonner";
 import ufixiLogo from "@/assets/ufixi-logo.svg";
 import GradientButton from "./GradientButton";
 import LavaLampBackground from "./LavaLampBackground";
@@ -19,7 +21,7 @@ const CATEGORIES = [
   { id: "other", label: "Other", icon: Wrench },
 ];
 
-const MOCK_QUESTIONS = [
+const FOLLOW_UP_QUESTIONS = [
   { q: "How long has this issue been present?", options: ["Less than a day", "A few days", "About a week", "More than a week", "Not sure"] },
   { q: "Is the problem getting worse?", options: ["Yes, rapidly", "Yes, slowly", "Staying the same", "Not sure"] },
   { q: "Have you attempted any fixes?", options: ["No, haven't tried anything", "Yes, basic DIY", "Yes, called a professional", "Waiting for advice"] },
@@ -27,6 +29,19 @@ const MOCK_QUESTIONS = [
 
 interface ScanFlowProps {
   onClose: () => void;
+}
+
+async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      // Strip the data:...;base64, prefix
+      resolve(result.split(",")[1]);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 export default function ScanFlow({ onClose }: ScanFlowProps) {
@@ -41,12 +56,13 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [expandedSection, setExpandedSection] = useState<string | null>("causes");
   const [showSignup, setShowSignup] = useState(false);
-
-  const fileInputRef = useState<HTMLInputElement | null>(null);
+  const [isAnalysing, setIsAnalysing] = useState(false);
+  const [diagnosis, setDiagnosis] = useState<any>(null);
+  const [triage, setTriage] = useState<any>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   const handleUploadOption = (id: string) => {
     setUploadMethod(id);
-    // Trigger the hidden file input
     const input = document.createElement("input");
     input.type = "file";
     if (id === "photo") {
@@ -73,11 +89,71 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
     const newAnswers = [...answers, selectedAnswer];
     setAnswers(newAnswers);
     setSelectedAnswer(null);
-    if (questionIndex < MOCK_QUESTIONS.length - 1) {
+    if (questionIndex < FOLLOW_UP_QUESTIONS.length - 1) {
       setQuestionIndex(questionIndex + 1);
     } else {
+      // All questions answered — run AI analysis
       setStep(4);
-      setTimeout(() => setStep(5), 2500);
+      runAIAnalysis(newAnswers);
+    }
+  };
+
+  const runAIAnalysis = async (finalAnswers: string[]) => {
+    setIsAnalysing(true);
+    setAiError(null);
+    try {
+      let imageBase64: string | undefined;
+      let imageMimeType: string | undefined;
+      if (uploadedFile && uploadedFile.type.startsWith("image/")) {
+        imageBase64 = await fileToBase64(uploadedFile);
+        imageMimeType = uploadedFile.type;
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scan-issue`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            description,
+            location,
+            category,
+            answers: finalAnswers,
+            imageBase64,
+            imageMimeType,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || `Request failed (${response.status})`);
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        if (data.error === "not_home_issue") {
+          setAiError("The uploaded image doesn't appear to show a home maintenance issue. Please try again with a clearer photo of the problem.");
+          setStep(1);
+          toast.error("That doesn't look like a home issue. Please upload a relevant photo.");
+          return;
+        }
+        throw new Error(data.error || "Analysis failed");
+      }
+
+      setTriage(data.triage);
+      setDiagnosis(data.diagnosis);
+      setStep(5);
+    } catch (err: any) {
+      console.error("AI analysis error:", err);
+      setAiError(err.message);
+      toast.error(err.message || "Analysis failed. Please try again.");
+      setStep(1);
+    } finally {
+      setIsAnalysing(false);
     }
   };
 
@@ -95,6 +171,126 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
   const textSecondary = "#5A6A7A";
   const showLavaBg = step === 5 || step === 6;
 
+  // Build results sections from real AI data
+  const resultSections = diagnosis ? [
+    {
+      id: "causes", title: "What Caused This?", icon: Lightbulb,
+      content: (
+        <div className="space-y-3">
+          {diagnosis.likely_causes?.map((c: any, i: number) => (
+            <div key={i} className="p-4 rounded-xl text-base leading-relaxed" style={{ background: "rgba(0,23,47,0.03)", borderLeft: "3px solid rgba(59,130,246,0.5)", color: navy }}>
+              <p className="font-semibold mb-1">{c.cause}</p>
+              <p style={{ color: textSecondary }}>{c.details}</p>
+            </div>
+          ))}
+        </div>
+      ),
+    },
+    {
+      id: "diagnostic", title: "How to Check What's Wrong", icon: Stethoscope,
+      content: (
+        <div className="space-y-3">
+          {diagnosis.diagnostic_steps?.map((s: any, i: number) => (
+            <div key={i} className="p-4 rounded-xl" style={{ background: "rgba(0,23,47,0.03)", border: "1px solid rgba(0,23,47,0.06)" }}>
+              <p className="text-base font-semibold mb-1" style={{ color: navy }}>Step {s.step_number}: {s.action}</p>
+              <p className="text-sm" style={{ color: textSecondary }}>Look for: {s.what_to_look_for}</p>
+              {s.safety_note && (
+                <p className="text-sm mt-2 flex items-center gap-1" style={{ color: "#F59E0B" }}>
+                  <AlertTriangle className="w-3.5 h-3.5" /> {s.safety_note}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      ),
+    },
+    {
+      id: "diy", title: "Quick Fixes to Try", icon: Wrench,
+      content: (
+        <div className="space-y-4">
+          {diagnosis.diy_quick_fixes?.map((fix: any, i: number) => (
+            <div key={i} className="p-4 rounded-xl" style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)" }}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="font-semibold text-base" style={{ color: navy }}>{fix.action}</span>
+                <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: fix.difficulty === "Easy" ? "rgba(29,158,117,0.1)" : fix.difficulty === "Moderate" ? "rgba(240,144,10,0.1)" : "rgba(220,38,38,0.1)", color: fix.difficulty === "Easy" ? "var(--color-success)" : fix.difficulty === "Moderate" ? "#F0900A" : "#DC2626" }}>{fix.difficulty} • {fix.estimated_time}</span>
+              </div>
+              <p className="text-sm leading-relaxed" style={{ color: textSecondary }}>{fix.description}</p>
+              {fix.tools_required?.length > 0 && (
+                <p className="text-xs mt-2" style={{ color: textSecondary }}>Tools: {fix.tools_required.join(", ")}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      ),
+    },
+    {
+      id: "products", title: "What You'll Need", icon: ExternalLink,
+      content: (
+        <div className="space-y-3">
+          {diagnosis.tools_and_materials?.map((p: any, i: number) => (
+            <div key={i} className="p-4 rounded-xl" style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)" }}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-base font-semibold" style={{ color: navy }}>{p.product_name}</span>
+                <a
+                  href={`https://amazon.co.uk/s?k=${encodeURIComponent(p.search_term)}&tag=ufixi-21`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-2 rounded-lg text-sm font-semibold flex-shrink-0"
+                  style={{ background: "#FFD814", color: "#0F1111" }}
+                >
+                  Buy on Amazon
+                </a>
+              </div>
+              {p.estimated_cost && <p className="text-sm" style={{ color: textSecondary }}>{p.estimated_cost}</p>}
+              {p.reason_needed && <p className="text-xs mt-1" style={{ color: textSecondary }}>{p.reason_needed}</p>}
+            </div>
+          ))}
+        </div>
+      ),
+    },
+    {
+      id: "costs", title: "Estimated Costs", icon: PoundSterling,
+      content: (
+        <div className="rounded-xl p-4 flex gap-4" style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)" }}>
+          <div className="flex-1 text-center">
+            <p className="text-xs" style={{ color: textSecondary }}>DIY Cost</p>
+            <p className="text-lg font-semibold" style={{ color: "var(--color-success)" }}>£{diagnosis.estimated_costs?.diy_min}–£{diagnosis.estimated_costs?.diy_max}</p>
+          </div>
+          <div className="w-px" style={{ background: "rgba(0,23,47,0.08)" }} />
+          <div className="flex-1 text-center">
+            <p className="text-xs" style={{ color: textSecondary }}>Professional</p>
+            <p className="text-lg font-semibold" style={{ color: "var(--color-primary)" }}>£{diagnosis.estimated_costs?.professional_min}–£{diagnosis.estimated_costs?.professional_max}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "safety", title: "Safety Warnings", icon: ShieldAlert,
+      content: (
+        <div className="space-y-3">
+          {diagnosis.safety_warnings?.map((w: string, i: number) => (
+            <div key={i} className="p-4 rounded-xl flex items-start gap-2" style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)" }}>
+              <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "#F59E0B" }} />
+              <span className="text-sm" style={{ color: "#92400E" }}>{w}</span>
+            </div>
+          ))}
+        </div>
+      ),
+    },
+    {
+      id: "pro", title: "When to Call a Professional", icon: AlertTriangle,
+      content: (
+        <div className="space-y-2">
+          {diagnosis.call_pro_if?.map((c: string, i: number) => (
+            <div key={i} className="p-4 rounded-xl" style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.15)" }}>
+              <p className="text-base leading-relaxed" style={{ color: "#DC2626" }}>{c}</p>
+            </div>
+          ))}
+        </div>
+      ),
+    },
+  ] : [];
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -108,7 +304,7 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 relative z-10" style={{ minHeight: 56 }}>
         {step > 1 && !showSignup ? (
-          <button onClick={() => setStep(step - 1)} className="flex items-center justify-center" style={{ minWidth: 44, minHeight: 44, color: navy }}>
+          <button onClick={() => { if (step === 4 && isAnalysing) return; setStep(step - 1); }} className="flex items-center justify-center" style={{ minWidth: 44, minHeight: 44, color: navy }}>
             <ArrowLeft className="w-5 h-5" />
           </button>
         ) : <div style={{ minWidth: 44 }} />}
@@ -160,26 +356,12 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
               </div>
 
               <div className="space-y-3">
-                <input
-                  type="email"
-                  placeholder="Email address"
-                  className="w-full rounded-2xl p-4 text-base"
-                  style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: navy }}
-                />
-                <input
-                  type="password"
-                  placeholder="Create a password"
-                  className="w-full rounded-2xl p-4 text-base"
-                  style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: navy }}
-                />
+                <input type="email" placeholder="Email address" className="w-full rounded-2xl p-4 text-base" style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: navy }} />
+                <input type="password" placeholder="Create a password" className="w-full rounded-2xl p-4 text-base" style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: navy }} />
                 <GradientButton size="lg">Create Account & Save</GradientButton>
               </div>
 
-              <button
-                onClick={() => setShowSignup(false)}
-                className="w-full text-center py-3 text-base"
-                style={{ color: textSecondary }}
-              >
+              <button onClick={() => setShowSignup(false)} className="w-full text-center py-3 text-base" style={{ color: textSecondary }}>
                 ← Back to results
               </button>
             </motion.div>
@@ -192,6 +374,12 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                 <h2 className="text-3xl tracking-tight" style={{ color: navy, letterSpacing: "-0.02em" }}>Describe Your Issue</h2>
                 <p className="text-base" style={{ color: textSecondary }}>Upload media and tell us about the problem</p>
               </div>
+
+              {aiError && (
+                <div className="p-4 rounded-2xl" style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.15)" }}>
+                  <p className="text-sm" style={{ color: "#DC2626" }}>{aiError}</p>
+                </div>
+              )}
 
               {/* Upload section */}
               <div className="space-y-2">
@@ -323,28 +511,25 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
           {/* STEP 3 — Questions */}
           {!showSignup && step === 3 && (
             <motion.div key="s3" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.2 }} className="space-y-7">
-              {/* Progress dots */}
               <div className="flex justify-center gap-2.5">
-                {MOCK_QUESTIONS.map((_, i) => (
+                {FOLLOW_UP_QUESTIONS.map((_, i) => (
                   <div key={i} className="w-3 h-3 rounded-full" style={{ background: i <= questionIndex ? "var(--color-primary)" : "rgba(0,23,47,0.12)" }} />
                 ))}
               </div>
 
-              {/* Bot message */}
               <div className="flex gap-3 items-start">
                 <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "var(--gradient-primary)" }}>
                   <Bot className="w-5 h-5 text-white" />
                 </div>
                 <div className="rounded-2xl rounded-tl-md p-4 flex-1" style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)" }}>
                   <p className="text-base leading-relaxed" style={{ color: navy }}>
-                    {MOCK_QUESTIONS[questionIndex].q}
+                    {FOLLOW_UP_QUESTIONS[questionIndex].q}
                   </p>
                 </div>
               </div>
 
-              {/* Options */}
               <div className="space-y-3 pl-14">
-                {MOCK_QUESTIONS[questionIndex].options.map((opt) => (
+                {FOLLOW_UP_QUESTIONS[questionIndex].options.map((opt) => (
                   <button
                     key={opt}
                     onClick={() => setSelectedAnswer(opt)}
@@ -362,12 +547,12 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
               </div>
 
               <GradientButton disabled={!selectedAnswer} onClick={handleNextQuestion} size="lg">
-                {questionIndex < MOCK_QUESTIONS.length - 1 ? "Next" : "See Results"}
+                {questionIndex < FOLLOW_UP_QUESTIONS.length - 1 ? "Next" : "See Results"}
               </GradientButton>
             </motion.div>
           )}
 
-          {/* STEP 4 — Loading results */}
+          {/* STEP 4 — Loading results (AI is running) */}
           {!showSignup && step === 4 && (
             <motion.div
               key="s4"
@@ -382,14 +567,15 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                 >
                   <Loader2 className="w-10 h-10 mx-auto" style={{ color: "var(--color-primary)" }} />
                 </motion.div>
-                <h2 className="text-2xl tracking-tight" style={{ color: navy }}>Your Results Are Ready</h2>
-                <p className="text-base" style={{ color: textSecondary }}>Generating your full AI diagnosis...</p>
+                <h2 className="text-2xl tracking-tight" style={{ color: navy }}>Generating Your Diagnosis</h2>
+                <p className="text-base" style={{ color: textSecondary }}>Our AI is analysing the image and building a full repair guide...</p>
+                <p className="text-sm" style={{ color: textSecondary }}>This usually takes 10–20 seconds</p>
               </div>
             </motion.div>
           )}
 
-          {/* STEP 5 — Results */}
-          {!showSignup && step === 5 && (
+          {/* STEP 5 — Real AI Results */}
+          {!showSignup && step === 5 && diagnosis && (
             <motion.div key="s5" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.2 }} className="space-y-5 pb-6">
               {/* Result header */}
               <div className="rounded-2xl p-6 space-y-3" style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(12px)", border: "1px solid rgba(0,23,47,0.08)", boxShadow: "var(--shadow-card)" }}>
@@ -397,86 +583,27 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                   <CheckCircle2 className="w-5 h-5" style={{ color: "var(--color-success)" }} />
                   <span className="text-sm font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(29,158,117,0.1)", color: "var(--color-success)" }}>AI Diagnosis Complete</span>
                 </div>
-                <h2 className="text-2xl tracking-tight" style={{ color: navy }}>{description || "Home Issue Detected"}</h2>
+                <h2 className="text-2xl tracking-tight" style={{ color: navy }}>{triage?.brief_description || description || "Home Issue Detected"}</h2>
                 <p className="text-base leading-relaxed" style={{ color: textSecondary }}>
-                  Based on your description and our AI analysis, here's what we've found.
+                  Category: {triage?.category} • Confidence: {triage?.confidence}
                 </p>
+
+                {/* Urgency badge */}
+                {diagnosis.urgency_assessment && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{
+                      background: diagnosis.urgency_assessment.level === "fix_now" ? "rgba(220,38,38,0.1)" : diagnosis.urgency_assessment.level === "fix_soon" ? "rgba(240,144,10,0.1)" : "rgba(107,122,141,0.1)",
+                      color: diagnosis.urgency_assessment.level === "fix_now" ? "#DC2626" : diagnosis.urgency_assessment.level === "fix_soon" ? "#F0900A" : "#6B7A8D",
+                    }}>
+                      {diagnosis.urgency_assessment.level.replace("_", " ").toUpperCase()}
+                    </span>
+                    <span className="text-sm" style={{ color: textSecondary }}>{diagnosis.urgency_assessment.reason}</span>
+                  </div>
+                )}
               </div>
 
               {/* Accordion sections */}
-              {[
-                {
-                  id: "causes", title: "What Caused This?", icon: Lightbulb,
-                  content: (
-                    <div className="space-y-3">
-                      {["Worn components due to regular use", "Mineral buildup affecting seals", "Age-related degradation of materials"].map((c, i) => (
-                        <div key={i} className="p-4 rounded-xl text-base leading-relaxed" style={{ background: "rgba(0,23,47,0.03)", borderLeft: "3px solid rgba(59,130,246,0.5)", color: navy }}>{c}</div>
-                      ))}
-                    </div>
-                  ),
-                },
-                {
-                  id: "diagnostic", title: "How to Check What's Wrong", icon: CheckCircle2,
-                  content: (
-                    <ol className="space-y-3 list-decimal list-inside text-base leading-relaxed" style={{ color: navy }}>
-                      <li>Inspect the affected area carefully</li>
-                      <li>Check for any visible damage or wear</li>
-                      <li>Test related systems (water pressure, electrical, etc.)</li>
-                      <li>Document findings with photos</li>
-                    </ol>
-                  ),
-                },
-                {
-                  id: "products", title: "What You'll Need", icon: ExternalLink,
-                  content: (
-                    <div className="space-y-3">
-                      {[
-                        { name: "Repair Kit", term: "home+repair+kit" },
-                        { name: "Sealant", term: "waterproof+sealant" },
-                      ].map((p, i) => (
-                        <div key={i} className="flex items-center justify-between p-4 rounded-xl" style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)" }}>
-                          <span className="text-base" style={{ color: navy }}>{p.name}</span>
-                          <a
-                            href={`https://amazon.co.uk/s?k=${p.term}&tag=ufixi-21`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-3 py-2 rounded-lg text-sm font-semibold"
-                            style={{ background: "#FFD814", color: "#0F1111" }}
-                          >
-                            Buy on Amazon
-                          </a>
-                        </div>
-                      ))}
-                    </div>
-                  ),
-                },
-                {
-                  id: "diy", title: "Quick Fixes to Try", icon: Wrench,
-                  content: (
-                    <div className="space-y-3">
-                      <div className="flex gap-2 mb-3">
-                        <span className="text-sm px-3 py-1 rounded-full" style={{ background: "rgba(29,158,117,0.1)", color: "var(--color-success)" }}>Easy • 30 min</span>
-                      </div>
-                      <ol className="space-y-3 list-decimal list-inside text-base leading-relaxed" style={{ color: navy }}>
-                        <li>Turn off the relevant supply (water/electricity)</li>
-                        <li>Inspect and clean the affected component</li>
-                        <li>Replace worn parts if necessary</li>
-                        <li>Test the repair and monitor for 24 hours</li>
-                      </ol>
-                    </div>
-                  ),
-                },
-                {
-                  id: "pro", title: "When to Call a Professional", icon: AlertTriangle,
-                  content: (
-                    <div className="p-4 rounded-xl" style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.15)" }}>
-                      <p className="text-base leading-relaxed" style={{ color: "#DC2626" }}>
-                        If the issue persists after attempting DIY fixes, or if you notice the problem worsening, contact a qualified professional immediately. Safety-critical issues should never be delayed.
-                      </p>
-                    </div>
-                  ),
-                },
-              ].map(({ id, title, icon: Icon, content }) => (
+              {resultSections.map(({ id, title, icon: Icon, content }) => (
                 <div key={id} className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(12px)", border: "1px solid rgba(0,23,47,0.08)" }}>
                   <button
                     onClick={() => setExpandedSection(expandedSection === id ? null : id)}
@@ -506,11 +633,7 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
               ))}
 
               <GradientButton size="lg" onClick={handleSave}>Save Full Diagnosis</GradientButton>
-              <button
-                onClick={onClose}
-                className="w-full text-center py-3 text-base"
-                style={{ color: textSecondary }}
-              >
+              <button onClick={onClose} className="w-full text-center py-3 text-base" style={{ color: textSecondary }}>
                 Close without saving
               </button>
             </motion.div>
