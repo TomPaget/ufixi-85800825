@@ -32,6 +32,7 @@ Produce a SPECIFIC, ACTIONABLE diagnosis. STRICT RULES:
 - No waffle, no repetition, no padding.
 - UK spelling, UK brands, GBP costs (2024-2025 rates).
 - Amazon search_terms must find real UK products.
+- tools_and_materials MUST contain between 3 and 5 items. Always recommend at least 3 relevant products.
 - Never use emojis anywhere in the response.`;
 
 const STAGE1_TOOL = {
