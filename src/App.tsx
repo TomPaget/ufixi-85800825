@@ -29,9 +29,7 @@ function AnimatedRoutes() {
         <Route path="/issues" element={<MyIssues />} />
         <Route path="/issue/:id" element={<IssueDetail />} />
         <Route path="/history" element={<History />} />
-        <Route path="/forum" element={<Forum />} />
-        <Route path="/forum/:id" element={<ForumPost />} />
-        <Route path="/forum/create" element={<CreatePost />} />
+        <Route path="/ai-help" element={<AIHelp />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/contractors" element={<Contractors />} />
