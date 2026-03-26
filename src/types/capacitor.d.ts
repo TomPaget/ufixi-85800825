@@ -1,5 +1,3 @@
-export {};
-
 declare module "@capacitor-community/app-tracking-transparency" {
   export const AppTrackingTransparency: {
     getStatus: () => Promise<{ status: string }>;
@@ -7,11 +5,9 @@ declare module "@capacitor-community/app-tracking-transparency" {
   };
 }
 
-declare global {
-  interface Window {
-    Capacitor?: {
-      isNativePlatform: () => boolean;
-      getPlatform: () => "ios" | "android" | "web";
-    };
-  }
+interface Window {
+  Capacitor?: {
+    isNativePlatform: () => boolean;
+    getPlatform: () => "ios" | "android" | "web";
+  };
 }
