@@ -57,31 +57,31 @@ export function useAdMob() {
         ? ADMOB_CONFIG.test.interstitialId
         : ADMOB_CONFIG[platform].interstitialId;
 
-      return new Promise<boolean>((resolve) => {
+      return new Promise<boolean>(async (resolve) => {
         let settled = false;
 
         const settle = (val: boolean) => {
           if (!settled) {
             settled = true;
+            // Remove all interstitial listeners to prevent leaks
+            AdMob.removeAllListeners();
             resolve(val);
           }
         };
 
-        AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => {
-          settle(true);
-        });
+        AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => settle(true));
+        AdMob.addListener(InterstitialAdPluginEvents.FailedToLoad, () => settle(false));
+        AdMob.addListener(InterstitialAdPluginEvents.FailedToShow, () => settle(false));
 
-        AdMob.addListener(InterstitialAdPluginEvents.FailedToLoad, () => {
+        // Timeout fallback — don't block forever
+        setTimeout(() => settle(false), 30000);
+
+        try {
+          await AdMob.prepareInterstitial({ adId, isTesting: import.meta.env.DEV });
+          await AdMob.showInterstitial();
+        } catch {
           settle(false);
-        });
-
-        AdMob.addListener(InterstitialAdPluginEvents.FailedToShow, () => {
-          settle(false);
-        });
-
-        AdMob.prepareInterstitial({ adId, isTesting: import.meta.env.DEV })
-          .then(() => AdMob.showInterstitial())
-          .catch(() => settle(false));
+        }
       });
     } catch (err) {
       console.error("AdMob interstitial error:", err);
