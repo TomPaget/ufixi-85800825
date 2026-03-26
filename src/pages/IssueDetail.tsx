@@ -25,6 +25,8 @@ export default function IssueDetail() {
   const { id } = useParams();
   const issue = MOCK_ISSUES.find((i) => i.id === id);
   const [expanded, setExpanded] = useState<string | null>("causes");
+  const { isPremium } = useSubscription();
+  const tradeName = issue ? getTradeNameForCategory(issue.category) : "Specialist";
 
   if (!issue) return <div className="p-6 text-center" style={{ color: "var(--color-text-secondary)" }}>Issue not found</div>;
 
