@@ -16,7 +16,7 @@ const PLANS = [
   },
   {
     name: "Premium",
-    price: "£3.99",
+    price: "£0.99",
     period: "per month",
     features: ["Unlimited scans", "Extended scan history", "Priority AI analysis", "Detailed cost estimates", "PDF & email reports", "Ad-free experience"],
     current: false,
