@@ -60,10 +60,8 @@ serve(async (req) => {
 
     if (hasActiveSub) {
       const sub = subscriptions.data[0];
-      logStep("Raw subscription data", {
-        current_period_end: sub.current_period_end,
-        type: typeof sub.current_period_end,
-      });
+      logStep("Raw subscription keys", Object.keys(sub));
+      logStep("Raw sub snippet", JSON.stringify(sub).slice(0, 500));
 
       // Handle current_period_end in any format:
       // - Unix timestamp (number in seconds)
