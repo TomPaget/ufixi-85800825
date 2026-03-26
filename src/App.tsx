@@ -59,6 +59,7 @@ function AnimatedRoutes() {
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/cancel-subscription" element={<CancelSubscription />} />
+        <Route path="/unsubscribe" element={<Unsubscribe />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
