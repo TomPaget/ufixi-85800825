@@ -10,7 +10,6 @@ const ADMOB_CONFIG = {
     appId: "ca-app-pub-9591380465147865~3443454625",
     interstitialId: "ca-app-pub-9591380465147865/2130372952",
   },
-  // Test IDs for development
   test: {
     interstitialId: "ca-app-pub-3940256099942544/1033173712",
   },
@@ -33,7 +32,6 @@ export function useAdMob() {
         initializeForTesting: import.meta.env.DEV,
       });
       admobInitialized = true;
-      console.log("AdMob initialized");
     } catch (err) {
       console.error("AdMob init error:", err);
     }
@@ -41,12 +39,11 @@ export function useAdMob() {
 
   const showInterstitial = useCallback(async (): Promise<boolean> => {
     if (!isNative.current) {
-      // On web, fall back to the existing countdown ad screen
       return false;
     }
 
     try {
-      const { AdMob, AdOptions, InterstitialAdPluginEvents } = await import(
+      const { AdMob, InterstitialAdPluginEvents } = await import(
         "@capacitor-community/admob"
       );
 
@@ -55,48 +52,36 @@ export function useAdMob() {
       }
 
       const platform =
-        window.Capacitor.getPlatform() === "ios" ? "ios" : "android";
+        window.Capacitor?.getPlatform() === "ios" ? "ios" : "android";
       const adId = import.meta.env.DEV
         ? ADMOB_CONFIG.test.interstitialId
         : ADMOB_CONFIG[platform].interstitialId;
 
-      const options: AdOptions = {
-        adId,
-        isTesting: import.meta.env.DEV,
-      };
-
-      // Wait for the ad to load, then show it
       return new Promise<boolean>((resolve) => {
-        let dismissed = false;
+        let settled = false;
 
-        const onDismissed = AdMob.addListener(
-          InterstitialAdPluginEvents.Dismissed,
-          () => {
-            dismissed = true;
-            onDismissed.remove();
-            resolve(true);
+        const settle = (val: boolean) => {
+          if (!settled) {
+            settled = true;
+            resolve(val);
           }
-        );
+        };
 
-        const onFailedToLoad = AdMob.addListener(
-          InterstitialAdPluginEvents.FailedToLoad,
-          () => {
-            onFailedToLoad.remove();
-            if (!dismissed) resolve(false);
-          }
-        );
+        AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => {
+          settle(true);
+        });
 
-        const onFailedToShow = AdMob.addListener(
-          InterstitialAdPluginEvents.FailedToShow,
-          () => {
-            onFailedToShow.remove();
-            if (!dismissed) resolve(false);
-          }
-        );
+        AdMob.addListener(InterstitialAdPluginEvents.FailedToLoad, () => {
+          settle(false);
+        });
 
-        AdMob.prepareInterstitial(options)
+        AdMob.addListener(InterstitialAdPluginEvents.FailedToShow, () => {
+          settle(false);
+        });
+
+        AdMob.prepareInterstitial({ adId, isTesting: import.meta.env.DEV })
           .then(() => AdMob.showInterstitial())
-          .catch(() => resolve(false));
+          .catch(() => settle(false));
       });
     } catch (err) {
       console.error("AdMob interstitial error:", err);
