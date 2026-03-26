@@ -273,7 +273,13 @@ export default function HomeDashboard() {
         <BottomNavDemo />
 
         <AnimatePresence>
-          {showScanFlow && <ScanFlow onClose={() => setShowScanFlow(false)} />}
+          {showScanFlow && (
+            <ScanFlow
+              onClose={() => { setShowScanFlow(false); setResumeScanId(null); setResumeData(null); }}
+              resumeScanId={resumeScanId || undefined}
+              resumeData={resumeData || undefined}
+            />
+          )}
         </AnimatePresence>
       </div>
     </PageTransition>
