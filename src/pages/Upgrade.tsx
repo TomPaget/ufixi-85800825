@@ -140,7 +140,7 @@ export default function Upgrade() {
                 toast.info(isPremium ? "Subscription restored!" : "No active subscription found.");
               }}
               className="w-full text-center py-2 text-sm"
-              style={{ color: textSecondary }}
+              style={{ color: "var(--color-text-secondary)" }}
             >
               Restore Purchases
             </button>
