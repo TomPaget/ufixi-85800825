@@ -19,10 +19,10 @@ import Upgrade from "./pages/Upgrade";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/AdminDashboard";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import Forum from "./pages/Forum";
 import ForumPost from "./pages/ForumPost";
 import CreatePost from "./pages/CreatePost";
-import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +43,7 @@ function AnimatedRoutes() {
         <Route path="/support" element={<Support />} />
         <Route path="/upgrade" element={<Upgrade />} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/forum" element={<Forum />} />
         <Route path="/forum/:id" element={<ForumPost />} />
