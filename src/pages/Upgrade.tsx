@@ -89,6 +89,11 @@ export default function Upgrade() {
                   <span className="text-3xl" style={{ color: "var(--color-navy)" }}>{plan.price}</span>
                   <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>/{plan.period}</span>
                 </div>
+                {plan.priceAfter && (
+                  <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+                    Then {plan.priceAfter}/{plan.periodAfter}
+                  </p>
+                )}
                 <h3 className="text-lg" style={{ color: "var(--color-navy)" }}>{plan.name}</h3>
                 <ul className="space-y-2">
                   {plan.features.map((f) => (
