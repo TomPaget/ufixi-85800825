@@ -36,6 +36,7 @@ function AnimatedRoutes() {
         <Route path="/contractors" element={<Contractors />} />
         <Route path="/support" element={<Support />} />
         <Route path="/upgrade" element={<Upgrade />} />
+        <Route path="/admin" element={<AdminDashboard />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
