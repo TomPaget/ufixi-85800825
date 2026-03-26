@@ -17,6 +17,7 @@ import Support from "./pages/Support";
 import Upgrade from "./pages/Upgrade";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/AdminDashboard";
+import Auth from "./pages/Auth";
 
 const queryClient = new QueryClient();
 
