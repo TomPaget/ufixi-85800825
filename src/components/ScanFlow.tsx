@@ -32,6 +32,7 @@ interface ScanFlowProps {
 export default function ScanFlow({ onClose }: ScanFlowProps) {
   const [step, setStep] = useState(1);
   const [uploadMethod, setUploadMethod] = useState<string | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
   const [category, setCategory] = useState<string | null>(null);
@@ -40,6 +41,29 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [expandedSection, setExpandedSection] = useState<string | null>("causes");
   const [showSignup, setShowSignup] = useState(false);
+
+  const fileInputRef = useState<HTMLInputElement | null>(null);
+
+  const handleUploadOption = (id: string) => {
+    setUploadMethod(id);
+    // Trigger the hidden file input
+    const input = document.createElement("input");
+    input.type = "file";
+    if (id === "photo") {
+      input.accept = "image/*";
+      input.capture = "environment";
+    } else if (id === "video") {
+      input.accept = "video/*";
+      input.capture = "environment";
+    } else {
+      input.accept = "image/*,video/*";
+    }
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) setUploadedFile(file);
+    };
+    input.click();
+  };
 
   const totalSteps = 7;
   const canContinueStep1 = description.trim().length > 0 && !!category && !!uploadMethod;
