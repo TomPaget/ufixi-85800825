@@ -43,6 +43,7 @@ const STAGE1_TOOL = {
       properties: {
         is_home_issue: { type: "boolean" },
         category: { type: "string" },
+        issue_title: { type: "string" },
         brief_description: { type: "string" },
         confidence: { type: "string", enum: ["high", "medium", "low"] },
       },
