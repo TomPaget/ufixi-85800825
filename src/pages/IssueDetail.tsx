@@ -141,7 +141,21 @@ export default function IssueDetail() {
 
           {/* Export buttons */}
           <div className="flex gap-2">
-            <button className="flex-1 flex items-center justify-center gap-2 p-3 rounded-2xl text-xs font-semibold" style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", color: "var(--color-navy)", minHeight: 44 }}>
+            <button
+              onClick={() => {
+                const triage = { issue_title: issue.title, brief_description: issue.description, category: issue.category };
+                const diagnosis = {
+                  likely_causes: issue.causes?.map(c => ({ cause: c, details: "" })) || [],
+                  diy_quick_fixes: issue.diySteps?.map(s => ({ action: s, description: "", estimated_time: "", difficulty: "Moderate" })) || [],
+                  safety_warnings: issue.safetyWarnings || [],
+                  call_pro_if: issue.whenToCallPro ? [issue.whenToCallPro] : [],
+                  urgency_assessment: { level: issue.urgency, reason: "" },
+                };
+                generateTradesmanPdf(triage, diagnosis);
+              }}
+              className="flex-1 flex items-center justify-center gap-2 p-3 rounded-2xl text-xs font-semibold transition-all active:scale-95"
+              style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", color: "var(--color-navy)", minHeight: 44 }}
+            >
               <FileText className="w-4 h-4" style={{ color: "var(--color-primary)" }} /> Export PDF
             </button>
             <button className="flex-1 flex items-center justify-center gap-2 p-3 rounded-2xl text-xs font-semibold" style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", color: "var(--color-navy)", minHeight: 44 }}>
