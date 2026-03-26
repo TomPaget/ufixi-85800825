@@ -31,7 +31,8 @@ Produce a SPECIFIC, ACTIONABLE diagnosis. STRICT RULES:
 - safety_warnings: 1 sentence each.
 - No waffle, no repetition, no padding.
 - UK spelling, UK brands, GBP costs (2024-2025 rates).
-- Amazon search_terms must find real UK products.`;
+- Amazon search_terms must find real UK products.
+- Never use emojis anywhere in the response.`;
 
 const STAGE1_TOOL = {
   type: "function",
