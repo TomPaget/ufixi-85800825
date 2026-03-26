@@ -1,8 +1,8 @@
 import jsPDF from "jspdf";
+import { getTradeNameForCategory } from "./tradeNameMap";
 
 const NAVY = "#00172F";
 const PRIMARY = "#E8530A";
-const SECONDARY = "#D93870";
 const CREAM = "#FDF6EE";
 const TEXT_SECONDARY = "#5A6A7A";
 const PAGE_W = 210;
@@ -36,24 +36,27 @@ function drawGradientBar(doc: jsPDF, x: number, y: number, w: number, h: number)
   }
 }
 
-export function generateTradesmanPdf(triage: any, diagnosis: any) {
+export function generateTradesmanPdf(
+  triage: any,
+  diagnosis: any,
+  imageDataUrl?: string | null,
+) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const tradeName = getTradeNameForCategory(triage?.category);
 
   // Background
   doc.setFillColor(253, 246, 238);
   doc.rect(0, 0, PAGE_W, 297, "F");
 
-  let y = 20;
-
   // Gradient header bar
   drawGradientBar(doc, 0, 0, PAGE_W, 8);
 
   // Title
-  y = 18;
+  let y = 18;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(22);
   doc.setTextColor(0, 23, 47);
-  doc.text("Issue Report for Your Tradesman", MARGIN, y);
+  doc.text(`Issue Report for Your ${tradeName}`, MARGIN, y);
 
   // Subtitle
   y += 8;
@@ -68,8 +71,23 @@ export function generateTradesmanPdf(triage: any, diagnosis: any) {
   doc.setLineWidth(0.3);
   doc.line(MARGIN, y, PAGE_W - MARGIN, y);
 
+  // === Uploaded Image ===
+  if (imageDataUrl) {
+    y += 6;
+    y = checkPageBreak(doc, y, 65);
+    try {
+      const imgW = CONTENT_W;
+      const imgH = 60;
+      doc.addImage(imageDataUrl, "JPEG", MARGIN, y, imgW, imgH);
+      y += imgH + 4;
+    } catch (e) {
+      console.warn("Could not embed image in PDF:", e);
+    }
+  }
+
   // === SECTION 1: Problem Summary ===
-  y += 10;
+  y += 4;
+  y = checkPageBreak(doc, y, 30);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
   doc.setTextColor(232, 83, 10);
@@ -132,52 +150,38 @@ export function generateTradesmanPdf(triage: any, diagnosis: any) {
     }
   }
 
-  // === SECTION 3: Questions to Ask Your Tradesman ===
+  // === SECTION 3: Possible Questions to Ask ===
   y += 8;
   y = checkPageBreak(doc, y, 20);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
   doc.setTextColor(232, 83, 10);
-  doc.text("Questions to Ask Your Tradesman", MARGIN, y);
+  doc.text(`Possible Questions to Ask Your ${tradeName}`, MARGIN, y);
 
   y += 8;
   doc.setFontSize(10);
 
-  // Generate questions from diagnosis data
   const questions: string[] = [];
 
-  // From causes
+  // Pick top 2 causes as questions (max)
   if (diagnosis?.likely_causes?.length > 0) {
-    for (const cause of diagnosis.likely_causes) {
-      questions.push(`Could this be caused by ${cause.cause.toLowerCase()}? If so, what is the best fix?`);
+    const topCauses = diagnosis.likely_causes.slice(0, 2);
+    for (const cause of topCauses) {
+      questions.push(`Could this be caused by ${cause.cause.toLowerCase()}? What would be the best course of action?`);
     }
   }
 
-  // From DIY fixes - frame as professional alternatives
-  if (diagnosis?.diy_quick_fixes?.length > 0) {
-    for (const fix of diagnosis.diy_quick_fixes) {
-      questions.push(`Would you recommend "${fix.action.toLowerCase()}" as a fix, or is a more thorough repair needed?`);
-    }
-  }
+  // One question about recurrence
+  questions.push("Are there any underlying issues that could cause this to happen again?");
 
-  // From call_pro_if
-  if (diagnosis?.call_pro_if?.length > 0) {
-    questions.push("Based on your inspection, do any of the following apply?");
-    for (const c of diagnosis.call_pro_if) {
-      questions.push(`  - ${c}`);
-    }
-  }
-
-  // Standard closing questions
+  // One question about timeline
   questions.push("What is the expected timeline to complete this repair?");
-  questions.push("Are there any underlying issues I should be aware of that could cause this to recur?");
-  questions.push("Is this something that needs immediate attention, or can it safely wait?");
 
   for (const q of questions) {
     y = checkPageBreak(doc, y, 8);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(0, 23, 47);
-    const qLines = doc.splitTextToSize(`${q.startsWith("  -") ? q : "• " + q}`, CONTENT_W);
+    const qLines = doc.splitTextToSize(`• ${q}`, CONTENT_W);
     doc.text(qLines, MARGIN, y);
     y += qLines.length * 5 + 2;
   }
@@ -207,11 +211,7 @@ export function generateTradesmanPdf(triage: any, diagnosis: any) {
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
-
-    // Bottom gradient bar
     drawGradientBar(doc, 0, 289, PAGE_W, 8);
-
-    // Footer text
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(90, 106, 122);
@@ -222,4 +222,36 @@ export function generateTradesmanPdf(triage: any, diagnosis: any) {
   // Save
   const filename = `ufixi-report-${title.toLowerCase().replace(/\s+/g, "-").slice(0, 30)}.pdf`;
   doc.save(filename);
+}
+
+/**
+ * Generates a pre-made email body for premium users to send to their trade professional.
+ */
+export function generateTradesmanEmail(triage: any, diagnosis: any): { subject: string; body: string } {
+  const tradeName = getTradeNameForCategory(triage?.category);
+  const title = triage?.issue_title || "a home issue";
+  const description = triage?.brief_description || "";
+  const urgency = diagnosis?.urgency_assessment?.level;
+  const urgencyText = urgency === "fix_now" ? "quite urgent" : urgency === "fix_soon" ? "fairly important" : "not urgent but worth looking at";
+
+  const causes = (diagnosis?.likely_causes || [])
+    .slice(0, 2)
+    .map((c: any) => c.cause)
+    .join(" or ");
+
+  const subject = `Could you take a look at a ${title.toLowerCase()}?`;
+
+  const body = `Hi,
+
+I've recently had an online diagnostic done on a problem at my property — ${title.toLowerCase()}. ${description ? description + " " : ""}
+
+The diagnostic suggested it could be caused by ${causes || "a few possible things"}, and it's ${urgencyText}.
+
+I'd really appreciate a second opinion from a qualified ${tradeName.toLowerCase()} — would you be able to come and take a look?
+
+Happy to share more details or photos if helpful. Let me know when you might be available.
+
+Thanks!`;
+
+  return { subject, body };
 }
