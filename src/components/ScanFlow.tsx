@@ -130,7 +130,10 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
     }
   };
 
-  const canContinueStep1 = description.trim().length > 0 && !!category && !!uploadedFile;
+  const wordCount = description.trim().split(/\s+/).filter(Boolean).length;
+  const hasFile = !!uploadedFile;
+  const hasEnoughDescription = hasFile || wordCount >= 20;
+  const canContinueStep1 = description.trim().length > 0 && !!category && hasEnoughDescription;
 
   const handleNextQuestion = () => {
     if (!selectedAnswer) return;
