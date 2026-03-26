@@ -133,3 +133,12 @@
   70% { box-shadow: 0 0 0 20px rgba(232, 83, 10, 0); }
   100% { box-shadow: 0 0 0 0 rgba(232, 83, 10, 0); }
 }
+
+/* Global orange focus ring for all inputs */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: hsl(var(--primary)) !important;
+  box-shadow: 0 0 0 2px hsla(var(--primary) / 0.3) !important;
+}
