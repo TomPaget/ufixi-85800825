@@ -553,8 +553,8 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                 ))}
               </div>
 
-              <GradientButton size="lg" onClick={() => { onClose(); window.location.href = "/upgrade"; }}>
-                Upgrade to Premium
+              <GradientButton size="lg" onClick={startCheckout}>
+                Upgrade to Premium — £3.99/mo
               </GradientButton>
 
               <button onClick={() => setShowSavePrompt(null)} className="w-full text-center py-3 text-base" style={{ color: textSecondary }}>
