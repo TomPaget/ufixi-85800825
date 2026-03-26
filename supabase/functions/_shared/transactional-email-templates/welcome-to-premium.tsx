@@ -27,7 +27,7 @@ interface WelcomeToPremiumProps {
 const WelcomeToPremiumEmail = ({ name }: WelcomeToPremiumProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Welcome to Ufixi Premium — you absolute legend</Preview>
+    <Preview>Welcome to Ufixi Premium</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={headerSection}>
@@ -35,24 +35,24 @@ const WelcomeToPremiumEmail = ({ name }: WelcomeToPremiumProps) => (
         </Section>
         <Section style={contentSection}>
           <Heading style={h1}>
-            {name ? `Welcome aboard, ${name}!` : 'Welcome aboard!'}
+            Welcome aboard, {name ? <span style={gradientName}>{name}</span> : 'friend'}!
           </Heading>
           <Text style={text}>
-            You just upgraded to Ufixi Premium and honestly, we're chuffed.
-            Your DIY disasters are about to become a lot less... disastrous.
+            You've just upgraded to Ufixi Premium — great choice.
+            You now have access to our full suite of home diagnosis tools.
           </Text>
           <Text style={textBold}>Here's what you've unlocked:</Text>
           <Text style={featureList}>
-            Unlimited saved diagnoses — hoard away{'\n'}
-            45-day scan history — because memory is overrated{'\n'}
-            Zero ads — just you and your dodgy plumbing{'\n'}
-            Priority AI analysis — skip the queue like a VIP{'\n'}
-            Landlord letter generator — polite but firm, just like you{'\n'}
-            PDF exports — for when you need receipts (literally)
+            ✦ Unlimited saved diagnoses{'\n'}
+            ✦ 45-day scan history{'\n'}
+            ✦ Ad-free experience{'\n'}
+            ✦ Priority AI analysis{'\n'}
+            ✦ Landlord letter generator{'\n'}
+            ✦ PDF exports
           </Text>
           <Text style={text}>
-            Now go forth and diagnose something. That mysterious damp patch
-            isn't going to identify itself.
+            Ready to get started? Scan your first issue and let Ufixi
+            do the hard work for you.
           </Text>
           <Button style={button} href="https://ufixi.lovable.app/home">
             Start Diagnosing
@@ -60,7 +60,7 @@ const WelcomeToPremiumEmail = ({ name }: WelcomeToPremiumProps) => (
         </Section>
         <Text style={footer}>
           Thanks for supporting Ufixi. If you have any questions,
-          we're always here to help — unlike that leaky tap.
+          we're always here to help.
         </Text>
       </Container>
     </Body>
@@ -69,7 +69,7 @@ const WelcomeToPremiumEmail = ({ name }: WelcomeToPremiumProps) => (
 
 export const template = {
   component: WelcomeToPremiumEmail,
-  subject: 'Welcome to Ufixi Premium — you legend',
+  subject: 'Welcome to Ufixi Premium',
   displayName: 'Welcome to Premium',
   previewData: { name: 'Tom' },
 } satisfies TemplateEntry
@@ -80,6 +80,7 @@ const headerSection = { backgroundColor: '#FDF6EE', padding: '28px 25px 20px', b
 const logo = { margin: '0 auto', display: 'block' as const }
 const contentSection = { backgroundColor: '#FDF6EE', padding: '8px 25px 32px', borderRadius: '0 0 16px 16px' }
 const h1 = { fontSize: '24px', fontWeight: 'bold' as const, color: '#00172F', margin: '0 0 16px', letterSpacing: '-0.02em' }
+const gradientName = { background: 'linear-gradient(135deg, #E8530A 0%, #D93870 100%)', WebkitBackgroundClip: 'text' as const, WebkitTextFillColor: 'transparent', backgroundClip: 'text' as const }
 const text = { fontSize: '15px', color: 'rgba(0, 23, 47, 0.55)', lineHeight: '1.6', margin: '0 0 20px', letterSpacing: '0.03em' }
 const textBold = { fontSize: '15px', color: '#00172F', lineHeight: '1.6', margin: '0 0 8px', letterSpacing: '0.03em', fontWeight: 'bold' as const }
 const featureList = { fontSize: '14px', color: 'rgba(0, 23, 47, 0.55)', lineHeight: '2', margin: '0 0 20px', letterSpacing: '0.03em', whiteSpace: 'pre-line' as const, paddingLeft: '8px' }
