@@ -9,8 +9,10 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Link,
   Preview,
+  Section,
   Text,
 } from 'npm:@react-email/components@0.0.22'
 
@@ -21,6 +23,8 @@ interface SignupEmailProps {
   confirmationUrl: string
 }
 
+const LOGO_URL = 'https://rvxpqwscfmygfqanxfbq.supabase.co/storage/v1/object/public/email-assets/ufixi-logo.svg'
+
 export const SignupEmail = ({
   siteName,
   siteUrl,
@@ -29,27 +33,32 @@ export const SignupEmail = ({
 }: SignupEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Confirm your email for {siteName}</Preview>
+    <Preview>Verify your email for Ufixi</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Confirm your email</Heading>
-        <Text style={text}>
-          Thanks for signing up for{' '}
-          <Link href={siteUrl} style={link}>
-            <strong>{siteName}</strong>
-          </Link>
-          !
-        </Text>
-        <Text style={text}>
-          Please confirm your email address (
-          <Link href={`mailto:${recipient}`} style={link}>
-            {recipient}
-          </Link>
-          ) by clicking the button below:
-        </Text>
-        <Button style={button} href={confirmationUrl}>
-          Verify Email
-        </Button>
+        <Section style={headerSection}>
+          <Img src={LOGO_URL} alt="Ufixi" width="90" height="32" style={logo} />
+        </Section>
+        <Section style={contentSection}>
+          <Heading style={h1}>Verify your email</Heading>
+          <Text style={text}>
+            Thanks for signing up to{' '}
+            <Link href={siteUrl} style={link}>
+              <strong>Ufixi</strong>
+            </Link>
+            . Clarity before cost — AI diagnoses any home issue in seconds.
+          </Text>
+          <Text style={text}>
+            Confirm your email address (
+            <Link href={`mailto:${recipient}`} style={link}>
+              {recipient}
+            </Link>
+            ) by clicking below:
+          </Text>
+          <Button style={button} href={confirmationUrl}>
+            Verify Email
+          </Button>
+        </Section>
         <Text style={footer}>
           If you didn't create an account, you can safely ignore this email.
         </Text>
@@ -60,27 +69,13 @@ export const SignupEmail = ({
 
 export default SignupEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
-const link = { color: 'inherit', textDecoration: 'underline' }
-const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
-  fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
-  textDecoration: 'none',
-}
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+const main = { backgroundColor: '#ffffff', fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }
+const container = { padding: '0', maxWidth: '480px', margin: '0 auto' }
+const headerSection = { backgroundColor: '#FDF6EE', padding: '28px 25px 20px', borderRadius: '16px 16px 0 0' }
+const logo = { margin: '0 auto', display: 'block' as const }
+const contentSection = { backgroundColor: '#FDF6EE', padding: '8px 25px 32px', borderRadius: '0 0 16px 16px' }
+const h1 = { fontSize: '24px', fontWeight: 'bold' as const, color: '#00172F', margin: '0 0 16px', letterSpacing: '-0.02em' }
+const text = { fontSize: '15px', color: 'rgba(0, 23, 47, 0.55)', lineHeight: '1.6', margin: '0 0 20px', letterSpacing: '0.03em' }
+const link = { color: '#00172F', textDecoration: 'underline' }
+const button = { background: 'linear-gradient(135deg, #E8530A 0%, #D93870 100%)', backgroundColor: '#E8530A', color: '#ffffff', fontSize: '15px', fontWeight: 'bold' as const, borderRadius: '16px', padding: '14px 28px', textDecoration: 'none', display: 'block' as const, textAlign: 'center' as const, margin: '8px 0 0' }
+const footer = { fontSize: '12px', color: 'rgba(0, 23, 47, 0.38)', margin: '24px 25px 0', letterSpacing: '0.03em' }
