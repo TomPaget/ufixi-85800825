@@ -65,7 +65,6 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
   const [questionIndex, setQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  const [expandedSection, setExpandedSection] = useState<string | null>("causes");
   const [showSavePrompt, setShowSavePrompt] = useState<"upgrade" | "auth" | null>(null);
   const [isAnalysing, setIsAnalysing] = useState(false);
   const [diagnosis, setDiagnosis] = useState<any>(null);
