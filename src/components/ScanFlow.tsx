@@ -27,7 +27,6 @@ const CATEGORIES = [
 const FOLLOW_UP_QUESTIONS = [
   { q: "How long has this issue been present?", options: ["Less than a day", "A few days", "About a week", "More than a week", "Not sure"] },
   { q: "Is the problem getting worse?", options: ["Yes, rapidly", "Yes, slowly", "Staying the same", "Not sure"] },
-  { q: "Have you attempted any fixes?", options: ["No, haven't tried anything", "Yes, basic DIY", "Yes, called a professional", "Waiting for advice"] },
 ];
 
 const PREMIUM_BENEFITS = [

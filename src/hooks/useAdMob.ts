@@ -16,6 +16,7 @@ const ADMOB_CONFIG = {
 };
 
 let admobInitialized = false;
+let attRequested = false;
 
 export function useAdMob() {
   const isNative = useRef(
@@ -24,9 +25,34 @@ export function useAdMob() {
       window.Capacitor.isNativePlatform()
   );
 
+  const requestATT = useCallback(async () => {
+    if (attRequested) return;
+    if (window.Capacitor?.getPlatform() !== "ios") {
+      attRequested = true;
+      return;
+    }
+    try {
+      // Dynamic import — only resolves in native iOS builds with the plugin installed
+      const mod = await (Function('return import("@capacitor-community/app-tracking-transparency")')() as Promise<any>);
+      const ATT = mod?.AppTrackingTransparency;
+      if (!ATT) throw new Error("ATT plugin not found");
+      const { status } = await ATT.getStatus();
+      if (status === "notDetermined") {
+        await ATT.requestPermission();
+      }
+      attRequested = true;
+    } catch (err) {
+      console.warn("ATT not available:", err);
+      attRequested = true;
+    }
+  }, []);
+
   const initialize = useCallback(async () => {
     if (!isNative.current || admobInitialized) return;
     try {
+      // Request ATT before initialising AdMob (required by Apple)
+      await requestATT();
+
       const { AdMob } = await import("@capacitor-community/admob");
       await AdMob.initialize({
         initializeForTesting: import.meta.env.DEV,
@@ -35,7 +61,7 @@ export function useAdMob() {
     } catch (err) {
       console.error("AdMob init error:", err);
     }
-  }, []);
+  }, [requestATT]);
 
   const showInterstitial = useCallback(async (): Promise<boolean> => {
     if (!isNative.current) {
@@ -63,7 +89,6 @@ export function useAdMob() {
         const settle = (val: boolean) => {
           if (!settled) {
             settled = true;
-            // Remove all interstitial listeners to prevent leaks
             (AdMob as any).removeAllListeners?.();
             resolve(val);
           }
@@ -73,7 +98,6 @@ export function useAdMob() {
         AdMob.addListener(InterstitialAdPluginEvents.FailedToLoad, () => settle(false));
         AdMob.addListener(InterstitialAdPluginEvents.FailedToShow, () => settle(false));
 
-        // Timeout fallback — don't block forever
         setTimeout(() => settle(false), 30000);
 
         try {
