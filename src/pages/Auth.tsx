@@ -34,7 +34,7 @@ export default function Auth() {
     setLoading(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -43,8 +43,12 @@ export default function Auth() {
           },
         });
         if (error) throw error;
-        toast.success("Account created! Check your email to verify, then log in.");
-        setMode("login");
+        if (data?.user && data.user.identities?.length === 0) {
+          toast.error("An account with this email already exists. Try logging in.");
+        } else {
+          toast.success("Account created! Check your email for a verification link before logging in.");
+          setMode("login");
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
