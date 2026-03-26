@@ -60,6 +60,7 @@ export default function Settings() {
         <div className="min-h-screen pb-20 relative overflow-hidden" style={{ background: "transparent" }}>
           <LavaLampBackground />
           <PageHeader title="Settings" showBack={false} showLogo />
+          <main className="max-w-lg mx-auto px-5 py-8 text-center space-y-4">
             <User className="w-12 h-12 mx-auto" style={{ color: "var(--color-text-secondary)" }} />
             <p className="text-base" style={{ color: "var(--color-navy)" }}>Sign in to access your settings</p>
             <button
