@@ -23,6 +23,8 @@ import ResetPassword from "./pages/ResetPassword";
 import Forum from "./pages/Forum";
 import ForumPost from "./pages/ForumPost";
 import CreatePost from "./pages/CreatePost";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 
 const queryClient = new QueryClient();
 
