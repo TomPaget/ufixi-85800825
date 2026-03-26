@@ -50,6 +50,8 @@ function AnimatedRoutes() {
         <Route path="/forum" element={<Forum />} />
         <Route path="/forum/:id" element={<ForumPost />} />
         <Route path="/forum/create" element={<CreatePost />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
