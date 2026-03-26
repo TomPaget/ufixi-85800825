@@ -7,6 +7,7 @@ import { AnimatePresence } from "framer-motion";
 import { SubscriptionProvider } from "@/hooks/useSubscription";
 import Index from "./pages/Index";
 import HomeDashboard from "./pages/HomeDashboard";
+import Landing from "./pages/Landing";
 import MyIssues from "./pages/MyIssues";
 import IssueDetail from "./pages/IssueDetail";
 import AIHelp from "./pages/AIHelp";
@@ -36,13 +37,16 @@ function AnimatedRoutes() {
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<Index />} />
         <Route path="/home" element={<HomeDashboard />} />
+        <Route path="/landing" element={<Landing />} />
         <Route path="/issues" element={<MyIssues />} />
+        <Route path="/my-issues" element={<MyIssues />} />
         <Route path="/issue/:id" element={<IssueDetail />} />
         <Route path="/history" element={<History />} />
         <Route path="/ai-help" element={<AIHelp />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/contractors" element={<Contractors />} />
+        <Route path="/find-tradesman" element={<Contractors />} />
         <Route path="/support" element={<Support />} />
         <Route path="/upgrade" element={<Upgrade />} />
         <Route path="/auth" element={<Auth />} />
