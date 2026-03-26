@@ -16,12 +16,28 @@ export default function HomeDashboard() {
   const [showRecentIssues, setShowRecentIssues] = useState(false);
   const [showScanFlow, setShowScanFlow] = useState(false);
   const [showPremiumPrompt, setShowPremiumPrompt] = useState(false);
+  const [savedIssues, setSavedIssues] = useState<any[]>([]);
   const navigate = useNavigate();
+  const { isPremium, startCheckout } = useSubscription();
 
-  const isPremium = false; // TODO: check real subscription
-  const activeCount = 0;
-  const fixSoonCount = 0;
-  const resolvedCount = 0;
+  const [activeCount, setActiveCount] = useState(0);
+  const [fixSoonCount, setFixSoonCount] = useState(0);
+  const [resolvedCount, setResolvedCount] = useState(0);
+
+  useEffect(() => {
+    if (isPremium) loadCounts();
+  }, [isPremium]);
+
+  const loadCounts = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data } = await supabase.from("saved_issues").select("status, urgency").eq("user_id", user.id);
+    if (!data) return;
+    setActiveCount(data.filter(i => i.status === "active").length);
+    setFixSoonCount(data.filter(i => i.urgency === "fix_now" || i.urgency === "fix_soon").length);
+    setResolvedCount(data.filter(i => i.status === "resolved").length);
+    setSavedIssues(data);
+  };
 
   const handleRecentScansClick = () => {
     if (!isPremium) {
