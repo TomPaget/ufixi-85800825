@@ -525,8 +525,8 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Describe what you see..."
-                  className="w-full rounded-2xl p-4 text-base resize-none"
-                  style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: navy, minHeight: 110 }}
+                  className="w-full rounded-2xl p-4 text-base resize-none focus:outline-none focus:ring-2"
+                  style={{ background: "white", border: "1px solid rgba(232,83,10,0.25)", color: navy, minHeight: 110, boxShadow: "0 0 0 0px transparent", "--tw-ring-color": "rgba(232,83,10,0.4)" } as React.CSSProperties}
                   rows={4}
                 />
               </div>
