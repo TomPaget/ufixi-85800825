@@ -510,7 +510,7 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
 
               {/* Tips */}
               <div className="rounded-2xl p-4 space-y-2" style={{ background: "rgba(232,83,10,0.06)", border: "1px solid rgba(232,83,10,0.12)" }}>
-                <p className="text-sm font-semibold" style={{ color: "var(--color-primary)" }}>💡 Tips for best results</p>
+                <p className="text-sm font-semibold" style={{ color: "var(--color-primary)" }}>Tips for best results</p>
                 <ul className="text-sm space-y-1.5" style={{ color: textSecondary }}>
                   <li>• Good lighting helps AI accuracy</li>
                   <li>• Capture the full affected area</li>

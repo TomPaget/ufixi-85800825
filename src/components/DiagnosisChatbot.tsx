@@ -130,7 +130,7 @@ export default function DiagnosisChatbot({
       >
         <span className="flex items-center gap-2.5 text-base font-semibold" style={{ color: navy }}>
           <MessageSquare className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
-          💬 Ask Ufixi AI about this issue
+          Ask Ufixi AI about this issue
         </span>
         {isOpen ? (
           <ChevronUp className="w-5 h-5" style={{ color: "#9aa5b4" }} />
