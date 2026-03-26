@@ -64,7 +64,7 @@ export function useAdMob() {
           if (!settled) {
             settled = true;
             // Remove all interstitial listeners to prevent leaks
-            AdMob.removeAllListeners();
+            (AdMob as any).removeAllListeners?.();
             resolve(val);
           }
         };
