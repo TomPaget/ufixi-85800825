@@ -1,9 +1,10 @@
-import { Home, ClipboardList, Settings } from "lucide-react";
+import { Home, ClipboardList, MessageSquareText, Settings } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const NAV_ITEMS = [
-  { label: "Home", icon: Home, path: "/" },
+  { label: "Home", icon: Home, path: "/home" },
   { label: "My Issues", icon: ClipboardList, path: "/issues" },
+  { label: "Forum", icon: MessageSquareText, path: "/forum" },
   { label: "Settings", icon: Settings, path: "/settings" },
 ];
 
@@ -24,7 +25,7 @@ export default function BottomNavDemo() {
       }}
     >
       {NAV_ITEMS.map(({ label, icon: Icon, path }) => {
-        const isActive = location.pathname === path;
+        const isActive = location.pathname === path || (path === "/home" && location.pathname === "/");
         return (
           <button
             key={path}
