@@ -80,6 +80,7 @@ const headerSection = { backgroundColor: '#FDF6EE', padding: '28px 25px 20px', b
 const logo = { margin: '0 auto', display: 'block' as const }
 const contentSection = { backgroundColor: '#FDF6EE', padding: '8px 25px 32px', borderRadius: '0 0 16px 16px' }
 const h1 = { fontSize: '24px', fontWeight: 'bold' as const, color: '#00172F', margin: '0 0 16px', letterSpacing: '-0.02em' }
+const gradientName = { background: 'linear-gradient(135deg, #E8530A 0%, #D93870 100%)', WebkitBackgroundClip: 'text' as const, WebkitTextFillColor: 'transparent', backgroundClip: 'text' as const }
 const text = { fontSize: '15px', color: 'rgba(0, 23, 47, 0.55)', lineHeight: '1.6', margin: '0 0 20px', letterSpacing: '0.03em' }
 const textBold = { fontSize: '15px', color: '#00172F', lineHeight: '1.6', margin: '0 0 8px', letterSpacing: '0.03em', fontWeight: 'bold' as const }
 const featureList = { fontSize: '14px', color: 'rgba(0, 23, 47, 0.55)', lineHeight: '2', margin: '0 0 20px', letterSpacing: '0.03em', whiteSpace: 'pre-line' as const, paddingLeft: '8px' }
