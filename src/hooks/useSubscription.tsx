@@ -1,26 +1,37 @@
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { User } from "@supabase/supabase-js";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface SubscriptionState {
   isPremium: boolean;
   subscriptionEnd: string | null;
   loading: boolean;
+  user: User | null;
+  authReady: boolean;
   checkSubscription: () => Promise<void>;
   startCheckout: () => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
 const SubscriptionContext = createContext<SubscriptionState>({
   isPremium: false,
   subscriptionEnd: null,
   loading: true,
+  user: null,
+  authReady: false,
   checkSubscription: async () => {},
   startCheckout: async () => {},
+  signOut: async () => {},
 });
 
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [isPremium, setIsPremium] = useState(false);
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const [authReady, setAuthReady] = useState(false);
 
   const checkSubscription = useCallback(async () => {
     try {
@@ -46,6 +57,15 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const startCheckout = useCallback(async () => {
+    // Check if user is logged in first
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast.error("Please create an account first to subscribe");
+      // Navigate to auth - we use window.location since we're outside Router context
+      window.location.href = "/auth?redirect=upgrade";
+      return;
+    }
+
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout");
       if (error) throw error;
@@ -54,14 +74,39 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       }
     } catch (err) {
       console.error("Checkout error:", err);
+      toast.error("Could not start checkout. Please try again.");
     }
   }, []);
 
-  useEffect(() => {
-    checkSubscription();
+  const signOut = useCallback(async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setIsPremium(false);
+    setSubscriptionEnd(null);
+  }, []);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      checkSubscription();
+  useEffect(() => {
+    // Restore session first
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setAuthReady(true);
+      if (session?.user) {
+        checkSubscription();
+      } else {
+        setLoading(false);
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        checkSubscription();
+      } else {
+        setIsPremium(false);
+        setSubscriptionEnd(null);
+        setLoading(false);
+      }
     });
 
     // Re-check every 60s
@@ -74,7 +119,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   }, [checkSubscription]);
 
   return (
-    <SubscriptionContext.Provider value={{ isPremium, subscriptionEnd, loading, checkSubscription, startCheckout }}>
+    <SubscriptionContext.Provider value={{ isPremium, subscriptionEnd, loading, user, authReady, checkSubscription, startCheckout, signOut }}>
       {children}
     </SubscriptionContext.Provider>
   );

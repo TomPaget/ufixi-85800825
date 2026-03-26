@@ -1,4 +1,5 @@
 import { Check, Crown, Zap } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import PageTransition from "@/components/PageTransition";
 import PageHeader from "@/components/PageHeader";
 import GradientButton from "@/components/GradientButton";
@@ -25,7 +26,8 @@ const PLANS = [
 ];
 
 export default function Upgrade() {
-  const { isPremium, subscriptionEnd, startCheckout } = useSubscription();
+  const { isPremium, subscriptionEnd, startCheckout, user } = useSubscription();
+  const navigate = useNavigate();
 
   const handleManage = async () => {
     try {
@@ -35,6 +37,15 @@ export default function Upgrade() {
     } catch (err: any) {
       toast.error(err.message || "Could not open subscription manager");
     }
+  };
+
+  const handleUpgrade = () => {
+    if (!user) {
+      toast("Create an account first to subscribe");
+      navigate("/auth?redirect=upgrade");
+      return;
+    }
+    startCheckout();
   };
 
   return (
@@ -94,7 +105,7 @@ export default function Upgrade() {
                     Current Plan
                   </button>
                 ) : plan.recommended ? (
-                  <GradientButton size="lg" onClick={startCheckout}>
+                  <GradientButton size="lg" onClick={handleUpgrade}>
                     <span className="flex items-center justify-center gap-2"><Zap className="w-4 h-4" /> Upgrade Now</span>
                   </GradientButton>
                 ) : null}

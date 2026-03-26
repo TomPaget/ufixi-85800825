@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { Mail, Lock, User, ArrowLeft, Eye, EyeOff } from "lucide-react";
@@ -16,6 +16,8 @@ export default function Auth() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get("redirect");
 
   const navy = "#00172F";
   const textSec = "#5A6A7A";
@@ -56,7 +58,7 @@ export default function Auth() {
         });
         if (error) throw error;
         toast.success("Logged in!");
-        navigate("/home");
+        navigate(redirect ? `/${redirect}` : "/home");
       }
     } catch (err: any) {
       toast.error(err.message || "Authentication failed");
