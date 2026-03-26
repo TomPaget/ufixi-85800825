@@ -103,6 +103,8 @@ const STAGE2_TOOL = {
         },
         tools_and_materials: {
           type: "array",
+          minItems: 3,
+          maxItems: 5,
           items: {
             type: "object",
             properties: {
