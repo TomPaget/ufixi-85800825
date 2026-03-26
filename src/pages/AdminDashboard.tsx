@@ -154,11 +154,11 @@ export default function AdminDashboard() {
                 <div className="rounded-2xl p-5" style={{ background: "white", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
                   <h3 className="text-sm font-semibold mb-4" style={{ color: navy }}>Issue Categories</h3>
                   <div className="space-y-2">
-                    {Object.entries(categoryBreakdown).sort((a, b) => b[1] - a[1]).map(([cat, count]) => (
+                    {Object.entries(categoryBreakdown).sort((a, b) => (b[1] as number) - (a[1] as number)).map(([cat, count]) => (
                       <div key={cat} className="flex items-center justify-between">
                         <span className="text-sm capitalize" style={{ color: navy }}>{cat}</span>
                         <div className="flex items-center gap-2">
-                          <div className="h-2 rounded-full" style={{ width: `${Math.max((count as number / insights.length) * 150, 20)}px`, background: "var(--gradient-primary, linear-gradient(135deg, #E8530A, #D93870))" }} />
+                          <div className="h-2 rounded-full" style={{ width: `${Math.max(((count as number) / insights.length) * 150, 20)}px`, background: "linear-gradient(135deg, #E8530A, #D93870)" }} />
                           <span className="text-xs font-semibold" style={{ color: textSec }}>{count as number}</span>
                         </div>
                       </div>
