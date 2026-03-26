@@ -43,6 +43,11 @@ export default function Landing() {
           <motion.p className="text-xs" style={{ color: "rgba(0,23,47,0.38)" }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.45 }}>
             No jargon. No guesswork. No wasted call-outs.
           </motion.p>
+
+          <motion.div className="flex gap-4 justify-center text-xs" style={{ color: "rgba(0,23,47,0.38)" }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.5 }}>
+            <a href="/privacy" className="underline hover:opacity-70 transition-opacity">Privacy Policy</a>
+            <a href="/terms" className="underline hover:opacity-70 transition-opacity">Terms of Service</a>
+          </motion.div>
         </div>
       </div>
     </PageTransition>

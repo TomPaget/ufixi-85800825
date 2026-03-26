@@ -23,6 +23,8 @@ import ResetPassword from "./pages/ResetPassword";
 import Forum from "./pages/Forum";
 import ForumPost from "./pages/ForumPost";
 import CreatePost from "./pages/CreatePost";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +50,8 @@ function AnimatedRoutes() {
         <Route path="/forum" element={<Forum />} />
         <Route path="/forum/:id" element={<ForumPost />} />
         <Route path="/forum/create" element={<CreatePost />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
