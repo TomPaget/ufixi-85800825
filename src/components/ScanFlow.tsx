@@ -1,11 +1,10 @@
-import { useState, useRef, useMemo, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, Camera, Video, Upload, ArrowLeft, MapPin, Tag,
   Droplets, Zap, Building2, Wind, Cpu, Wrench,
-  Bot, ChevronDown, ChevronUp, ExternalLink, AlertTriangle,
-  Loader2, CheckCircle2, Lightbulb, UserPlus, Clock,
-  Stethoscope, ShieldAlert, PoundSterling, Crown, Lock, FileText, Mail
+  Bot, ChevronDown, ChevronUp, AlertTriangle,
+  Loader2, CheckCircle2, UserPlus, Crown, Lock, FileText, Mail
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +12,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import ufixiLogo from "@/assets/ufixi-logo.svg";
 import GradientButton from "./GradientButton";
 import LavaLampBackground from "./LavaLampBackground";
+import DiagnosisResults from "./DiagnosisResults";
 
 const CATEGORIES = [
   { id: "plumbing", label: "Plumbing", icon: Droplets },
@@ -31,7 +31,7 @@ const FOLLOW_UP_QUESTIONS = [
 
 const PREMIUM_BENEFITS = [
   { icon: CheckCircle2, text: "Save unlimited diagnoses" },
-  { icon: Clock, text: "Access scan history for 45 days" },
+  { icon: CheckCircle2, text: "Access scan history for 45 days" },
   { icon: X, text: "No ads during diagnosis" },
   { icon: Zap, text: "Priority AI analysis" },
   { icon: Mail, text: "Landlord letter generator" },
@@ -65,7 +65,6 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
   const [questionIndex, setQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  const [expandedSection, setExpandedSection] = useState<string | null>("causes");
   const [showSavePrompt, setShowSavePrompt] = useState<"upgrade" | "auth" | null>(null);
   const [isAnalysing, setIsAnalysing] = useState(false);
   const [diagnosis, setDiagnosis] = useState<any>(null);
@@ -300,124 +299,7 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
     return `rgb(${r},${g},${b})`;
   };
 
-  // Build results sections from real AI data
-  const resultSections = diagnosis ? [
-    {
-      id: "causes", title: "What Caused This?", icon: Lightbulb,
-      content: (
-        <div className="space-y-3">
-          {diagnosis.likely_causes?.map((c: any, i: number) => (
-            <div key={i} className="p-4 rounded-xl text-base leading-relaxed" style={{ background: "rgba(0,23,47,0.03)", borderLeft: "3px solid rgba(59,130,246,0.5)", color: navy }}>
-              <p className="font-semibold mb-1">{c.cause}</p>
-              <p style={{ color: textSecondary }}>{c.details}</p>
-            </div>
-          ))}
-        </div>
-      ),
-    },
-    {
-      id: "diagnostic", title: "How to Check", icon: Stethoscope,
-      content: (
-        <div className="space-y-3">
-          {diagnosis.diagnostic_steps?.map((s: any, i: number) => (
-            <div key={i} className="p-4 rounded-xl" style={{ background: "rgba(0,23,47,0.03)", border: "1px solid rgba(0,23,47,0.06)" }}>
-              <p className="text-base font-semibold mb-1" style={{ color: navy }}>Step {s.step_number}: {s.action}</p>
-              <p className="text-sm" style={{ color: textSecondary }}>{s.what_to_look_for}</p>
-              {s.safety_note && (
-                <p className="text-sm mt-2 flex items-center gap-1" style={{ color: "#F59E0B" }}>
-                  <AlertTriangle className="w-3.5 h-3.5" /> {s.safety_note}
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
-      ),
-    },
-    {
-      id: "diy", title: "Quick Fixes", icon: Wrench,
-      content: (
-        <div className="space-y-4">
-          {diagnosis.diy_quick_fixes?.map((fix: any, i: number) => (
-            <div key={i} className="p-4 rounded-xl" style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)" }}>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="font-semibold text-base" style={{ color: navy }}>{fix.action}</span>
-                <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: fix.difficulty === "Easy" ? "rgba(29,158,117,0.1)" : fix.difficulty === "Moderate" ? "rgba(240,144,10,0.1)" : "rgba(220,38,38,0.1)", color: fix.difficulty === "Easy" ? "var(--color-success)" : fix.difficulty === "Moderate" ? "#F0900A" : "#DC2626" }}>{fix.difficulty} • {fix.estimated_time}</span>
-              </div>
-              <p className="text-sm leading-relaxed" style={{ color: textSecondary }}>{fix.description}</p>
-              {fix.tools_required?.length > 0 && (
-                <p className="text-xs mt-2" style={{ color: textSecondary }}>Tools: {fix.tools_required.join(", ")}</p>
-              )}
-            </div>
-          ))}
-        </div>
-      ),
-    },
-    {
-      id: "products", title: "What You'll Need", icon: ExternalLink,
-      content: (
-        <div className="space-y-3">
-          {diagnosis.tools_and_materials?.map((p: any, i: number) => (
-            <div key={i} className="p-4 rounded-xl" style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)" }}>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-base font-semibold" style={{ color: navy }}>{p.product_name}</span>
-                <a
-                  href={`https://amazon.co.uk/s?k=${encodeURIComponent(p.search_term)}&tag=ufixi-21`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-2 rounded-lg text-sm font-semibold flex-shrink-0"
-                  style={{ background: "#FFD814", color: "#0F1111" }}
-                >
-                  Buy on Amazon
-                </a>
-              </div>
-              {p.estimated_cost && <p className="text-sm" style={{ color: textSecondary }}>{p.estimated_cost}</p>}
-            </div>
-          ))}
-        </div>
-      ),
-    },
-    {
-      id: "costs", title: "Estimated Costs", icon: PoundSterling,
-      content: (
-        <div className="rounded-xl p-4 flex gap-4" style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)" }}>
-          <div className="flex-1 text-center">
-            <p className="text-xs" style={{ color: textSecondary }}>DIY Cost</p>
-            <p className="text-lg font-semibold" style={{ color: "var(--color-success)" }}>£{diagnosis.estimated_costs?.diy_min}–£{diagnosis.estimated_costs?.diy_max}</p>
-          </div>
-          <div className="w-px" style={{ background: "rgba(0,23,47,0.08)" }} />
-          <div className="flex-1 text-center">
-            <p className="text-xs" style={{ color: textSecondary }}>Professional</p>
-            <p className="text-lg font-semibold" style={{ color: "var(--color-primary)" }}>£{diagnosis.estimated_costs?.professional_min}–£{diagnosis.estimated_costs?.professional_max}</p>
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: "safety", title: "Safety Warnings", icon: ShieldAlert,
-      content: (
-        <div className="space-y-3">
-          {diagnosis.safety_warnings?.map((w: string, i: number) => (
-            <div key={i} className="p-4 rounded-xl flex items-start gap-2" style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)" }}>
-              <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "#F59E0B" }} />
-              <span className="text-sm" style={{ color: "#92400E" }}>{w}</span>
-            </div>
-          ))}
-        </div>
-      ),
-    },
-    {
-      id: "pro", title: "When to Call a Pro", icon: AlertTriangle,
-      content: (
-        <div className="space-y-2">
-          {diagnosis.call_pro_if?.map((c: string, i: number) => (
-            <div key={i} className="p-4 rounded-xl" style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.15)" }}>
-              <p className="text-base leading-relaxed" style={{ color: "#DC2626" }}>• {c}</p>
-            </div>
-          ))}
-        </div>
-      ),
-    },
-  ] : [];
+  // Results sections moved to DiagnosisResults component
 
   // --- AD OVERLAY ---
   if (showAd) {
@@ -787,75 +669,14 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
 
           {/* STEP 5 — Real AI Results */}
           {!showSavePrompt && step === 5 && diagnosis && (
-            <motion.div key="s5" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.2 }} className="space-y-5 pb-6">
-              {/* Uploaded image preview */}
-              {uploadedPreviewUrl && uploadedFile?.type.startsWith("image/") && (
-                <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(0,23,47,0.08)" }}>
-                  <img src={uploadedPreviewUrl} alt="Scanned issue" className="w-full h-auto max-h-56 object-cover" />
-                </div>
-              )}
-
-              {/* Result header */}
-              <div className="rounded-2xl p-6 space-y-3" style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(12px)", border: "1px solid rgba(0,23,47,0.08)", boxShadow: "var(--shadow-card)" }}>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5" style={{ color: "var(--color-success)" }} />
-                  <span className="text-sm font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(29,158,117,0.1)", color: "var(--color-success)" }}>AI Diagnosis Complete</span>
-                </div>
-                <h2 className="text-2xl tracking-tight font-bold" style={{ color: navy }}>{triage?.issue_title || triage?.brief_description || "Issue Detected"}</h2>
-                <p className="text-base" style={{ color: textSecondary }}>{triage?.brief_description}</p>
-                <p className="text-sm" style={{ color: textSecondary }}>
-                  {triage?.category} • {triage?.confidence} confidence
-                </p>
-
-                {/* Urgency badge */}
-                {diagnosis.urgency_assessment && (
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{
-                      background: diagnosis.urgency_assessment.level === "fix_now" ? "rgba(220,38,38,0.1)" : diagnosis.urgency_assessment.level === "fix_soon" ? "rgba(240,144,10,0.1)" : "rgba(107,122,141,0.1)",
-                      color: diagnosis.urgency_assessment.level === "fix_now" ? "#DC2626" : diagnosis.urgency_assessment.level === "fix_soon" ? "#F0900A" : "#6B7A8D",
-                    }}>
-                      {diagnosis.urgency_assessment.level.replace("_", " ").toUpperCase()}
-                    </span>
-                    <span className="text-sm" style={{ color: textSecondary }}>{diagnosis.urgency_assessment.reason}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Accordion sections */}
-              {resultSections.map(({ id, title, icon: Icon, content }) => (
-                <div key={id} className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(12px)", border: "1px solid rgba(0,23,47,0.08)" }}>
-                  <button
-                    onClick={() => setExpandedSection(expandedSection === id ? null : id)}
-                    className="w-full flex items-center justify-between p-5 text-left"
-                    style={{ minHeight: 56 }}
-                  >
-                    <span className="flex items-center gap-2.5 text-base font-semibold" style={{ color: navy }}>
-                      <Icon className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
-                      {title}
-                    </span>
-                    {expandedSection === id ? <ChevronUp className="w-5 h-5" style={{ color: "#9aa5b4" }} /> : <ChevronDown className="w-5 h-5" style={{ color: "#9aa5b4" }} />}
-                  </button>
-                  <AnimatePresence>
-                    {expandedSection === id && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="px-5 pb-5">{content}</div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              ))}
-
-              <GradientButton size="lg" onClick={handleSave}>Save Full Diagnosis</GradientButton>
-              <button onClick={onClose} className="w-full text-center py-3 text-base" style={{ color: textSecondary }}>
-                Close without saving
-              </button>
-            </motion.div>
+            <DiagnosisResults
+              triage={triage}
+              diagnosis={diagnosis}
+              uploadedPreviewUrl={uploadedPreviewUrl}
+              uploadedFileType={uploadedFile?.type || null}
+              onSave={handleSave}
+              onClose={onClose}
+            />
           )}
         </AnimatePresence>
       </div>
