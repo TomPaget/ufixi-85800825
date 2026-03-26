@@ -209,12 +209,23 @@ export default function ScanFlow({ onClose }: ScanFlowProps) {
 
       // If free user, show ad before results
       if (!isPremium) {
-        setPendingResults({ triage: data.triage, diagnosis: data.diagnosis });
-        const adTime = Math.floor(Math.random() * 6) + 15;
-        setAdCountdown(adTime);
-        setAdDone(false);
-        setShowAd(true);
-        setIsAnalysing(false);
+        // Try native AdMob interstitial first
+        if (isNative) {
+          setIsAnalysing(false);
+          const shown = await showInterstitial();
+          // Whether ad shown or not, proceed to results
+          setTriage(data.triage);
+          setDiagnosis(data.diagnosis);
+          setStep(5);
+        } else {
+          // Web fallback: countdown ad screen
+          setPendingResults({ triage: data.triage, diagnosis: data.diagnosis });
+          const adTime = Math.floor(Math.random() * 6) + 15;
+          setAdCountdown(adTime);
+          setAdDone(false);
+          setShowAd(true);
+          setIsAnalysing(false);
+        }
       } else {
         setTriage(data.triage);
         setDiagnosis(data.diagnosis);
