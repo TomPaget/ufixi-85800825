@@ -213,12 +213,13 @@ export default function DiagnosisChatbot({
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && sendMessage()}
                   placeholder="Ask about this issue..."
-                  className="flex-1 rounded-xl px-4 py-3 text-sm outline-none"
+                  className="flex-1 rounded-xl px-4 py-3 outline-none"
                   style={{
                     background: "rgba(0,23,47,0.03)",
                     border: "1px solid rgba(0,23,47,0.08)",
                     color: navy,
                     minHeight: 44,
+                    fontSize: "16px",
                   }}
                 />
                 <button

@@ -19,9 +19,9 @@ export default function BottomNavDemo() {
         background: "rgba(255,255,255,0.88)",
         backdropFilter: "blur(20px)",
         borderTop: "1px solid var(--glass-border)",
-        paddingBottom: "max(env(safe-area-inset-bottom, 8px), 12px)",
-        paddingTop: "12px",
-        height: "calc(72px + env(safe-area-inset-bottom, 0px))",
+        paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)",
+        paddingTop: "14px",
+        height: "calc(84px + env(safe-area-inset-bottom, 0px))",
       }}
     >
       {NAV_ITEMS.map(({ label, icon: Icon, path }) => {

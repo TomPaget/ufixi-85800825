@@ -83,7 +83,7 @@ export default function HomeDashboard() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen relative overflow-hidden" style={{ background: "transparent", paddingBottom: "calc(72px + env(safe-area-inset-bottom, 0px) + 8px)" }}>
+      <div className="min-h-screen relative overflow-hidden" style={{ background: "transparent", paddingBottom: "calc(84px + env(safe-area-inset-bottom, 0px) + 8px)" }}>
         <LavaLampBackground />
 
         {/* Header */}
@@ -91,9 +91,9 @@ export default function HomeDashboard() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="sticky top-0 z-30"
-          style={{ paddingTop: "max(env(safe-area-inset-top, 0px), 12px)" }}
+          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)" }}
         >
-          <div className="max-w-lg mx-auto px-4 flex items-center relative" style={{ padding: "10px 16px" }}>
+          <div className="max-w-lg mx-auto px-4 flex items-center relative" style={{ padding: "14px 16px" }}>
             <button
               onClick={() => navigate("/notifications")}
               className="rounded-xl flex items-center justify-center transition-all active:scale-90 relative flex-shrink-0"
@@ -126,9 +126,9 @@ export default function HomeDashboard() {
           {/* Welcome */}
           <motion.div
             className="text-center space-y-3"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.3 }}
           >
             <h1
               style={{
@@ -160,7 +160,7 @@ export default function HomeDashboard() {
             className="grid grid-cols-3 gap-3"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
+            transition={{ duration: 0.3, delay: 0.05 }}
           >
             {[
               { icon: TrendingUp, value: activeCount, label: "Active", color: "var(--color-primary)" },
@@ -180,7 +180,7 @@ export default function HomeDashboard() {
             className="flex flex-col items-center justify-center gap-4 py-8 w-full text-center"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
           >
             <button
               onClick={() => setShowScanFlow(true)}
@@ -204,7 +204,7 @@ export default function HomeDashboard() {
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
+            transition={{ duration: 0.3, delay: 0.15 }}
           >
             <button
               onClick={handleRecentScansClick}
