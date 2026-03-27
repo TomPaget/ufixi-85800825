@@ -60,7 +60,7 @@ export default function AIHelp() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen pb-20 relative overflow-hidden" style={{ background: "transparent" }}>
+      <div className="min-h-screen relative overflow-hidden" style={{ background: "transparent", paddingBottom: "calc(72px + env(safe-area-inset-bottom, 0px) + 60px)" }}>
         <LavaLampBackground />
         <PageHeader title="AI Help" showBack={false} showLogo />
 
