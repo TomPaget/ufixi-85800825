@@ -121,33 +121,15 @@ export default function DiagnosisChatbot({
 
   return (
     <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(12px)", border: "1px solid rgba(0,23,47,0.08)" }}>
-      {/* Toggle button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-5"
-        style={{ minHeight: 56 }}
-      >
-        <span className="flex items-center gap-2.5 text-base font-semibold" style={{ color: navy }}>
-          <MessageSquare className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
+      {/* Header (non-collapsible) */}
+      <div className="flex items-center gap-2.5 p-5" style={{ minHeight: 56 }}>
+        <MessageSquare className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
+        <span className="text-base font-semibold" style={{ color: navy }}>
           Ask Ufixi AI about this issue
         </span>
-        {isOpen ? (
-          <ChevronUp className="w-5 h-5" style={{ color: "#9aa5b4" }} />
-        ) : (
-          <ChevronDown className="w-5 h-5" style={{ color: "#9aa5b4" }} />
-        )}
-      </button>
+      </div>
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="overflow-hidden"
-          >
-            <div className="px-4 pb-4">
+      <div className="px-4 pb-4">
               {/* Chat messages container */}
               <div
                 ref={scrollRef}
