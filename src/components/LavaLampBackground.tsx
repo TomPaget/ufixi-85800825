@@ -1,4 +1,22 @@
+import { isNativeApp } from "@/lib/appNavigation";
+
 export default function LavaLampBackground() {
+  if (isNativeApp()) {
+    return (
+      <div
+        className="fixed inset-0 -z-10"
+        style={{
+          background: [
+            "radial-gradient(circle at 12% 14%, rgba(232,83,10,0.16) 0%, transparent 28%)",
+            "radial-gradient(circle at 82% 72%, rgba(217,56,112,0.14) 0%, transparent 26%)",
+            "radial-gradient(circle at 46% 46%, rgba(240,144,10,0.10) 0%, transparent 24%)",
+            "var(--color-bg)",
+          ].join(", "),
+        }}
+      />
+    );
+  }
+
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden" style={{ background: "var(--color-bg)" }}>
       {/* Orange */}

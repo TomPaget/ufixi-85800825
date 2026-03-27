@@ -1,11 +1,10 @@
-import { useState, useEffect } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Plus, History, Sparkles, TrendingUp, Calendar, ChevronDown, ChevronUp, Bell, Crown, CheckCircle2, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import LavaLampBackground from "@/components/LavaLampBackground";
 import GlassCard from "@/components/GlassCard";
 import BottomNavDemo from "@/components/BottomNavDemo";
-import ScanFlow from "@/components/ScanFlow";
 import PageTransition from "@/components/PageTransition";
 import GradientButton from "@/components/GradientButton";
 import ufixiLogo from "@/assets/ufixi-logo.svg";
@@ -13,6 +12,9 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useNotifications } from "@/hooks/useNotifications";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { supabase } from "@/integrations/supabase/client";
+import { isNativeApp } from "@/lib/appNavigation";
+
+const ScanFlow = lazy(() => import("@/components/ScanFlow"));
 
 export default function HomeDashboard() {
   const [showRecentIssues, setShowRecentIssues] = useState(false);
@@ -23,6 +25,7 @@ export default function HomeDashboard() {
   const [resumeData, setResumeData] = useState<any>(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const nativeApp = isNativeApp();
   const { isPremium, startCheckout } = useSubscription();
   const { unreadCount } = useNotifications();
 
@@ -107,14 +110,8 @@ export default function HomeDashboard() {
             <div className="flex items-center gap-2 ml-auto flex-shrink-0">
               <motion.button
                 onClick={() => navigate("/upgrade")}
-                animate={{
-                  boxShadow: [
-                    "0 0 0 0px rgba(226,100,171,0.2)",
-                    "0 0 0 6px rgba(226,100,171,0.08)",
-                    "0 0 0 0px rgba(226,100,171,0.2)",
-                  ],
-                }}
-                transition={{ duration: 2, ease: "easeInOut", repeat: Infinity }}
+                animate={nativeApp ? undefined : { scale: [1, 1.02, 1] }}
+                transition={nativeApp ? undefined : { duration: 2.2, ease: "easeInOut", repeat: Infinity }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-all active:scale-95"
                 style={{ background: "var(--gradient-primary)", color: "#fff" }}
               >
@@ -190,9 +187,11 @@ export default function HomeDashboard() {
               className="w-40 h-40 rounded-full flex flex-col items-center justify-center gap-2 border-0 transition-transform active:scale-95"
               style={{
                 background: "var(--gradient-primary)",
-                boxShadow: "0 0 0 16px rgba(232,83,10,0.1), 0 0 0 32px rgba(217,56,112,0.06), 0 8px 48px rgba(232,83,10,0.4)",
+                boxShadow: nativeApp
+                  ? "0 8px 24px rgba(232,83,10,0.28)"
+                  : "0 0 0 16px rgba(232,83,10,0.1), 0 0 0 32px rgba(217,56,112,0.06), 0 8px 48px rgba(232,83,10,0.4)",
                 color: "#fff",
-                animation: "pulse-ring 2s ease-out infinite",
+                animation: nativeApp ? "none" : "pulse-ring 2s ease-out infinite",
               }}
             >
               <Plus className="w-12 h-12" strokeWidth={2.5} />
@@ -279,11 +278,13 @@ export default function HomeDashboard() {
 
         <AnimatePresence>
           {showScanFlow && (
-            <ScanFlow
-              onClose={() => { setShowScanFlow(false); setResumeScanId(null); setResumeData(null); }}
-              resumeScanId={resumeScanId || undefined}
-              resumeData={resumeData || undefined}
-            />
+            <Suspense fallback={<div className="fixed inset-0 z-50 bg-background/80" />}>
+              <ScanFlow
+                onClose={() => { setShowScanFlow(false); setResumeScanId(null); setResumeData(null); }}
+                resumeScanId={resumeScanId || undefined}
+                resumeData={resumeData || undefined}
+              />
+            </Suspense>
           )}
         </AnimatePresence>
       </div>
