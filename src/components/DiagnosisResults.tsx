@@ -10,7 +10,8 @@ import DiagnosisChatbot from "./DiagnosisChatbot";
 import { generateTradesmanPdf, generateTradesmanEmail } from "@/lib/generateTradesmanPdf";
 import { getTradeNameForCategory } from "@/lib/tradeNameMap";
 import { useSubscription } from "@/hooks/useSubscription";
-import { FileText, Mail } from "lucide-react";
+import { FileText, Mail, Lock, Crown } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface DiagnosisResultsProps {
   triage: any;
@@ -93,6 +94,7 @@ export default function DiagnosisResults({
   const [expandedSection, setExpandedSection] = useState<string | null>("causes");
   const { isPremium } = useSubscription();
   const tradeName = getTradeNameForCategory(triage?.category);
+  const navigate = useNavigate();
 
   const issueTitle = triage?.issue_title || "Issue Detected";
   const briefDescription = triage?.brief_description || "";
@@ -617,18 +619,41 @@ export default function DiagnosisResults({
       />
 
       {/* Export PDF */}
-      <button
-        onClick={() => generateTradesmanPdf(triage, diagnosis, uploadedPreviewUrl)}
-        className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl text-base font-semibold transition-all active:scale-95"
-        style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", color: navy, minHeight: 52 }}
-      >
-        <FileText className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
-        Export Report for {tradeName}
-      </button>
+      {isPremium ? (
+        <button
+          onClick={() => generateTradesmanPdf(triage, diagnosis, uploadedPreviewUrl)}
+          className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl text-base font-semibold transition-all active:scale-95"
+          style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", color: navy, minHeight: 52 }}
+        >
+          <FileText className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
+          Export Report for {tradeName}
+        </button>
+      ) : (
+        <button
+          onClick={() => navigate("/upgrade")}
+          className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl text-base font-semibold transition-all active:scale-95 relative overflow-hidden"
+          style={{
+            background: "linear-gradient(135deg, rgba(0,23,47,0.03), rgba(59,130,246,0.06))",
+            border: "1px solid rgba(59,130,246,0.15)",
+            color: textSecondary,
+            minHeight: 52,
+          }}
+        >
+          <Lock className="w-4 h-4" style={{ color: textSecondary }} />
+          Export Report for {tradeName}
+          <span
+            className="ml-2 inline-flex items-center gap-1 text-xs font-bold px-2.5 py-0.5 rounded-full"
+            style={{ background: "linear-gradient(135deg, #3B82F6, #6366F1)", color: "white" }}
+          >
+            <Crown className="w-3 h-3" />
+            PRO
+          </span>
+        </button>
+      )}
 
       {/* Email tradesman — premium only */}
       {isPremium && (
-        <button
+      <button
           onClick={() => {
             const { subject, body } = generateTradesmanEmail(triage, diagnosis);
             window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, "_self");
@@ -638,6 +663,28 @@ export default function DiagnosisResults({
         >
           <Mail className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
           Email {tradeName}
+      </button>
+      )}
+      {!isPremium && (
+        <button
+          onClick={() => navigate("/upgrade")}
+          className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl text-base font-semibold transition-all active:scale-95 relative overflow-hidden"
+          style={{
+            background: "linear-gradient(135deg, rgba(0,23,47,0.03), rgba(59,130,246,0.06))",
+            border: "1px solid rgba(59,130,246,0.15)",
+            color: textSecondary,
+            minHeight: 52,
+          }}
+        >
+          <Lock className="w-4 h-4" style={{ color: textSecondary }} />
+          Email {tradeName}
+          <span
+            className="ml-2 inline-flex items-center gap-1 text-xs font-bold px-2.5 py-0.5 rounded-full"
+            style={{ background: "linear-gradient(135deg, #3B82F6, #6366F1)", color: "white" }}
+          >
+            <Crown className="w-3 h-3" />
+            PRO
+          </span>
         </button>
       )}
 
