@@ -31,9 +31,9 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) throw new Error("Authentication failed");
-    const email = claimsData.claims.email as string;
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    if (userError || !userData?.user) throw new Error("Authentication failed");
+    const email = userData.user.email as string;
     if (!email) throw new Error("Email not available");
     logStep("User authenticated", { email });
 
