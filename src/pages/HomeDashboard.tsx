@@ -80,14 +80,15 @@ export default function HomeDashboard() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen pb-20 relative overflow-hidden" style={{ background: "transparent" }}>
+      <div className="min-h-screen relative overflow-hidden" style={{ background: "transparent", paddingBottom: "calc(72px + env(safe-area-inset-bottom, 0px) + 8px)" }}>
         <LavaLampBackground />
 
         {/* Header */}
         <motion.header
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="sticky top-0 z-30 py-3"
+          className="sticky top-0 z-30"
+          style={{ paddingTop: "max(env(safe-area-inset-top, 0px), 12px)" }}
         >
           <div className="max-w-lg mx-auto px-4 flex items-center relative" style={{ padding: "10px 16px" }}>
             <button
