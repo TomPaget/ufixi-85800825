@@ -91,9 +91,9 @@ export default function HomeDashboard() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="sticky top-0 z-30"
-          style={{ paddingTop: "max(env(safe-area-inset-top, 0px), 12px)" }}
+          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)" }}
         >
-          <div className="max-w-lg mx-auto px-4 flex items-center relative" style={{ padding: "10px 16px" }}>
+          <div className="max-w-lg mx-auto px-4 flex items-center relative" style={{ padding: "14px 16px" }}>
             <button
               onClick={() => navigate("/notifications")}
               className="rounded-xl flex items-center justify-center transition-all active:scale-90 relative flex-shrink-0"

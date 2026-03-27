@@ -12,15 +12,15 @@ interface PageHeaderProps {
 export default function PageHeader({ title, showBack = true, showLogo = true, rightAction }: PageHeaderProps) {
   const navigate = useNavigate();
   return (
-    <header className="sticky top-0 z-30" style={{ background: "rgba(253,246,238,0.85)", backdropFilter: "blur(12px)", paddingTop: "max(env(safe-area-inset-top, 0px), 12px)", paddingBottom: 8 }}>
-      <div className="max-w-lg mx-auto px-4 flex items-center relative" style={{ minHeight: 48 }}>
+    <header className="sticky top-0 z-30" style={{ background: "rgba(253,246,238,0.85)", backdropFilter: "blur(12px)", paddingTop: "calc(env(safe-area-inset-top, 0px) + 14px)", paddingBottom: 10 }}>
+      <div className="max-w-lg mx-auto px-4 flex items-center relative" style={{ minHeight: 52 }}>
         {showBack ? (
           <button
             onClick={() => navigate(-1)}
             className="rounded-xl flex items-center justify-center transition-all active:scale-90"
-            style={{ color: "var(--color-navy)", minWidth: 44, minHeight: 44 }}
+            style={{ color: "var(--color-navy)", minWidth: 48, minHeight: 48 }}
           >
-            <ArrowLeft className="w-6 h-6" />
+            <ArrowLeft className="w-7 h-7" />
           </button>
         ) : <div style={{ minWidth: 44 }} />}
 
