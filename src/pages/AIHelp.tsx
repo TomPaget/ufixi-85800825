@@ -145,7 +145,7 @@ export default function AIHelp() {
         <div
           className="fixed left-0 right-0 z-40 px-4 py-3"
           style={{
-            bottom: "calc(60px + env(safe-area-inset-bottom, 0px))",
+            bottom: "calc(72px + env(safe-area-inset-bottom, 0px))",
             background: "rgba(253,246,238,0.9)",
             backdropFilter: "blur(12px)",
             borderTop: "1px solid var(--glass-border)",
