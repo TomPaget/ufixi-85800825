@@ -126,9 +126,9 @@ export default function HomeDashboard() {
           {/* Welcome */}
           <motion.div
             className="text-center space-y-3"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.3 }}
           >
             <h1
               style={{
