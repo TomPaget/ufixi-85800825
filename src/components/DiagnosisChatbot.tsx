@@ -29,7 +29,6 @@ export default function DiagnosisChatbot({
   diyCostRange,
   proCostRange,
 }: DiagnosisChatbotProps) {
-  const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -40,9 +39,9 @@ export default function DiagnosisChatbot({
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, isTyping]);
 
-  // Pre-populate first AI message when opened
+  // Pre-populate first AI message on mount (always open)
   useEffect(() => {
-    if (isOpen && !hasInitialized) {
+    if (!hasInitialized) {
       setHasInitialized(true);
       const welcomeMsg: ChatMessage = {
         id: "welcome",
@@ -51,7 +50,7 @@ export default function DiagnosisChatbot({
       };
       setMessages([welcomeMsg]);
     }
-  }, [isOpen, hasInitialized, issueTitle]);
+  }, [hasInitialized, issueTitle]);
 
   const sendMessage = async () => {
     const text = input.trim();
