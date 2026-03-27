@@ -97,13 +97,8 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
   const [adDone, setAdDone] = useState(false);
   const [pendingResults, setPendingResults] = useState<{ triage: any; diagnosis: any } | null>(null);
   const { isPremium, startCheckout, user } = useSubscription();
-  const { initialize: initAdMob, showInterstitial, isNative } = useAdMob();
+  const { showInterstitial, isNative } = useAdMob();
   const { saveScanProgress, deleteScan } = useInProgressScan();
-
-  // Initialize AdMob on mount for native platforms
-  useEffect(() => {
-    if (!isPremium) initAdMob();
-  }, [isPremium, initAdMob]);
 
   const handleUploadMedia = () => {
     const input = document.createElement("input");
