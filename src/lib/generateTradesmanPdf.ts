@@ -1,4 +1,3 @@
-import jsPDF from "jspdf";
 import { getTradeNameForCategory } from "./tradeNameMap";
 
 const NAVY = "#00172F";
@@ -9,13 +8,13 @@ const PAGE_W = 210;
 const MARGIN = 20;
 const CONTENT_W = PAGE_W - MARGIN * 2;
 
-function addPageBg(doc: jsPDF) {
+function addPageBg(doc: any) {
   doc.setFillColor(253, 246, 238);
   doc.addPage();
   doc.rect(0, 0, PAGE_W, 297, "F");
 }
 
-function checkPageBreak(doc: jsPDF, y: number, needed: number): number {
+function checkPageBreak(doc: any, y: number, needed: number): number {
   if (y + needed > 270) {
     addPageBg(doc);
     return 20;
@@ -23,7 +22,7 @@ function checkPageBreak(doc: jsPDF, y: number, needed: number): number {
   return y;
 }
 
-function drawGradientBar(doc: jsPDF, x: number, y: number, w: number, h: number) {
+function drawGradientBar(doc: any, x: number, y: number, w: number, h: number) {
   const steps = 20;
   const stepW = w / steps;
   for (let i = 0; i < steps; i++) {
@@ -36,11 +35,12 @@ function drawGradientBar(doc: jsPDF, x: number, y: number, w: number, h: number)
   }
 }
 
-export function generateTradesmanPdf(
+export async function generateTradesmanPdf(
   triage: any,
   diagnosis: any,
   imageDataUrl?: string | null,
 ) {
+  const { default: jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const tradeName = getTradeNameForCategory(triage?.category);
 

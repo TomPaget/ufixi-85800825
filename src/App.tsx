@@ -1,3 +1,4 @@
+import { Suspense, lazy } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, HashRouter, Route, Routes, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -7,33 +8,37 @@ import { AnimatePresence } from "framer-motion";
 import { SubscriptionProvider } from "@/hooks/useSubscription";
 import { isNativeApp } from "@/lib/appNavigation";
 import AppErrorBoundary from "@/components/AppErrorBoundary";
-import Index from "./pages/Index";
-import HomeDashboard from "./pages/HomeDashboard";
-import Landing from "./pages/Landing";
-import MyIssues from "./pages/MyIssues";
-import IssueDetail from "./pages/IssueDetail";
-import AIHelp from "./pages/AIHelp";
-import Settings from "./pages/Settings";
-import Notifications from "./pages/Notifications";
-import History from "./pages/History";
-import Contractors from "./pages/Contractors";
-import Support from "./pages/Support";
-import Upgrade from "./pages/Upgrade";
-import NotFound from "./pages/NotFound";
-import AdminDashboard from "./pages/AdminDashboard";
-import Auth from "./pages/Auth";
-import ResetPassword from "./pages/ResetPassword";
-import Forum from "./pages/Forum";
-import ForumPost from "./pages/ForumPost";
-import CreatePost from "./pages/CreatePost";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import TermsOfService from "./pages/TermsOfService";
-import CancelSubscription from "./pages/CancelSubscription";
-import Unsubscribe from "./pages/Unsubscribe";
-import Profile from "./pages/Profile";
+const Index = lazy(() => import("./pages/Index"));
+const HomeDashboard = lazy(() => import("./pages/HomeDashboard"));
+const Landing = lazy(() => import("./pages/Landing"));
+const MyIssues = lazy(() => import("./pages/MyIssues"));
+const IssueDetail = lazy(() => import("./pages/IssueDetail"));
+const AIHelp = lazy(() => import("./pages/AIHelp"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Notifications = lazy(() => import("./pages/Notifications"));
+const History = lazy(() => import("./pages/History"));
+const Contractors = lazy(() => import("./pages/Contractors"));
+const Support = lazy(() => import("./pages/Support"));
+const Upgrade = lazy(() => import("./pages/Upgrade"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const Auth = lazy(() => import("./pages/Auth"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Forum = lazy(() => import("./pages/Forum"));
+const ForumPost = lazy(() => import("./pages/ForumPost"));
+const CreatePost = lazy(() => import("./pages/CreatePost"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const CancelSubscription = lazy(() => import("./pages/CancelSubscription"));
+const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
+const Profile = lazy(() => import("./pages/Profile"));
 
 const queryClient = new QueryClient();
 const Router = isNativeApp() ? HashRouter : BrowserRouter;
+
+function RouteFallback() {
+  return <div className="min-h-screen bg-background" />;
+}
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -79,7 +84,9 @@ const App = () => (
           <Toaster />
           <Sonner />
           <Router>
-            <AnimatedRoutes />
+            <Suspense fallback={<RouteFallback />}>
+              <AnimatedRoutes />
+            </Suspense>
           </Router>
         </SubscriptionProvider>
       </TooltipProvider>
