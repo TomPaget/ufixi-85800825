@@ -20,7 +20,7 @@ export default function PageHeader({ title, showBack = true, showLogo = true, ri
             className="rounded-xl flex items-center justify-center transition-all active:scale-90"
             style={{ color: "var(--color-navy)", minWidth: 44, minHeight: 44 }}
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-6 h-6" />
           </button>
         ) : <div style={{ minWidth: 44 }} />}
 

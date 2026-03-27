@@ -236,9 +236,6 @@ export default function DiagnosisChatbot({
                 </button>
               </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
