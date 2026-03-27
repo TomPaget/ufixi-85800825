@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { getInAppPath } from "@/lib/appNavigation";
 
 interface SubscriptionState {
   isPremium: boolean;
@@ -51,7 +51,6 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       setIsPremium(nowPremium);
       setSubscriptionEnd(data?.subscription_end || null);
 
-      // Send welcome email on first premium detection (once per session)
       if (nowPremium && !welcomeEmailSent) {
         setWelcomeEmailSent(true);
         const fullName = session.user.user_metadata?.full_name;
@@ -73,12 +72,10 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   }, [welcomeEmailSent]);
 
   const startCheckout = useCallback(async () => {
-    // Check if user is logged in first
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       toast.error("Please create an account first to subscribe");
-      // Navigate to auth - we use window.location since we're outside Router context
-      window.location.href = "/auth?redirect=upgrade";
+      window.location.assign(getInAppPath("/auth?redirect=upgrade"));
       return;
     }
 
@@ -102,7 +99,6 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // Restore session first
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setAuthReady(true);
@@ -113,7 +109,6 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -125,7 +120,6 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    // Re-check every 60s
     const interval = setInterval(checkSubscription, 60000);
 
     return () => {
