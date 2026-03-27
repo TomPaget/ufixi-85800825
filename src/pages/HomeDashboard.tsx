@@ -160,7 +160,7 @@ export default function HomeDashboard() {
             className="grid grid-cols-3 gap-3"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
+            transition={{ duration: 0.3, delay: 0.05 }}
           >
             {[
               { icon: TrendingUp, value: activeCount, label: "Active", color: "var(--color-primary)" },
