@@ -180,7 +180,7 @@ export default function HomeDashboard() {
             className="flex flex-col items-center justify-center gap-4 py-8 w-full text-center"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
           >
             <button
               onClick={() => setShowScanFlow(true)}
