@@ -28,6 +28,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import CancelSubscription from "./pages/CancelSubscription";
 import Unsubscribe from "./pages/Unsubscribe";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +46,7 @@ function AnimatedRoutes() {
         <Route path="/history" element={<History />} />
         <Route path="/ai-help" element={<AIHelp />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/contractors" element={<Contractors />} />
         <Route path="/find-tradesman" element={<Contractors />} />

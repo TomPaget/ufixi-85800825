@@ -44,11 +44,11 @@ export default function Settings() {
     : "Free plan — Upgrade to Premium";
 
   const MENU_ITEMS = [
-    { icon: User, label: "Profile", sub: `${displayName}`, path: null },
+    { icon: User, label: "Profile", sub: `${displayName}`, path: "/profile" },
     { icon: Crown, label: "Subscription", sub: subDescription, action: handleManageSubscription },
     ...(isPremium ? [{ icon: XCircle, label: "Cancel Subscription", sub: "Cancel your Premium plan", path: "/cancel-subscription" }] : []),
     { icon: Bell, label: "Notifications", sub: "Push & email preferences", path: "/notifications" },
-    { icon: Shield, label: "Privacy", sub: "Data & privacy settings", path: null },
+    { icon: Shield, label: "Privacy", sub: "Data & privacy settings", path: "/privacy" },
     { icon: HelpCircle, label: "Support", sub: "Help centre & contact", path: "/support" },
   ];
 

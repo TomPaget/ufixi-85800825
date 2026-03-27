@@ -1,6 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Crown, Trash2 } from "lucide-react";
+import { Bell, Crown } from "lucide-react";
 import { motion } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
 import PageHeader from "@/components/PageHeader";
@@ -26,10 +26,19 @@ function timeAgo(dateStr: string): string {
 export default function Notifications() {
   const navigate = useNavigate();
   const { notifications, loading, markAsRead, requestPushPermission } = useNotifications();
+  const [pushEnabled, setPushEnabled] = useState(() => {
+    return localStorage.getItem("pushNotificationsEnabled") !== "false";
+  });
 
   useEffect(() => {
-    requestPushPermission();
-  }, [requestPushPermission]);
+    if (pushEnabled) requestPushPermission();
+  }, [requestPushPermission, pushEnabled]);
+
+  const toggleNotifications = () => {
+    const next = !pushEnabled;
+    setPushEnabled(next);
+    localStorage.setItem("pushNotificationsEnabled", String(next));
+  };
 
   return (
     <PageTransition>
@@ -37,6 +46,24 @@ export default function Notifications() {
         <PageHeader title="Notifications" />
 
         <main className="max-w-lg mx-auto px-5 py-4 space-y-3">
+          {/* Notification toggle */}
+          <div className="rounded-2xl p-4 flex items-center justify-between" style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)" }}>
+            <div>
+              <p className="text-sm font-semibold" style={{ color: "var(--color-navy)" }}>Push Notifications</p>
+              <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>{pushEnabled ? "Enabled" : "Disabled"}</p>
+            </div>
+            <button
+              onClick={toggleNotifications}
+              className="relative w-12 h-7 rounded-full transition-colors"
+              style={{ background: pushEnabled ? "var(--color-primary)" : "rgba(0,23,47,0.12)" }}
+            >
+              <span
+                className="absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform"
+                style={{ left: pushEnabled ? "calc(100% - 26px)" : "2px" }}
+              />
+            </button>
+          </div>
+
           {loading ? (
             <div className="text-center py-12">
               <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>Loading...</p>
