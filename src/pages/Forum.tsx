@@ -16,7 +16,7 @@ export default function Forum() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen pb-20" style={{ background: "var(--color-bg)" }}>
+      <div className="min-h-screen" style={{ background: "var(--color-bg)", paddingBottom: "calc(72px + env(safe-area-inset-bottom, 0px) + 16px)" }}>
         <PageHeader
           title="Community"
           showBack={false}

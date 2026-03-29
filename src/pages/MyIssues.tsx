@@ -129,7 +129,7 @@ export default function MyIssues() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen pb-20" style={{ background: "var(--color-bg)" }}>
+      <div className="min-h-screen" style={{ background: "var(--color-bg)", paddingBottom: "calc(72px + env(safe-area-inset-bottom, 0px) + 16px)" }}>
         <PageHeader title="My Issues" showBack={false} showLogo />
 
         <main className="max-w-lg mx-auto px-5 py-4 space-y-4">
