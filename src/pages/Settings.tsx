@@ -79,10 +79,10 @@ export default function Settings() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen pb-20 relative overflow-hidden" style={{ background: "transparent" }}>
-        <LavaLampBackground />
-        <PageHeader title="Settings" showBack={false} showLogo />
-        <main className="max-w-lg mx-auto px-5 py-4 space-y-3">
+        <div className="min-h-screen relative overflow-hidden flex flex-col" style={{ background: "transparent", paddingBottom: "calc(72px + env(safe-area-inset-bottom, 0px) + 16px)" }}>
+          <LavaLampBackground />
+          <PageHeader title="Settings" showBack={false} showLogo />
+          <main className="max-w-lg mx-auto px-5 py-4 space-y-3 flex-1">
           {/* Profile card */}
           <div className="rounded-2xl p-5 flex items-center gap-4" style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", boxShadow: "var(--shadow-card)" }}>
             <div className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold" style={{ background: "var(--gradient-primary)", color: "white" }}>

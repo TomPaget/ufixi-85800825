@@ -12,8 +12,8 @@ interface PageHeaderProps {
 export default function PageHeader({ title, showBack = true, showLogo = true, rightAction }: PageHeaderProps) {
   const navigate = useNavigate();
   return (
-    <header className="sticky top-0 z-30" style={{ background: "rgba(253,246,238,0.85)", backdropFilter: "blur(12px)", paddingTop: "calc(env(safe-area-inset-top, 0px) + 14px)", paddingBottom: 10 }}>
-      <div className="max-w-lg mx-auto px-4 flex items-center relative" style={{ minHeight: 52 }}>
+    <header className="sticky top-0 z-30" style={{ background: "rgba(253,246,238,0.85)", backdropFilter: "blur(12px)", paddingTop: "calc(env(safe-area-inset-top, 0px) + 18px)", paddingBottom: 10, paddingLeft: "env(safe-area-inset-left, 0px)", paddingRight: "env(safe-area-inset-right, 0px)" }}>
+      <div className="max-w-lg mx-auto px-4 flex items-center relative" style={{ minHeight: 56 }}>
         {showBack ? (
           <button
             onClick={() => navigate(-1)}

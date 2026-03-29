@@ -83,7 +83,7 @@ export default function HomeDashboard() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen relative overflow-hidden" style={{ background: "transparent", paddingBottom: "calc(84px + env(safe-area-inset-bottom, 0px) + 8px)" }}>
+      <div className="min-h-screen relative overflow-hidden" style={{ background: "transparent", paddingBottom: "calc(72px + env(safe-area-inset-bottom, 0px) + 16px)" }}>
         <LavaLampBackground />
 
         {/* Header */}
