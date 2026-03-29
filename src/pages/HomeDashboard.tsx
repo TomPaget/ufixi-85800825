@@ -91,7 +91,7 @@ export default function HomeDashboard() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="sticky top-0 z-30"
-          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)" }}
+          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 18px)", paddingLeft: "env(safe-area-inset-left, 0px)", paddingRight: "env(safe-area-inset-right, 0px)" }}
         >
           <div className="max-w-lg mx-auto px-4 flex items-center relative" style={{ padding: "14px 16px" }}>
             <button
