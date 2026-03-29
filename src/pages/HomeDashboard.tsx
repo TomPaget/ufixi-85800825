@@ -93,7 +93,7 @@ export default function HomeDashboard() {
           className="sticky top-0 z-30"
           style={{ paddingTop: "calc(var(--safe-top) + var(--app-header-offset))", paddingLeft: "var(--safe-left)", paddingRight: "var(--safe-right)" }}
         >
-          <div className="max-w-lg mx-auto px-4 flex items-center relative" style={{ minHeight: 64, padding: "10px 16px 14px" }}>
+          <div className="max-w-lg mx-auto px-4 flex items-center relative" style={{ minHeight: 48, padding: "4px 16px 6px" }}>
             <button
               onClick={() => navigate("/notifications")}
               className="rounded-xl flex items-center justify-center transition-all active:scale-90 relative flex-shrink-0"

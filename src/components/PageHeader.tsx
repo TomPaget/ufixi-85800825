@@ -13,7 +13,7 @@ export default function PageHeader({ title, showBack = true, showLogo = true, ri
   const navigate = useNavigate();
   return (
     <header className="sticky top-0 z-30" style={{ background: "rgba(253,246,238,0.85)", backdropFilter: "blur(12px)", paddingTop: "calc(var(--safe-top) + var(--app-header-offset))", paddingBottom: 12, paddingLeft: "var(--safe-left)", paddingRight: "var(--safe-right)" }}>
-      <div className="max-w-lg mx-auto px-4 flex items-center relative" style={{ minHeight: 64 }}>
+      <div className="max-w-lg mx-auto px-4 flex items-center relative" style={{ minHeight: 48 }}>
         {showBack ? (
           <button
             onClick={() => navigate(-1)}
