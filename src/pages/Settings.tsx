@@ -57,10 +57,10 @@ export default function Settings() {
   if (!user) {
     return (
       <PageTransition>
-        <div className="min-h-screen pb-20 relative overflow-hidden" style={{ background: "transparent" }}>
+        <div className="min-h-screen relative overflow-hidden flex flex-col" style={{ background: "transparent", paddingBottom: "calc(72px + env(safe-area-inset-bottom, 0px) + 16px)" }}>
           <LavaLampBackground />
           <PageHeader title="Settings" showBack={false} showLogo />
-          <main className="max-w-lg mx-auto px-5 py-8 text-center space-y-4">
+          <main className="max-w-lg mx-auto px-5 py-8 text-center space-y-4 flex-1">
             <User className="w-12 h-12 mx-auto" style={{ color: "var(--color-text-secondary)" }} />
             <p className="text-base" style={{ color: "var(--color-navy)" }}>Sign in to access your settings</p>
             <button
