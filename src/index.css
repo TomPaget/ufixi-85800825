@@ -11,7 +11,7 @@
     --app-header-offset: 15px;
     --app-header-bar-height: 60px;
     --app-header-total: calc(var(--safe-top) + var(--app-header-offset) + var(--app-header-bar-height));
-    --app-bottom-nav-height: 80px;
+    --app-bottom-nav-height: 70px;
     --app-bottom-nav-padding: 8px;
     --app-bottom-nav-total: calc(var(--app-bottom-nav-height) + var(--safe-bottom) + var(--app-bottom-nav-padding));
     --app-page-bottom-space: calc(var(--app-bottom-nav-total) + 16px);
