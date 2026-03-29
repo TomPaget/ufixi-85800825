@@ -10,7 +10,7 @@ export default function History() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen pb-8" style={{ background: "var(--color-bg)" }}>
+      <div className="min-h-screen" style={{ background: "var(--color-bg)", minHeight: "100dvh", paddingBottom: "calc(var(--safe-bottom) + 24px)" }}>
         <PageHeader title="History" />
 
         <main className="max-w-lg mx-auto px-5 py-4 space-y-3">

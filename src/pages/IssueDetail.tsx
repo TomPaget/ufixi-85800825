@@ -80,7 +80,7 @@ export default function IssueDetail() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen pb-8 relative overflow-hidden" style={{ background: "transparent" }}>
+      <div className="min-h-screen relative overflow-hidden" style={{ background: "transparent", minHeight: "100dvh", paddingBottom: "calc(var(--safe-bottom) + 24px)" }}>
         <LavaLampBackground />
         <PageHeader title="Issue Detail" />
         <main className="max-w-lg mx-auto px-5 py-4 space-y-4">
