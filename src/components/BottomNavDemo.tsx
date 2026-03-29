@@ -19,12 +19,12 @@ export default function BottomNavDemo() {
         background: "rgba(255,255,255,0.92)",
         backdropFilter: "blur(20px)",
         borderTop: "1px solid var(--glass-border)",
-        paddingBottom: "calc(var(--safe-bottom) + 12px)",
-        paddingTop: "14px",
-        paddingLeft: "calc(var(--safe-left) + 8px)",
-        paddingRight: "calc(var(--safe-right) + 8px)",
+        paddingBottom: "calc(var(--safe-bottom) + 10px)",
+        paddingTop: "12px",
+        paddingLeft: "calc(var(--safe-left) + 4px)",
+        paddingRight: "calc(var(--safe-right) + 4px)",
         minHeight: "var(--app-bottom-nav-height)",
-        gap: "4px",
+        gap: "2px",
       }}
     >
       {NAV_ITEMS.map(({ label, icon: Icon, path }) => {
@@ -34,7 +34,7 @@ export default function BottomNavDemo() {
             key={path}
             onClick={() => navigate(path)}
             className="flex flex-col items-center gap-0.5 rounded-xl transition-all active:scale-90"
-            style={{ minWidth: 64, minHeight: 56, background: "transparent", border: "none", cursor: "pointer", padding: "8px 12px", flex: "1 1 0" }}
+            style={{ minWidth: 60, minHeight: 52, background: "transparent", border: "none", cursor: "pointer", padding: "6px 10px", flex: "1 1 0" }}
           >
             <Icon
               className="w-6 h-6 transition-colors"
