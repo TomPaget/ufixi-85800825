@@ -19,8 +19,8 @@ export default function BottomNavDemo() {
         background: "rgba(255,255,255,0.92)",
         backdropFilter: "blur(20px)",
         borderTop: "1px solid var(--glass-border)",
-        paddingBottom: "calc(var(--safe-bottom) + 4px)",
-        paddingTop: "8px",
+        paddingBottom: "var(--safe-bottom)",
+        paddingTop: "4px",
         paddingLeft: "calc(var(--safe-left) + 4px)",
         paddingRight: "calc(var(--safe-right) + 4px)",
         minHeight: "var(--app-bottom-nav-height)",
@@ -34,7 +34,7 @@ export default function BottomNavDemo() {
             key={path}
             onClick={() => navigate(path)}
             className="flex flex-col items-center gap-0.5 rounded-xl transition-all active:scale-90"
-            style={{ minWidth: 60, minHeight: 52, background: "transparent", border: "none", cursor: "pointer", padding: "6px 10px", flex: "1 1 0" }}
+            style={{ minWidth: 56, minHeight: 44, background: "transparent", border: "none", cursor: "pointer", padding: "4px 8px", flex: "1 1 0" }}
           >
             <Icon
               className="w-6 h-6 transition-colors"
