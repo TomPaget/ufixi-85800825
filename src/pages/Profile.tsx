@@ -65,7 +65,7 @@ export default function Profile() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen relative overflow-hidden" style={{ background: "transparent", paddingBottom: "calc(72px + env(safe-area-inset-bottom, 0px) + 16px)" }}>
+      <div className="min-h-screen relative overflow-hidden" style={{ background: "transparent", minHeight: "100dvh", paddingBottom: "var(--app-page-bottom-space)" }}>
         <LavaLampBackground />
         <PageHeader title="Profile" />
 

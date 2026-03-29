@@ -83,7 +83,7 @@ export default function HomeDashboard() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen relative overflow-hidden" style={{ background: "transparent", paddingBottom: "calc(72px + env(safe-area-inset-bottom, 0px) + 16px)" }}>
+      <div className="min-h-screen relative overflow-hidden" style={{ background: "transparent", minHeight: "100dvh", paddingBottom: "var(--app-page-bottom-space)" }}>
         <LavaLampBackground />
 
         {/* Header */}
@@ -91,13 +91,13 @@ export default function HomeDashboard() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="sticky top-0 z-30"
-          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 18px)", paddingLeft: "env(safe-area-inset-left, 0px)", paddingRight: "env(safe-area-inset-right, 0px)" }}
+          style={{ paddingTop: "calc(var(--safe-top) + var(--app-header-offset))", paddingLeft: "var(--safe-left)", paddingRight: "var(--safe-right)" }}
         >
-          <div className="max-w-lg mx-auto px-4 flex items-center relative" style={{ padding: "14px 16px" }}>
+          <div className="max-w-lg mx-auto px-4 flex items-center relative" style={{ minHeight: 64, padding: "10px 16px 14px" }}>
             <button
               onClick={() => navigate("/notifications")}
               className="rounded-xl flex items-center justify-center transition-all active:scale-90 relative flex-shrink-0"
-              style={{ color: "var(--color-navy)", minWidth: 44, minHeight: 44 }}
+              style={{ color: "var(--color-navy)", minWidth: 52, minHeight: 52 }}
             >
               <Bell className="w-5 h-5" />
               {unreadCount > 0 && <div className="absolute top-2 right-2 w-2 h-2 rounded-full" style={{ background: "#DC2626" }} />}
@@ -113,7 +113,7 @@ export default function HomeDashboard() {
                 animate={nativeApp ? undefined : { scale: [1, 1.02, 1] }}
                 transition={nativeApp ? undefined : { duration: 2.2, ease: "easeInOut", repeat: Infinity }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-all active:scale-95"
-                style={{ background: "var(--gradient-primary)", color: "#fff" }}
+                style={{ background: "var(--gradient-primary)", color: "#fff", minHeight: 44 }}
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 Go Premium

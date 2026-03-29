@@ -60,14 +60,14 @@ export default function AIHelp() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen relative overflow-hidden" style={{ background: "transparent", paddingBottom: "calc(72px + env(safe-area-inset-bottom, 0px) + 60px)" }}>
+      <div className="min-h-screen relative overflow-hidden" style={{ background: "transparent", minHeight: "100dvh", paddingBottom: "calc(var(--app-page-bottom-space) + 72px)" }}>
         <LavaLampBackground />
         <PageHeader title="AI Help" showBack={false} showLogo />
 
         <div
           ref={scrollRef}
           className="max-w-lg mx-auto px-4 py-4 space-y-4 overflow-y-auto"
-          style={{ height: "calc(100vh - 180px)" }}
+          style={{ height: "calc(100dvh - var(--app-header-total) - var(--app-bottom-nav-total) - 96px)" }}
         >
           <AnimatePresence initial={false}>
             {messages.map((msg) => (
@@ -145,7 +145,7 @@ export default function AIHelp() {
         <div
           className="fixed left-0 right-0 z-40 px-4 py-3"
           style={{
-            bottom: "calc(72px + env(safe-area-inset-bottom, 0px))",
+            bottom: "var(--app-bottom-nav-total)",
             background: "rgba(253,246,238,0.9)",
             backdropFilter: "blur(12px)",
             borderTop: "1px solid var(--glass-border)",

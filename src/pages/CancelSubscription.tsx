@@ -92,20 +92,20 @@ export default function CancelSubscription() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen" style={{ background: "var(--color-bg)" }}>
+      <div className="min-h-screen" style={{ background: "var(--color-bg)", minHeight: "100dvh", paddingBottom: "calc(var(--safe-bottom) + 24px)" }}>
         {/* Header */}
-        <div className="flex items-center gap-3 px-5 py-4" style={{ minHeight: 56 }}>
+        <div className="flex items-center gap-3 px-5" style={{ minHeight: 64, paddingTop: "calc(var(--safe-top) + var(--app-header-offset))", paddingBottom: 12, paddingLeft: "calc(var(--safe-left) + 20px)", paddingRight: "calc(var(--safe-right) + 20px)" }}>
           <button
             onClick={() => step === "reason" ? navigate("/settings") : setStep("reason")}
             className="flex items-center justify-center"
             style={{ minWidth: 44, minHeight: 44, color: navy }}
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-7 h-7" />
           </button>
           <h1 className="text-lg font-semibold" style={{ color: navy }}>Cancel Subscription</h1>
         </div>
 
-        <main className="max-w-lg mx-auto px-5 pb-10">
+        <main className="max-w-lg mx-auto px-5" style={{ paddingBottom: "calc(var(--safe-bottom) + 32px)" }}>
           <AnimatePresence mode="wait">
 
             {/* Step 1: Select reason */}

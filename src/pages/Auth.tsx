@@ -90,13 +90,13 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden flex flex-col" style={{ background: "var(--color-bg)" }}>
+    <div className="min-h-screen relative overflow-hidden flex flex-col" style={{ background: "var(--color-bg)", minHeight: "100dvh", paddingBottom: "calc(var(--safe-bottom) + 24px)" }}>
       <LavaLampBackground />
 
       {/* Header */}
-      <div className="relative z-10 flex items-center justify-between px-4 py-3" style={{ minHeight: 56 }}>
+      <div className="relative z-10 flex items-center justify-between px-4" style={{ minHeight: 64, paddingTop: "calc(var(--safe-top) + var(--app-header-offset))", paddingBottom: 12, paddingLeft: "calc(var(--safe-left) + 16px)", paddingRight: "calc(var(--safe-right) + 16px)" }}>
         <button onClick={() => mode === "forgot" ? setMode("login") : navigate("/")} className="flex items-center justify-center" style={{ minWidth: 44, minHeight: 44, color: navy }}>
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-7 h-7" />
         </button>
         <img src={ufixiLogo} alt="Ufixi" className="h-7 object-contain" />
         <div style={{ minWidth: 44 }} />

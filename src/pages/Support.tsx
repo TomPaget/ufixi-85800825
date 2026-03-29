@@ -119,7 +119,7 @@ export default function Support() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen pb-8 relative overflow-hidden" style={{ background: "transparent" }}>
+      <div className="min-h-screen relative overflow-hidden" style={{ background: "transparent", minHeight: "100dvh", paddingBottom: "calc(var(--safe-bottom) + 24px)" }}>
         <LavaLampBackground />
         <PageHeader title="Support" />
 

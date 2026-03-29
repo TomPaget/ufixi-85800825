@@ -524,7 +524,7 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
             <button
               onClick={handleAdCloseAttempt}
               className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center"
-              style={{ background: "rgba(0,23,47,0.1)", color: textSecondary }}
+              style={{ background: "rgba(0,23,47,0.1)", color: textSecondary, top: "calc(var(--safe-top) + 16px)", right: "calc(var(--safe-right) + 16px)" }}
             >
               <X className="w-4 h-4" />
             </button>
@@ -611,15 +611,15 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
       {showLavaBg && <LavaLampBackground />}
 
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 relative z-10" style={{ minHeight: 56 }}>
+      <div className="flex items-center justify-between px-4 relative z-10" style={{ minHeight: 64, paddingTop: "calc(var(--safe-top) + var(--app-header-offset))", paddingBottom: 12, paddingLeft: "calc(var(--safe-left) + 16px)", paddingRight: "calc(var(--safe-right) + 16px)" }}>
         {step > 1 && !showSavePrompt ? (
           <button onClick={() => { if (step === 4 && isAnalysing) return; setStep(step - 1); }} className="flex items-center justify-center" style={{ minWidth: 44, minHeight: 44, color: navy }}>
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-7 h-7" />
           </button>
         ) : <div style={{ minWidth: 44 }} />}
         <img src={ufixiLogo} alt="Ufixi" className="h-7 object-contain" />
         <button onClick={handleClose} className="flex items-center justify-center" style={{ minWidth: 44, minHeight: 44, color: navy }}>
-          <X className="w-5 h-5" />
+          <X className="w-7 h-7" />
         </button>
       </div>
 
@@ -635,7 +635,7 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
       )}
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-6 pb-6 relative z-10">
+      <div className="flex-1 overflow-y-auto px-6 relative z-10" style={{ paddingBottom: "calc(var(--safe-bottom) + 24px)" }}>
         <AnimatePresence mode="wait">
 
           {/* PREMIUM UPGRADE PROMPT */}
