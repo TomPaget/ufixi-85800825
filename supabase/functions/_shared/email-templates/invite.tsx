@@ -20,11 +20,12 @@ interface InviteEmailProps {
   siteName: string
   siteUrl: string
   confirmationUrl: string
+  name?: string
 }
 
 const LOGO_URL = 'https://rvxpqwscfmygfqanxfbq.supabase.co/storage/v1/object/public/email-assets/ufixi-logo.svg'
 
-export const InviteEmail = ({ siteName, siteUrl, confirmationUrl }: InviteEmailProps) => (
+export const InviteEmail = ({ siteName, siteUrl, confirmationUrl, name }: InviteEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
     <Preview>You've been invited to join Ufixi</Preview>
@@ -34,7 +35,9 @@ export const InviteEmail = ({ siteName, siteUrl, confirmationUrl }: InviteEmailP
           <Img src={LOGO_URL} alt="Ufixi" width="90" height="32" style={logo} />
         </Section>
         <Section style={contentSection}>
-          <Heading style={h1}>You've been invited</Heading>
+          <Heading style={h1}>
+            {name ? <><span style={gradientName}>{name}</span>, you've been invited</> : "You've been invited"}
+          </Heading>
           <Text style={text}>
             You've been invited to join{' '}
             <Link href={siteUrl} style={link}><strong>Ufixi</strong></Link>
@@ -60,7 +63,8 @@ const headerSection = { backgroundColor: '#FDF6EE', padding: '28px 25px 20px', b
 const logo = { margin: '0 auto', display: 'block' as const }
 const contentSection = { backgroundColor: '#FDF6EE', padding: '8px 25px 32px', borderRadius: '0 0 16px 16px' }
 const h1 = { fontSize: '24px', fontWeight: 'bold' as const, color: '#00172F', margin: '0 0 16px', letterSpacing: '-0.02em' }
-const text = { fontSize: '15px', color: 'rgba(0, 23, 47, 0.55)', lineHeight: '1.6', margin: '0 0 20px', letterSpacing: '0.03em' }
+const gradientName = { background: 'linear-gradient(135deg, #E8530A 0%, #D93870 100%)', WebkitBackgroundClip: 'text' as const, WebkitTextFillColor: 'transparent', backgroundClip: 'text' as const }
+const text = { fontSize: '15px', color: '#00172F', lineHeight: '1.6', margin: '0 0 20px', letterSpacing: '0.03em' }
 const link = { color: '#00172F', textDecoration: 'underline' }
 const button = { background: 'linear-gradient(135deg, #E8530A 0%, #D93870 100%)', backgroundColor: '#E8530A', color: '#ffffff', fontSize: '15px', fontWeight: 'bold' as const, borderRadius: '16px', padding: '14px 28px', textDecoration: 'none', display: 'block' as const, textAlign: 'center' as const, margin: '8px 0 0' }
 const footer = { fontSize: '12px', color: 'rgba(0, 23, 47, 0.38)', margin: '24px 25px 0', letterSpacing: '0.03em' }
