@@ -61,9 +61,9 @@ export default function Auth() {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: {
-            data: { full_name: fullName },
-            emailRedirectTo: window.location.origin,
+            options: {
+              data: { full_name: fullName },
+              emailRedirectTo: 'https://ufixi.lovable.app',
           },
         });
         if (error) throw error;
