@@ -33,7 +33,7 @@ export default function Auth() {
       setLoading(true);
       try {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/reset-password`,
+          redirectTo: `https://ufixi.lovable.app/reset-password`,
         });
         if (error) throw error;
         toast.success("Check your email for a password reset link");
@@ -61,9 +61,9 @@ export default function Auth() {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: {
-            data: { full_name: fullName },
-            emailRedirectTo: window.location.origin,
+            options: {
+              data: { full_name: fullName },
+              emailRedirectTo: 'https://ufixi.lovable.app',
           },
         });
         if (error) throw error;
