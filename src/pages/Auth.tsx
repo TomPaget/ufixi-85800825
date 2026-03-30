@@ -33,7 +33,7 @@ export default function Auth() {
       setLoading(true);
       try {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/reset-password`,
+          redirectTo: `https://ufixi.lovable.app/reset-password`,
         });
         if (error) throw error;
         toast.success("Check your email for a password reset link");
