@@ -850,6 +850,9 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
                 <p className="text-xs" style={{ color: textSecondary }}>
                   Only the area code (e.g. "SW1") is stored — never your full postcode
                 </p>
+              </div>
+
+              {/* Category */}
               <div className="space-y-3">
                 <label className="text-base font-semibold flex items-center gap-2" style={{ color: navy }}>
                   <Tag className="w-4 h-4" style={{ color: "var(--color-primary)" }} /> Issue Category
