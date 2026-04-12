@@ -63,7 +63,7 @@ export default function AdminDashboard() {
     if (exportFilters.issueType) filtered = filtered.filter(i => i.issue_type === exportFilters.issueType);
     if (exportFilters.urgency) filtered = filtered.filter(i => i.urgency === exportFilters.urgency);
 
-    const headers = ["issue_type","issue_title","category","urgency","severity_score","priority","diy_safe","diy_cost_estimate","pro_cost_estimate","postcode_area","region","property_category","user_tier","issue_date","status"];
+    const headers = ["issue_type","issue_title","category","urgency","severity_score","priority","diy_safe","diy_cost_estimate","pro_cost_estimate","postcode_area","region","trade_type","responsibility","property_category","user_tier","issue_date","status"];
     const csv = [headers.join(","), ...filtered.map(r => headers.map(h => `"${r[h] ?? ""}"`).join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);

@@ -88,6 +88,7 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
   const [aiError, setAiError] = useState<string | null>(null);
   const [showExitWarning, setShowExitWarning] = useState(false);
   const [currentScanId, setCurrentScanId] = useState<string | null>(resumeScanId || null);
+  const [postcode, setPostcode] = useState("");
 
   // Ad state
   const [showAd, setShowAd] = useState(false);
@@ -158,6 +159,48 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
     onClose();
   };
 
+  // Extract truncated postcode area (e.g. "SW1" from "SW1A 2AA") — never store full postcode
+  const getPostcodeArea = (pc: string): string | null => {
+    const trimmed = pc.trim().toUpperCase();
+    if (!trimmed) return null;
+    // UK postcode area is 1-2 letters + 1-2 digits at the start
+    const match = trimmed.match(/^([A-Z]{1,2}\d{1,2})/);
+    return match ? match[1] : null;
+  };
+
+  // Map postcode area to broad UK region for analytics
+  const getRegionFromPostcode = (area: string | null): string | null => {
+    if (!area) return null;
+    const prefix = area.replace(/\d+$/, "");
+    const REGION_MAP: Record<string, string> = {
+      AB: "Scotland", DD: "Scotland", DG: "Scotland", EH: "Scotland", FK: "Scotland",
+      G: "Scotland", HS: "Scotland", IV: "Scotland", KA: "Scotland", KW: "Scotland",
+      KY: "Scotland", ML: "Scotland", PA: "Scotland", PH: "Scotland", TD: "Scotland", ZE: "Scotland",
+      AL: "East of England", CB: "East of England", CM: "East of England", CO: "East of England",
+      IP: "East of England", NR: "East of England", PE: "East of England", SG: "East of England", SS: "East of England",
+      B: "West Midlands", CV: "West Midlands", DY: "West Midlands", WS: "West Midlands", WV: "West Midlands",
+      DE: "East Midlands", DN: "East Midlands", LE: "East Midlands", LN: "East Midlands",
+      NG: "East Midlands", NN: "East Midlands", S: "East Midlands",
+      BA: "South West", BH: "South West", BS: "South West", DT: "South West", EX: "South West",
+      GL: "South West", PL: "South West", SN: "South West", SP: "South West", TA: "South West",
+      TQ: "South West", TR: "South West",
+      BN: "South East", CT: "South East", GU: "South East", HP: "South East", ME: "South East",
+      MK: "South East", OX: "South East", PO: "South East", RG: "South East", RH: "South East",
+      SL: "South East", SO: "South East", TN: "South East",
+      E: "London", EC: "London", N: "London", NW: "London", SE: "London", SW: "London",
+      W: "London", WC: "London",
+      BB: "North West", BL: "North West", CA: "North West", CH: "North West", CW: "North West",
+      FY: "North West", L: "North West", LA: "North West", M: "North West", OL: "North West",
+      PR: "North West", SK: "North West", WA: "North West", WN: "North West",
+      BD: "Yorkshire", HD: "Yorkshire", HG: "Yorkshire", HU: "Yorkshire", HX: "Yorkshire",
+      LS: "Yorkshire", WF: "Yorkshire", YO: "Yorkshire",
+      DH: "North East", DL: "North East", NE: "North East", SR: "North East", TS: "North East",
+      CF: "Wales", LD: "Wales", LL: "Wales", NP: "Wales", SA: "Wales", SY: "Wales",
+      BT: "Northern Ireland",
+    };
+    return REGION_MAP[prefix] || null;
+  };
+
   const collectAnonymisedData = async (triageData: any, diagnosisData: any) => {
     try {
       const sessionHash = crypto.randomUUID();
@@ -168,11 +211,26 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
       const proMax = diagnosisData?.estimated_costs?.professional_max || 0;
       const hasDiy = diagnosisData?.diy_quick_fixes?.length > 0;
       const priority = urgency === "fix_now" ? "critical" : urgency === "fix_soon" ? "high" : urgency === "monitor" ? "medium" : "low";
+      const cat = triageData?.category || category || "other";
+      const postcodeArea = getPostcodeArea(postcode);
+      const region = getRegionFromPostcode(postcodeArea);
+
+      // Derive trade type from category
+      const TRADE_FROM_CAT: Record<string, string> = {
+        plumbing: "Plumber", electrical: "Electrician", structural: "Builder",
+        hvac: "Heating Engineer", appliance: "Appliance Repair", roofing: "Roofer",
+        damp: "Damp Specialist", gas: "Gas Safe Engineer", drainage: "Drainage Engineer",
+        carpentry: "Carpenter", glazing: "Glazier", pest: "Pest Control", other: "General",
+      };
+      const tradeType = TRADE_FROM_CAT[cat.toLowerCase()] || "General";
+
+      // Determine responsibility from diagnosis if available
+      const responsibility = diagnosisData?.responsibility || (diagnosisData?.diy_quick_fixes?.length > 0 ? "tenant_can_diy" : "landlord_likely");
 
       await supabase.from("anonymised_insights").insert({
-        issue_type: triageData?.category || category || "other",
+        issue_type: cat,
         issue_title: triageData?.issue_title || triageData?.brief_description || "Unknown",
-        category: triageData?.category || category || "other",
+        category: cat,
         urgency,
         severity_score: urgency === "fix_now" ? 9 : urgency === "fix_soon" ? 6 : urgency === "monitor" ? 3 : 1,
         priority,
@@ -182,6 +240,11 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
         user_tier: isPremium ? "premium" : "free",
         session_id: sessionHash,
         status: "active",
+        postcode_area: postcodeArea,
+        region,
+        trade_type: tradeType,
+        property_category: "residential",
+        responsibility,
       } as any);
     } catch (err) {
       console.error("Anonymised data collection error:", err);
@@ -769,6 +832,24 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
                   className="w-full rounded-2xl p-4 text-base"
                   style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: navy }}
                 />
+              </div>
+
+              {/* Postcode (optional — truncated for anonymised analytics) */}
+              <div className="space-y-2">
+                <label className="text-base font-semibold flex items-center gap-2" style={{ color: navy }}>
+                  <MapPin className="w-4 h-4" style={{ color: "var(--color-primary)" }} /> Postcode <span className="text-xs font-normal" style={{ color: textSecondary }}>(optional)</span>
+                </label>
+                <input
+                  value={postcode}
+                  onChange={(e) => setPostcode(e.target.value.toUpperCase())}
+                  placeholder="e.g., SW1A 2AA"
+                  maxLength={8}
+                  className="w-full rounded-2xl p-4 text-base"
+                  style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: navy }}
+                />
+                <p className="text-xs" style={{ color: textSecondary }}>
+                  Only the area code (e.g. "SW1") is stored — never your full postcode
+                </p>
               </div>
 
               {/* Category */}
