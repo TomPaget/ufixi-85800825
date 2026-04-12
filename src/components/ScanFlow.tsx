@@ -834,7 +834,22 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
                 />
               </div>
 
-              {/* Category */}
+              {/* Postcode (optional — truncated for anonymised analytics) */}
+              <div className="space-y-2">
+                <label className="text-base font-semibold flex items-center gap-2" style={{ color: navy }}>
+                  <MapPin className="w-4 h-4" style={{ color: "var(--color-primary)" }} /> Postcode <span className="text-xs font-normal" style={{ color: textSecondary }}>(optional)</span>
+                </label>
+                <input
+                  value={postcode}
+                  onChange={(e) => setPostcode(e.target.value.toUpperCase())}
+                  placeholder="e.g., SW1A 2AA"
+                  maxLength={8}
+                  className="w-full rounded-2xl p-4 text-base"
+                  style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: navy }}
+                />
+                <p className="text-xs" style={{ color: textSecondary }}>
+                  Only the area code (e.g. "SW1") is stored — never your full postcode
+                </p>
               <div className="space-y-3">
                 <label className="text-base font-semibold flex items-center gap-2" style={{ color: navy }}>
                   <Tag className="w-4 h-4" style={{ color: "var(--color-primary)" }} /> Issue Category
