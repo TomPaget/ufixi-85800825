@@ -102,18 +102,55 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
   const { saveScanProgress, deleteScan } = useInProgressScan();
 
   const handleUploadMedia = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*,video/*";
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        setUploadedFile(file);
-        setUploadedPreviewUrl(URL.createObjectURL(file));
-        setUploadMethod("upload");
-      }
-    };
-    input.click();
+    try {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*,video/*";
+      // Add capture attribute for direct camera access on mobile/iPad
+      input.setAttribute("capture", "environment");
+      input.onchange = (e) => {
+        try {
+          const file = (e.target as HTMLInputElement).files?.[0];
+          if (file) {
+            setUploadedFile(file);
+            setUploadedPreviewUrl(URL.createObjectURL(file));
+            setUploadMethod("upload");
+          }
+        } catch (err) {
+          console.error("File selection error:", err);
+          toast.error("Could not load the selected file. Please try again.");
+        }
+      };
+      input.click();
+    } catch (err) {
+      console.error("Camera/upload error:", err);
+      toast.error("Could not open camera. Please try uploading from your gallery instead.");
+    }
+  };
+
+  const handleUploadFromGallery = () => {
+    try {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*,video/*";
+      input.onchange = (e) => {
+        try {
+          const file = (e.target as HTMLInputElement).files?.[0];
+          if (file) {
+            setUploadedFile(file);
+            setUploadedPreviewUrl(URL.createObjectURL(file));
+            setUploadMethod("upload");
+          }
+        } catch (err) {
+          console.error("File selection error:", err);
+          toast.error("Could not load the selected file. Please try again.");
+        }
+      };
+      input.click();
+    } catch (err) {
+      console.error("Gallery error:", err);
+      toast.error("Could not open gallery. Please try again.");
+    }
   };
 
   const totalSteps = 7;

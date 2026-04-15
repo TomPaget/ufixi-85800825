@@ -79,14 +79,25 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Pre-open the window BEFORE the async call to avoid Safari/iPad popup blocker
+    const checkoutWindow = window.open("about:blank", "_blank");
+
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout");
       if (error) throw error;
       if (data?.url) {
-        window.open(data.url, "_blank");
+        if (checkoutWindow && !checkoutWindow.closed) {
+          checkoutWindow.location.href = data.url;
+        } else {
+          // Fallback: navigate in the same tab if popup was blocked
+          window.location.assign(data.url);
+        }
+      } else {
+        checkoutWindow?.close();
       }
     } catch (err) {
       console.error("Checkout error:", err);
+      checkoutWindow?.close();
       toast.error("Could not start checkout. Please try again.");
     }
   }, []);
