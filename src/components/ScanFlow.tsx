@@ -102,18 +102,55 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
   const { saveScanProgress, deleteScan } = useInProgressScan();
 
   const handleUploadMedia = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*,video/*";
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        setUploadedFile(file);
-        setUploadedPreviewUrl(URL.createObjectURL(file));
-        setUploadMethod("upload");
-      }
-    };
-    input.click();
+    try {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*,video/*";
+      // Add capture attribute for direct camera access on mobile/iPad
+      input.setAttribute("capture", "environment");
+      input.onchange = (e) => {
+        try {
+          const file = (e.target as HTMLInputElement).files?.[0];
+          if (file) {
+            setUploadedFile(file);
+            setUploadedPreviewUrl(URL.createObjectURL(file));
+            setUploadMethod("upload");
+          }
+        } catch (err) {
+          console.error("File selection error:", err);
+          toast.error("Could not load the selected file. Please try again.");
+        }
+      };
+      input.click();
+    } catch (err) {
+      console.error("Camera/upload error:", err);
+      toast.error("Could not open camera. Please try uploading from your gallery instead.");
+    }
+  };
+
+  const handleUploadFromGallery = () => {
+    try {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*,video/*";
+      input.onchange = (e) => {
+        try {
+          const file = (e.target as HTMLInputElement).files?.[0];
+          if (file) {
+            setUploadedFile(file);
+            setUploadedPreviewUrl(URL.createObjectURL(file));
+            setUploadMethod("upload");
+          }
+        } catch (err) {
+          console.error("File selection error:", err);
+          toast.error("Could not load the selected file. Please try again.");
+        }
+      };
+      input.click();
+    } catch (err) {
+      console.error("Gallery error:", err);
+      toast.error("Could not open gallery. Please try again.");
+    }
   };
 
   const totalSteps = 7;
@@ -746,36 +783,53 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
               )}
 
               {/* Upload section */}
-              <div className="space-y-2">
+               <div className="space-y-2">
                 <label className="text-base font-semibold flex items-center gap-2" style={{ color: navy }}>
                   <Camera className="w-4 h-4" style={{ color: "var(--color-primary)" }} /> Upload Issue
                 </label>
-                <button
-                  onClick={handleUploadMedia}
-                  className="w-full flex items-center gap-4 p-4 rounded-2xl transition-all active:scale-[0.98]"
-                  style={{
-                    background: uploadedFile ? "rgba(232,83,10,0.08)" : "white",
-                    border: `2px solid ${uploadedFile ? "var(--color-primary)" : "rgba(0,23,47,0.08)"}`,
-                    minHeight: 56,
-                  }}
-                >
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(232,83,10,0.08)" }}>
-                    <Upload className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
+                {uploadedFile ? (
+                  <button
+                    onClick={handleUploadFromGallery}
+                    className="w-full flex items-center gap-4 p-4 rounded-2xl transition-all active:scale-[0.98]"
+                    style={{
+                      background: "rgba(232,83,10,0.08)",
+                      border: "2px solid var(--color-primary)",
+                      minHeight: 56,
+                    }}
+                  >
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(232,83,10,0.08)" }}>
+                      <Upload className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-base font-semibold" style={{ color: navy }}>Change Media</p>
+                      <p className="text-sm" style={{ color: textSecondary }}>{uploadedFile.name.slice(0, 30)}</p>
+                    </div>
+                    <span className="ml-auto text-xs px-2 py-1 rounded-full" style={{ background: "rgba(29,158,117,0.1)", color: "var(--color-success)" }}>✓</span>
+                  </button>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={handleUploadMedia}
+                      className="flex flex-col items-center gap-2 p-4 rounded-2xl transition-all active:scale-[0.98]"
+                      style={{ background: "white", border: "2px solid rgba(0,23,47,0.08)", minHeight: 56 }}
+                    >
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(232,83,10,0.08)" }}>
+                        <Camera className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
+                      </div>
+                      <p className="text-sm font-semibold" style={{ color: navy }}>Take Photo</p>
+                    </button>
+                    <button
+                      onClick={handleUploadFromGallery}
+                      className="flex flex-col items-center gap-2 p-4 rounded-2xl transition-all active:scale-[0.98]"
+                      style={{ background: "white", border: "2px solid rgba(0,23,47,0.08)", minHeight: 56 }}
+                    >
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(232,83,10,0.08)" }}>
+                        <Upload className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
+                      </div>
+                      <p className="text-sm font-semibold" style={{ color: navy }}>Choose from Gallery</p>
+                    </button>
                   </div>
-                  <div className="text-left">
-                    <p className="text-base font-semibold" style={{ color: navy }}>
-                      {uploadedFile ? "Change Media" : "Upload Photo or Video"}
-                    </p>
-                    <p className="text-sm" style={{ color: textSecondary }}>
-                      {uploadedFile ? uploadedFile.name.slice(0, 30) : "Take a photo, record video, or choose from gallery"}
-                    </p>
-                  </div>
-                  {uploadedFile && (
-                    <span className="ml-auto text-xs px-2 py-1 rounded-full" style={{ background: "rgba(29,158,117,0.1)", color: "var(--color-success)" }}>
-                      ✓
-                    </span>
-                  )}
-                </button>
+                )}
               </div>
 
               {/* Image/Video Preview OR Tips */}
