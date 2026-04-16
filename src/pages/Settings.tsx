@@ -70,6 +70,33 @@ export default function Settings() {
             >
               Sign In / Create Account
             </button>
+
+            <div className="rounded-2xl overflow-hidden mt-6 text-left" style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)" }}>
+              <button
+                onClick={() => navigate("/privacy")}
+                className="w-full flex items-center gap-3 p-4 text-left transition-all active:bg-muted"
+                style={{ borderBottom: "1px solid rgba(0,23,47,0.06)", minHeight: 56 }}
+              >
+                <Shield className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold" style={{ color: "var(--color-navy)" }}>Privacy Policy</p>
+                  <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>How we handle your data</p>
+                </div>
+                <ChevronRight className="w-4 h-4" style={{ color: "#9aa5b4" }} />
+              </button>
+              <button
+                onClick={() => navigate("/terms")}
+                className="w-full flex items-center gap-3 p-4 text-left transition-all active:bg-muted"
+                style={{ minHeight: 56 }}
+              >
+                <HelpCircle className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold" style={{ color: "var(--color-navy)" }}>Terms of Service</p>
+                  <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>Usage terms & conditions</p>
+                </div>
+                <ChevronRight className="w-4 h-4" style={{ color: "#9aa5b4" }} />
+              </button>
+            </div>
           </main>
           <BottomNavDemo />
         </div>
