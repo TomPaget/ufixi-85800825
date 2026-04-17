@@ -60,7 +60,22 @@ serve(async (req) => {
       throw new Error("No active subscription found");
     }
 
-    const subscriptionEnd = new Date(ongoingSubscription.current_period_end * 1000).toISOString();
+    const getPeriodEnd = (sub: any): string | null => {
+      const candidates = [
+        sub?.current_period_end,
+        sub?.items?.data?.[0]?.current_period_end,
+        sub?.cancel_at,
+        sub?.trial_end,
+      ];
+      for (const ts of candidates) {
+        if (typeof ts === "number" && Number.isFinite(ts) && ts > 0) {
+          return new Date(ts * 1000).toISOString();
+        }
+      }
+      return null;
+    };
+
+    const subscriptionEnd = getPeriodEnd(ongoingSubscription);
 
     if (ongoingSubscription.cancel_at_period_end) {
       logStep("Subscription already set to cancel", { subscriptionId: ongoingSubscription.id, subscriptionEnd });
