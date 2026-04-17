@@ -64,13 +64,19 @@ export async function autoSaveRecentScan(opts: {
 }
 
 /**
- * Loads up to MAX_AUTO_RECENT non-expired auto-recent scans for the user.
- * Also fires off a background delete of expired rows.
+ * Loads recent scans for premium users:
+ * - All auto_recent rows that haven't expired
+ * - PLUS any other saved_issues created in the last AUTO_RECENT_DAYS days
+ *   (so manually saved scans also show up here for quick access)
+ *
+ * Capped at MAX_AUTO_RECENT total. Also fires off a background delete of
+ * expired auto-recent rows.
  */
 export async function loadRecentScans(userId: string) {
   const nowIso = new Date().toISOString();
+  const cutoffIso = new Date(Date.now() - AUTO_RECENT_DAYS * 86400000).toISOString();
 
-  // Background cleanup of expired rows (don't await)
+  // Background cleanup of expired auto-recent rows
   supabase
     .from("saved_issues")
     .delete()
@@ -79,18 +85,25 @@ export async function loadRecentScans(userId: string) {
     .lt("expires_at", nowIso)
     .then(() => {});
 
+  // Pull a generous window of recent rows (any status), then filter client-side
   const { data, error } = await supabase
     .from("saved_issues")
     .select("*")
     .eq("user_id", userId)
-    .eq("status", AUTO_RECENT_STATUS)
-    .or(`expires_at.is.null,expires_at.gte.${nowIso}`)
+    .gte("created_at", cutoffIso)
     .order("created_at", { ascending: false })
-    .limit(MAX_AUTO_RECENT);
+    .limit(MAX_AUTO_RECENT * 2);
 
   if (error) {
     console.warn("loadRecentScans error:", error);
     return [];
   }
-  return data || [];
+
+  const rows = (data || []).filter((r: any) => {
+    // Drop expired auto-recent rows that the background delete hasn't cleared yet
+    if (r.status === AUTO_RECENT_STATUS && r.expires_at && r.expires_at < nowIso) return false;
+    return true;
+  });
+
+  return rows.slice(0, MAX_AUTO_RECENT);
 }
