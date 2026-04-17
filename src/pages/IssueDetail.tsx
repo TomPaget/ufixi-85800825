@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
 import LavaLampBackground from "@/components/LavaLampBackground";
 import PageHeader from "@/components/PageHeader";
 import DiagnosisResults from "@/components/DiagnosisResults";
 import AppErrorBoundary from "@/components/AppErrorBoundary";
+import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 
 const textSec = "#5A6A7A";
@@ -13,43 +14,72 @@ const textSec = "#5A6A7A";
 export default function IssueDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [issue, setIssue] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const location = useLocation();
+  const { authReady, user } = useSubscription();
+  const [issue, setIssue] = useState<any>((location.state as any)?.issue ?? null);
+  const [loading, setLoading] = useState(!(location.state as any)?.issue);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    const preloadedIssue = (location.state as any)?.issue;
+
+    const loadIssue = async () => {
       try {
         if (!id) {
-          setLoading(false);
+          setError("Missing issue ID");
           return;
         }
+
+        if (preloadedIssue?.id === id) {
+          setIssue(preloadedIssue);
+          setError(null);
+          return;
+        }
+
+        if (!authReady) return;
+
+        if (!user) {
+          setError("Please sign in to view this issue.");
+          return;
+        }
+
+        setError(null);
         const { data, error: dbError } = await supabase
           .from("saved_issues")
           .select("*")
           .eq("id", id)
           .maybeSingle();
+
         if (cancelled) return;
+
         if (dbError) {
           console.error("[IssueDetail] Load error:", dbError);
           setError(dbError.message);
-        } else {
-          setIssue(data);
+          setIssue(null);
+          return;
         }
+
+        setIssue(data);
       } catch (e: any) {
         console.error("[IssueDetail] Unexpected error:", e);
-        if (!cancelled) setError(e?.message || "Failed to load issue");
+        if (!cancelled) {
+          setError(e?.message || "Failed to load issue");
+          setIssue(null);
+        }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled && (authReady || preloadedIssue)) setLoading(false);
       }
-    })();
+    };
+
+    setLoading(!preloadedIssue);
+    loadIssue();
+
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, authReady, user, location.state]);
 
-  // Always render the page shell so users see a header instead of a blank screen
   return (
     <PageTransition>
       <div
