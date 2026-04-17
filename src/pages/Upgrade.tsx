@@ -7,29 +7,30 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const PLANS = [
-  {
-    name: "Free",
-    price: "£0",
-    period: "forever",
-    features: ["3 scans per month", "Basic AI diagnosis", "Ads"],
-    current: true,
-  },
-  {
-    name: "Premium",
-    price: "£0.99",
-    priceAfter: "£1.99",
-    period: "first month",
-    periodAfter: "per month after",
-    features: ["Unlimited scans", "Save scans to your account", "45-day scan history", "Priority AI analysis", "Detailed cost estimates", "PDF & email reports", "Ad-free experience"],
-    current: false,
-    recommended: true,
-  },
-];
-
 export default function Upgrade() {
-  const { isPremium, subscriptionEnd, startCheckout, user, checkSubscription } = useSubscription();
+  const { isPremium, subscriptionEnd, cancelAtPeriodEnd, hasEverSubscribed, startCheckout, renewSubscription, user, checkSubscription } = useSubscription();
   const navigate = useNavigate();
+  const eligibleForFirstMonth = !hasEverSubscribed;
+
+  const PLANS = [
+    {
+      name: "Free",
+      price: "£0",
+      period: "forever",
+      features: ["3 scans per month", "Basic AI diagnosis", "Ads"],
+      current: true,
+    },
+    {
+      name: "Premium",
+      price: eligibleForFirstMonth ? "£0.99" : "£1.99",
+      priceAfter: eligibleForFirstMonth ? "£1.99" : null,
+      period: eligibleForFirstMonth ? "first month" : "per month",
+      periodAfter: eligibleForFirstMonth ? "per month after" : null,
+      features: ["Unlimited scans", "Save scans to your account", "45-day scan history", "Priority AI analysis", "Detailed cost estimates", "PDF & email reports", "Ad-free experience"],
+      current: false,
+      recommended: true,
+    },
+  ];
 
   const handleManage = async () => {
     try {
@@ -47,6 +48,10 @@ export default function Upgrade() {
       navigate("/auth?redirect=upgrade");
       return;
     }
+    if (isPremium && cancelAtPeriodEnd) {
+      renewSubscription();
+      return;
+    }
     startCheckout();
   };
 
@@ -59,17 +64,19 @@ export default function Upgrade() {
           <div className="text-center space-y-2 py-4">
             <Crown className="w-10 h-10 mx-auto" style={{ color: "var(--color-primary)" }} />
             <h1 className="text-2xl" style={{ color: "var(--color-navy)" }}>
-              {isPremium ? "You're Premium!" : "Go Premium"}
+              {isPremium ? (cancelAtPeriodEnd ? "Renew Premium" : "You're Premium!") : "Go Premium"}
             </h1>
             <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
               {isPremium
-                ? `Active until ${subscriptionEnd ? new Date(subscriptionEnd).toLocaleDateString() : "—"}`
+                ? cancelAtPeriodEnd
+                  ? `Cancelled — Premium ends ${subscriptionEnd ? new Date(subscriptionEnd).toLocaleDateString() : "—"}. Renew to keep your benefits.`
+                  : `Active until ${subscriptionEnd ? new Date(subscriptionEnd).toLocaleDateString() : "—"}`
                 : "Unlock unlimited scans and premium features"}
             </p>
           </div>
 
           {PLANS.map((plan) => {
-            const isActive = (plan.name === "Premium" && isPremium) || (plan.name === "Free" && !isPremium);
+            const isActive = (plan.name === "Premium" && isPremium && !cancelAtPeriodEnd) || (plan.name === "Free" && !isPremium);
             return (
               <div
                 key={plan.name}
@@ -113,14 +120,17 @@ export default function Upgrade() {
                   </button>
                 ) : plan.recommended ? (
                   <GradientButton size="lg" onClick={handleUpgrade}>
-                    <span className="flex items-center justify-center gap-2"><Zap className="w-4 h-4" /> Upgrade Now</span>
+                    <span className="flex items-center justify-center gap-2">
+                      <Zap className="w-4 h-4" />
+                      {isPremium && cancelAtPeriodEnd ? "Renew Now" : "Upgrade Now"}
+                    </span>
                   </GradientButton>
                 ) : null}
               </div>
             );
           })}
 
-          {isPremium && (
+          {isPremium && !cancelAtPeriodEnd && (
             <div className="space-y-2">
               <button
                 onClick={handleManage}
