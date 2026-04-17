@@ -1,5 +1,5 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { User, CreditCard, Bell, Shield, HelpCircle, LogOut, ChevronRight, Crown, XCircle } from "lucide-react";
+import { User, CreditCard, Bell, Shield, HelpCircle, LogOut, ChevronRight, Crown, XCircle, RefreshCw } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
 import LavaLampBackground from "@/components/LavaLampBackground";
 import PageHeader from "@/components/PageHeader";
@@ -10,7 +10,7 @@ import { toast } from "sonner";
 
 export default function Settings() {
   const navigate = useNavigate();
-  const { user, isPremium, subscriptionEnd, signOut, authReady } = useSubscription();
+  const { user, isPremium, subscriptionEnd, cancelAtPeriodEnd, signOut, authReady, renewSubscription } = useSubscription();
 
   const handleSignOut = async () => {
     await signOut();
@@ -39,14 +39,22 @@ export default function Settings() {
   const displayName = user?.user_metadata?.full_name || user?.email || "Guest";
   const displayEmail = user?.email || "";
   const planLabel = isPremium ? "Premium" : "Free Plan";
+  const endDateLabel = subscriptionEnd ? new Date(subscriptionEnd).toLocaleDateString() : "—";
   const subDescription = isPremium
-    ? `Premium · Renews ${subscriptionEnd ? new Date(subscriptionEnd).toLocaleDateString() : "—"}`
+    ? cancelAtPeriodEnd
+      ? `Premium — Ends ${endDateLabel}`
+      : `Premium · Renews ${endDateLabel}`
     : "Free plan — Upgrade to Premium";
 
   const MENU_ITEMS = [
     { icon: User, label: "Profile", sub: `${displayName}`, path: "/profile" },
     { icon: Crown, label: "Subscription", sub: subDescription, action: handleManageSubscription },
-    ...(isPremium ? [{ icon: XCircle, label: "Cancel Subscription", sub: "Cancel your Premium plan", path: "/cancel-subscription" }] : []),
+    ...(isPremium && !cancelAtPeriodEnd
+      ? [{ icon: XCircle, label: "Cancel Subscription", sub: "Cancel your Premium plan", path: "/cancel-subscription" }]
+      : []),
+    ...(isPremium && cancelAtPeriodEnd
+      ? [{ icon: RefreshCw, label: "Subscription has been cancelled", sub: "Click here to renew", action: async () => { await renewSubscription(); } }]
+      : []),
     { icon: Bell, label: "Notifications", sub: "Push & email preferences", path: "/notifications" },
     { icon: Shield, label: "Privacy", sub: "Data & privacy settings", path: "/privacy" },
     { icon: HelpCircle, label: "Support", sub: "Help centre & contact", path: "/support" },

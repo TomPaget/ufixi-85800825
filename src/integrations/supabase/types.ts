@@ -398,6 +398,48 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_history: {
+        Row: {
+          cancel_flow_attempts: number
+          created_at: string
+          email: string
+          first_month_discount_used: boolean
+          first_month_discount_used_at: string | null
+          free_month_claimed: boolean
+          free_month_claimed_at: string | null
+          has_ever_subscribed: boolean
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_flow_attempts?: number
+          created_at?: string
+          email: string
+          first_month_discount_used?: boolean
+          first_month_discount_used_at?: string | null
+          free_month_claimed?: boolean
+          free_month_claimed_at?: string | null
+          has_ever_subscribed?: boolean
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_flow_attempts?: number
+          created_at?: string
+          email?: string
+          first_month_discount_used?: boolean
+          first_month_discount_used_at?: string | null
+          free_month_claimed?: boolean
+          free_month_claimed_at?: string | null
+          has_ever_subscribed?: boolean
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string

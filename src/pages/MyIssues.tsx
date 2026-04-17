@@ -29,7 +29,7 @@ export default function MyIssues() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { isPremium, startCheckout } = useSubscription();
+  const { isPremium, hasEverSubscribed, startCheckout } = useSubscription();
   const { loadInProgressScans, deleteScan } = useInProgressScan();
 
   useEffect(() => {
@@ -108,7 +108,7 @@ export default function MyIssues() {
               <div className="space-y-3">
                 <GradientButton size="lg" onClick={startCheckout}>
                   <span className="flex items-center justify-center gap-2">
-                    <Crown className="w-5 h-5" /> Upgrade to Premium — £0.99/mo
+                    <Crown className="w-5 h-5" /> Upgrade to Premium — {hasEverSubscribed ? "£1.99/mo" : "£0.99/mo"}
                   </span>
                 </GradientButton>
                 <p className="text-xs" style={{ color: textSec }}>Cancel anytime. No commitments.</p>

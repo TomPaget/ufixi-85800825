@@ -74,33 +74,75 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
-      status: "active",
-      limit: 1,
+      status: "all",
+      limit: 10,
     });
 
-    const hasActiveSub = subscriptions.data.length > 0;
+    const ACTIVE_STATUSES = new Set(["active", "trialing", "past_due"]);
+    const activeSub = subscriptions.data.find((s) => ACTIVE_STATUSES.has(s.status));
+    const hasActiveSub = !!activeSub;
+    const hasEverSubscribed = subscriptions.data.length > 0;
     let subscriptionEnd: string | null = null;
+    let cancelAtPeriodEnd = false;
 
-    if (hasActiveSub) {
-      const sub = subscriptions.data[0] as any;
+    if (activeSub) {
+      const sub = activeSub as any;
+      cancelAtPeriodEnd = !!sub.cancel_at_period_end;
 
       // In basil API, current_period_end was removed.
       // Calculate from billing_cycle_anchor + plan interval.
       const anchor = sub.billing_cycle_anchor;
       const interval = sub.plan?.interval || sub.items?.data?.[0]?.price?.recurring?.interval || "month";
 
-      if (typeof anchor === "number") {
+      // Prefer explicit cancel_at if scheduled
+      if (typeof sub.cancel_at === "number" && sub.cancel_at > 0) {
+        subscriptionEnd = new Date(sub.cancel_at * 1000).toISOString();
+      } else if (typeof anchor === "number") {
         subscriptionEnd = calculatePeriodEnd(anchor, interval);
       }
 
-      logStep("Active subscription found", { subscriptionId: sub.id, subscriptionEnd });
+      logStep("Active subscription found", { subscriptionId: sub.id, subscriptionEnd, cancelAtPeriodEnd });
     } else {
       logStep("No active subscription found");
+    }
+
+    // Persist subscription history (server-side using service role)
+    try {
+      const adminClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+        { auth: { persistSession: false } }
+      );
+      const userId = claimsData.claims.sub as string;
+      const { data: existing } = await adminClient
+        .from("subscription_history")
+        .select("id, first_month_discount_used, has_ever_subscribed")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (!existing) {
+        await adminClient.from("subscription_history").insert({
+          user_id: userId,
+          email,
+          has_ever_subscribed: hasEverSubscribed,
+          first_month_discount_used: hasEverSubscribed,
+          first_month_discount_used_at: hasEverSubscribed ? new Date().toISOString() : null,
+        });
+      } else if (hasEverSubscribed && !existing.has_ever_subscribed) {
+        await adminClient.from("subscription_history").update({
+          has_ever_subscribed: true,
+          first_month_discount_used: true,
+          first_month_discount_used_at: existing.first_month_discount_used ? undefined : new Date().toISOString(),
+        }).eq("user_id", userId);
+      }
+    } catch (e) {
+      logStep("History sync warning", { error: e instanceof Error ? e.message : String(e) });
     }
 
     return new Response(JSON.stringify({
       subscribed: hasActiveSub,
       subscription_end: subscriptionEnd,
+      cancel_at_period_end: cancelAtPeriodEnd,
+      has_ever_subscribed: hasEverSubscribed,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

@@ -26,7 +26,7 @@ export default function HomeDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const nativeApp = isNativeApp();
-  const { isPremium, startCheckout } = useSubscription();
+  const { isPremium, hasEverSubscribed, startCheckout } = useSubscription();
   const { unreadCount } = useNotifications();
 
   // Register native push notifications — navigate on tap
@@ -257,7 +257,7 @@ export default function HomeDashboard() {
                     </div>
 
                     <GradientButton onClick={startCheckout}>
-                      <span className="flex items-center justify-center gap-2"><Crown className="w-4 h-4" /> Upgrade to Premium — £0.99/mo</span>
+                      <span className="flex items-center justify-center gap-2"><Crown className="w-4 h-4" /> Upgrade to Premium — {hasEverSubscribed ? "£1.99/mo" : "£0.99/mo"}</span>
                     </GradientButton>
                   </div>
                 </motion.div>

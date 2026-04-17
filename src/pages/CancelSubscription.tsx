@@ -32,22 +32,28 @@ type CancelStep = "reason" | "offer" | "confirm" | "done";
 
 export default function CancelSubscription() {
   const navigate = useNavigate();
-  const { isPremium, subscriptionEnd, checkSubscription } = useSubscription();
+  const { isPremium, subscriptionEnd, cancelAtPeriodEnd, checkSubscription } = useSubscription();
   const [step, setStep] = useState<CancelStep>("reason");
   const [selectedReason, setSelectedReason] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
   const [claimingOffer, setClaimingOffer] = useState(false);
   const [cancelledUntil, setCancelledUntil] = useState<string | null>(null);
+  const [offerEligible, setOfferEligible] = useState<boolean | null>(null);
+  const [trackingAttempt, setTrackingAttempt] = useState(false);
 
   const navy = "#00172F";
   const textSecondary = "#5A6A7A";
 
-  if (!isPremium) {
+  if (!isPremium || cancelAtPeriodEnd) {
     return (
       <PageTransition>
         <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--color-bg)" }}>
           <div className="text-center space-y-4 px-6">
-            <p className="text-base" style={{ color: navy }}>You don't have an active subscription.</p>
+            <p className="text-base" style={{ color: navy }}>
+              {cancelAtPeriodEnd
+                ? "Your subscription is already scheduled to cancel."
+                : "You don't have an active subscription."}
+            </p>
             <button onClick={() => navigate("/settings")} className="text-sm font-semibold" style={{ color: "var(--color-primary)" }}>
               Back to Settings
             </button>
@@ -62,6 +68,7 @@ export default function CancelSubscription() {
     try {
       const { data, error } = await supabase.functions.invoke("cancel-subscription", {
         body: {
+          action: "cancel",
           reason: selectedReason,
         },
       });
@@ -86,13 +93,40 @@ export default function CancelSubscription() {
 
   const handleClaimOffer = async () => {
     setClaimingOffer(true);
-    // In a real implementation, this would apply a coupon via Stripe API
-    // For now, show success and redirect
-    setTimeout(() => {
-      setClaimingOffer(false);
-      toast.success("🎉 Free month applied! Your next billing is delayed by 30 days.");
+    try {
+      const { data, error } = await supabase.functions.invoke("cancel-subscription", {
+        body: { action: "claim_free_month" },
+      });
+      if (error) throw error;
+      if (data?.success === false) throw new Error(data?.error || "Could not claim offer");
+      toast.success("Free month applied! Your next charge is delayed by a full month.");
+      await checkSubscription();
       navigate("/settings");
-    }, 1500);
+    } catch (err: any) {
+      toast.error(err?.message || "Could not apply free month");
+    } finally {
+      setClaimingOffer(false);
+    }
+  };
+
+  const handleContinueToOffer = async () => {
+    if (!selectedReason) return;
+    setTrackingAttempt(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("cancel-subscription", {
+        body: { action: "track_attempt", reason: selectedReason },
+      });
+      if (error) throw error;
+      const eligible = !!data?.offer_eligible;
+      setOfferEligible(eligible);
+      setStep(eligible ? "offer" : "confirm");
+    } catch (err: any) {
+      // If tracking fails, default to showing confirm
+      setOfferEligible(false);
+      setStep("confirm");
+    } finally {
+      setTrackingAttempt(false);
+    }
   };
 
   const slideVariants = {
@@ -167,8 +201,8 @@ export default function CancelSubscription() {
                 </div>
 
                 <button
-                  onClick={() => selectedReason && setStep("offer")}
-                  disabled={!selectedReason}
+                  onClick={handleContinueToOffer}
+                  disabled={!selectedReason || trackingAttempt}
                   className="w-full py-3.5 rounded-2xl text-sm font-semibold transition-all"
                   style={{
                     background: selectedReason ? "var(--color-primary)" : "rgba(0,23,47,0.08)",
@@ -176,7 +210,7 @@ export default function CancelSubscription() {
                     opacity: selectedReason ? 1 : 0.5,
                   }}
                 >
-                  Continue
+                  {trackingAttempt ? "Please wait…" : "Continue"}
                 </button>
 
                 <button

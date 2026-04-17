@@ -8,28 +8,36 @@ import { getInAppPath } from "@/lib/appNavigation";
 interface SubscriptionState {
   isPremium: boolean;
   subscriptionEnd: string | null;
+  cancelAtPeriodEnd: boolean;
+  hasEverSubscribed: boolean;
   loading: boolean;
   user: User | null;
   authReady: boolean;
   checkSubscription: () => Promise<void>;
   startCheckout: () => Promise<void>;
+  renewSubscription: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
 const SubscriptionContext = createContext<SubscriptionState>({
   isPremium: false,
   subscriptionEnd: null,
+  cancelAtPeriodEnd: false,
+  hasEverSubscribed: false,
   loading: true,
   user: null,
   authReady: false,
   checkSubscription: async () => {},
   startCheckout: async () => {},
+  renewSubscription: async () => {},
   signOut: async () => {},
 });
 
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [isPremium, setIsPremium] = useState(false);
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
+  const [cancelAtPeriodEnd, setCancelAtPeriodEnd] = useState(false);
+  const [hasEverSubscribed, setHasEverSubscribed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
@@ -41,6 +49,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       if (!session) {
         setIsPremium(false);
         setSubscriptionEnd(null);
+        setCancelAtPeriodEnd(false);
+        setHasEverSubscribed(false);
         setLoading(false);
         return;
       }
@@ -51,6 +61,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       const nowPremium = data?.subscribed === true;
       setIsPremium(nowPremium);
       setSubscriptionEnd(data?.subscription_end || null);
+      setCancelAtPeriodEnd(!!data?.cancel_at_period_end);
+      setHasEverSubscribed(!!data?.has_ever_subscribed);
 
       if (nowPremium && !welcomeEmailSent) {
         setWelcomeEmailSent(true);
@@ -138,7 +150,28 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setIsPremium(false);
     setSubscriptionEnd(null);
+    setCancelAtPeriodEnd(false);
+    setHasEverSubscribed(false);
   }, []);
+
+  const renewSubscription = useCallback(async () => {
+    try {
+      toast.loading("Renewing subscription…", { id: "renew" });
+      const { data, error } = await supabase.functions.invoke("renew-subscription");
+      toast.dismiss("renew");
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (data?.success === false) {
+        toast.info(data?.error || "Could not renew. Starting fresh checkout.");
+        return;
+      }
+      toast.success("Subscription renewed!");
+      await checkSubscription();
+    } catch (err: any) {
+      toast.dismiss("renew");
+      toast.error(err?.message || "Could not renew subscription");
+    }
+  }, [checkSubscription]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -171,7 +204,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   }, [checkSubscription]);
 
   return (
-    <SubscriptionContext.Provider value={{ isPremium, subscriptionEnd, loading, user, authReady, checkSubscription, startCheckout, signOut }}>
+    <SubscriptionContext.Provider value={{ isPremium, subscriptionEnd, cancelAtPeriodEnd, hasEverSubscribed, loading, user, authReady, checkSubscription, startCheckout, renewSubscription, signOut }}>
       {children}
     </SubscriptionContext.Provider>
   );
