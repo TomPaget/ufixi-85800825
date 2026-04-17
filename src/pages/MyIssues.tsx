@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Lock, Crown, CheckCircle2, Play, Clock, Trash2, X, ArrowUpDown, Check } from "lucide-react";
+import { Search, Lock, Crown, CheckCircle2, Play, Clock, Trash2, X, ArrowUpDown, Check, PartyPopper } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import PageTransition from "@/components/PageTransition";
@@ -12,6 +12,10 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useInProgressScan, InProgressScan } from "@/hooks/useInProgressScan";
 import { supabase } from "@/integrations/supabase/client";
 import { resolveSavedIssueMedia } from "@/lib/scanMedia";
+import PullToRefresh from "@/components/PullToRefresh";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
@@ -56,6 +60,8 @@ export default function MyIssues() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ ids: string[]; label: string } | null>(null);
+  const [resolvePrompt, setResolvePrompt] = useState<{ id: string; label: string } | null>(null);
+  const [showCongrats, setShowCongrats] = useState(false);
   const navigate = useNavigate();
   const { isPremium, hasEverSubscribed, startCheckout, authReady, user } = useSubscription();
   const { loadInProgressScans, deleteScan } = useInProgressScan();
@@ -91,6 +97,16 @@ export default function MyIssues() {
   };
 
   const handleDeleteIssues = async (ids: string[]) => {
+    // Stop any pending follow-up reminders for these issues so resolved /
+    // deleted scans never trigger a notification.
+    const titles = issues.filter((i) => ids.includes(i.id)).map((i) => i.issue_title);
+    if (titles.length > 0 && user) {
+      await supabase
+        .from("scan_follow_ups")
+        .update({ notification_sent: true, issue_resolved: true })
+        .eq("user_id", user.id)
+        .in("issue_title", titles);
+    }
     const { error } = await supabase.from("saved_issues").delete().in("id", ids);
     if (error) {
       toast.error("Failed to delete");
@@ -100,6 +116,15 @@ export default function MyIssues() {
     setSelectedIds(new Set());
     setSelectMode(false);
     toast.success(ids.length === 1 ? "Issue deleted" : `${ids.length} issues deleted`);
+  };
+
+  const handleResolveAnswer = async (answer: "yes" | "specialist") => {
+    if (!resolvePrompt) return;
+    const { id } = resolvePrompt;
+    setResolvePrompt(null);
+    await handleDeleteIssues([id]);
+    if (answer === "yes") setShowCongrats(true);
+    else toast.success("Glad you've got a specialist on it. We'll stop reminders.");
   };
 
   const toggleSelect = (id: string) => {
@@ -181,6 +206,7 @@ export default function MyIssues() {
     <PageTransition>
       <div className="min-h-screen" style={{ background: "var(--color-bg)", minHeight: "100dvh", paddingBottom: "var(--app-page-bottom-space)" }}>
         <PageHeader title="My Issues" showBack={false} showLogo />
+        <PullToRefresh onRefresh={loadIssues}>
         <main className="max-w-lg mx-auto px-5 py-4 space-y-4">
           {/* Search + sort */}
           <div className="flex gap-2">
@@ -326,9 +352,9 @@ export default function MyIssues() {
                     )}
                     {!selectMode && (
                       <button
-                        onClick={(e) => { e.stopPropagation(); setConfirmDelete({ ids: [issue.id], label: issue.issue_title }); }}
+                        onClick={(e) => { e.stopPropagation(); setResolvePrompt({ id: issue.id, label: issue.issue_title }); }}
                         className="absolute top-2 right-2 p-1.5 rounded-full transition-colors hover:bg-black/5"
-                        aria-label="Delete issue"
+                        aria-label="Resolve or remove issue"
                         style={{ color: textSec }}
                       >
                         <X className="w-4 h-4" />
@@ -379,6 +405,7 @@ export default function MyIssues() {
             </div>
           )}
         </main>
+        </PullToRefresh>
 
         <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
           <AlertDialogContent>
@@ -402,6 +429,59 @@ export default function MyIssues() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <Dialog open={!!resolvePrompt} onOpenChange={(o) => !o && setResolvePrompt(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Did you fix it?</DialogTitle>
+              <DialogDescription>
+                Removing "{resolvePrompt?.label}" from your saved issues. Tell us how it ended so we know whether to celebrate.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <button
+                onClick={() => handleResolveAnswer("specialist")}
+                className="w-full sm:w-auto px-4 py-3 rounded-xl text-sm font-semibold"
+                style={{ background: "white", border: "1px solid rgba(0,23,47,0.12)", color: navy, minHeight: 44 }}
+              >
+                No, I've arranged a specialist
+              </button>
+              <button
+                onClick={() => handleResolveAnswer("yes")}
+                className="w-full sm:w-auto px-4 py-3 rounded-xl text-sm font-semibold"
+                style={{ background: "var(--gradient-primary)", color: "#fff", minHeight: 44 }}
+              >
+                Yes!
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showCongrats} onOpenChange={(o) => !o && setShowCongrats(false)}>
+          <DialogContent>
+            <div className="flex flex-col items-center text-center space-y-3 py-2">
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center"
+                style={{ background: "var(--gradient-primary)" }}
+              >
+                <PartyPopper className="w-8 h-8 text-white" />
+              </div>
+              <DialogHeader>
+                <DialogTitle className="text-center">Congratulations!</DialogTitle>
+                <DialogDescription className="text-center">
+                  Your issue has been marked as resolved. We'll stop reminding you about it.
+                </DialogDescription>
+              </DialogHeader>
+              <button
+                onClick={() => setShowCongrats(false)}
+                className="w-full px-4 py-3 rounded-xl text-sm font-semibold"
+                style={{ background: "var(--gradient-primary)", color: "#fff", minHeight: 44 }}
+              >
+                Nice
+              </button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <BottomNavDemo />
       </div>

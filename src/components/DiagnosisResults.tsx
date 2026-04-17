@@ -624,7 +624,7 @@ export default function DiagnosisResults({
 
       {/* Export PDF + Share (premium) */}
       {isPremium ? (
-        <div className="flex gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <button
             onClick={async () => {
               const { toast } = await import("sonner");
@@ -662,7 +662,7 @@ export default function DiagnosisResults({
             style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", color: navy, minHeight: 52 }}
           >
             <Share2 className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
-            Share
+            Share with friends
           </button>
         </div>
       ) : (
