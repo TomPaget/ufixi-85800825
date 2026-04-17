@@ -649,44 +649,43 @@ export default function DiagnosisResults({
               const shareText = `${issueTitle}${briefDescription ? ` — ${briefDescription}` : ""}\n\nDiagnosed by Ufixi.`;
               const fullText = `${shareTitle}\n\n${shareText}`;
 
-              const copyToClipboard = async () => {
-                try {
-                  if (navigator.clipboard?.writeText) {
-                    await navigator.clipboard.writeText(fullText);
-                    toast.success("Diagnosis copied to clipboard");
-                    return true;
-                  }
-                } catch {}
-                try {
-                  const ta = document.createElement("textarea");
-                  ta.value = fullText;
-                  ta.style.position = "fixed";
-                  ta.style.opacity = "0";
-                  document.body.appendChild(ta);
-                  ta.select();
-                  const ok = document.execCommand("copy");
-                  document.body.removeChild(ta);
-                  if (ok) {
-                    toast.success("Diagnosis copied to clipboard");
-                    return true;
-                  }
-                } catch {}
-                return false;
-              };
+              // 1. Try native Capacitor Share (full iOS/Android share sheet: Messages, WhatsApp, AirDrop, Mail, etc.)
+              try {
+                const { Capacitor } = await import("@capacitor/core");
+                if (Capacitor.isNativePlatform()) {
+                  const { Share } = await import("@capacitor/share");
+                  await Share.share({
+                    title: shareTitle,
+                    text: shareText,
+                    dialogTitle: "Share diagnosis",
+                  });
+                  return;
+                }
+              } catch (e: any) {
+                if (e?.message?.toLowerCase?.().includes("cancel")) return;
+                console.warn("Capacitor share failed:", e);
+              }
 
+              // 2. Try Web Share API (mobile browsers get a real share sheet)
               try {
                 if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
                   await navigator.share({ title: shareTitle, text: shareText });
                   return;
                 }
-                if (await copyToClipboard()) return;
-                toast.error("Sharing not supported — try Export PDF instead");
               } catch (e: any) {
                 if (e?.name === "AbortError") return;
-                console.warn("navigator.share failed, falling back to clipboard:", e);
-                if (await copyToClipboard()) return;
-                toast.error("Couldn't share — try Export PDF instead");
+                console.warn("navigator.share failed:", e);
               }
+
+              // 3. Desktop fallback — clipboard (full native share sheets aren't available on desktop browsers)
+              try {
+                if (navigator.clipboard?.writeText) {
+                  await navigator.clipboard.writeText(fullText);
+                  toast.success("Diagnosis copied — paste into Messages, Mail, WhatsApp, etc.");
+                  return;
+                }
+              } catch {}
+              toast.error("Sharing not supported on this device — try Export PDF instead");
             }}
             className="flex-1 flex items-center justify-center gap-2 p-4 rounded-2xl text-sm font-semibold transition-all active:scale-95"
             style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", color: navy, minHeight: 52 }}
