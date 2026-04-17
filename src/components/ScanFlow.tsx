@@ -582,6 +582,18 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
         status: "active",
       });
       if (error) throw error;
+
+      // Enforce max 30 saved issues — delete oldest beyond that
+      const { data: all } = await supabase
+        .from("saved_issues")
+        .select("id, created_at")
+        .eq("user_id", authUser.id)
+        .order("created_at", { ascending: false });
+      if (all && all.length > 30) {
+        const toDelete = all.slice(30).map((r) => r.id);
+        await supabase.from("saved_issues").delete().in("id", toDelete);
+      }
+
       toast.success("Diagnosis saved to My Issues ✓");
       // Close the scan flow after saving — user can reopen from My Issues
       setTimeout(() => onClose(), 400);
