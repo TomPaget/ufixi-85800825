@@ -219,6 +219,10 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   return (
     <SubscriptionContext.Provider value={{ isPremium, subscriptionEnd, cancelAtPeriodEnd, hasEverSubscribed, loading, user, authReady, checkSubscription, startCheckout, renewSubscription, signOut }}>
       {children}
+      <CheckoutRedirectModal
+        url={checkoutRedirectUrl}
+        onClose={() => setCheckoutRedirectUrl(null)}
+      />
     </SubscriptionContext.Provider>
   );
 }
