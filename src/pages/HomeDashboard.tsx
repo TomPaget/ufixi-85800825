@@ -27,7 +27,7 @@ export default function HomeDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const nativeApp = isNativeApp();
-  const { isPremium, hasEverSubscribed, startCheckout, checkSubscription } = useSubscription();
+  const { isPremium, hasEverSubscribed, startCheckout, checkSubscription, user, authReady } = useSubscription();
   const [verifyingUpgrade, setVerifyingUpgrade] = useState(false);
 
   // Post-checkout: poll for subscription activation
@@ -76,7 +76,6 @@ export default function HomeDashboard() {
         diagnosisData: state.resumeData?.diagnosis_data || null,
       });
       setShowScanFlow(true);
-      // Clear location state
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
@@ -86,32 +85,33 @@ export default function HomeDashboard() {
   const [resolvedCount, setResolvedCount] = useState(0);
   const [recentScans, setRecentScans] = useState<any[]>([]);
 
-  useEffect(() => {
-    if (isPremium) loadCounts();
-  }, [isPremium, showScanFlow]);
-
-  // Reload recent scans when the scan flow closes (so a fresh auto-saved scan shows up)
-  useEffect(() => {
-    if (isPremium && !showScanFlow) loadCounts();
-  }, [showScanFlow, isPremium]);
-
   const loadCounts = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!authReady || !user) return;
+
     const { data } = await supabase
       .from("saved_issues")
       .select("status, urgency")
       .eq("user_id", user.id)
       .neq("status", "auto_recent");
+
     if (data) {
       setActiveCount(data.filter(i => i.status === "active").length);
       setFixSoonCount(data.filter(i => i.urgency === "fix_now" || i.urgency === "fix_soon").length);
       setResolvedCount(data.filter(i => i.status === "resolved").length);
       setSavedIssues(data);
     }
+
     const recent = await loadRecentScans(user.id);
     setRecentScans(recent);
   };
+
+  useEffect(() => {
+    if (authReady && isPremium && user) loadCounts();
+  }, [authReady, isPremium, user, showScanFlow]);
+
+  useEffect(() => {
+    if (authReady && isPremium && user && !showScanFlow) loadCounts();
+  }, [authReady, showScanFlow, isPremium, user]);
 
   const handleRecentScansClick = () => {
     if (!isPremium) {

@@ -6,6 +6,7 @@ import LavaLampBackground from "@/components/LavaLampBackground";
 import PageHeader from "@/components/PageHeader";
 import DiagnosisResults from "@/components/DiagnosisResults";
 import AppErrorBoundary from "@/components/AppErrorBoundary";
+import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 
 const textSec = "#5A6A7A";
@@ -13,43 +14,64 @@ const textSec = "#5A6A7A";
 export default function IssueDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { authReady, user } = useSubscription();
   const [issue, setIssue] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+
+    const loadIssue = async () => {
       try {
         if (!id) {
-          setLoading(false);
+          setError("Missing issue ID");
           return;
         }
+
+        if (!authReady) return;
+
+        if (!user) {
+          setError("Please sign in to view this issue.");
+          return;
+        }
+
+        setError(null);
         const { data, error: dbError } = await supabase
           .from("saved_issues")
           .select("*")
           .eq("id", id)
           .maybeSingle();
+
         if (cancelled) return;
+
         if (dbError) {
           console.error("[IssueDetail] Load error:", dbError);
           setError(dbError.message);
-        } else {
-          setIssue(data);
+          setIssue(null);
+          return;
         }
+
+        setIssue(data);
       } catch (e: any) {
         console.error("[IssueDetail] Unexpected error:", e);
-        if (!cancelled) setError(e?.message || "Failed to load issue");
+        if (!cancelled) {
+          setError(e?.message || "Failed to load issue");
+          setIssue(null);
+        }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled && authReady) setLoading(false);
       }
-    })();
+    };
+
+    setLoading(true);
+    loadIssue();
+
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, authReady, user]);
 
-  // Always render the page shell so users see a header instead of a blank screen
   return (
     <PageTransition>
       <div
