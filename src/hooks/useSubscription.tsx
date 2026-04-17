@@ -101,22 +101,39 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
     const navigateTo = (url: string) => {
       if (native) {
-        Browser.open({ url });
+        Browser.open({ url }).catch(() => { window.location.href = url; });
         return;
       }
       if (checkoutWindow && !checkoutWindow.closed) {
-        checkoutWindow.location.href = url;
+        try {
+          checkoutWindow.location.href = url;
+          return;
+        } catch { /* fall through */ }
+      }
+      let opened: Window | null = null;
+      try {
+        opened = window.open(url, "_blank", "noopener,noreferrer");
+      } catch { opened = null; }
+      if (opened) return;
+
+      if (inIframe) {
+        try {
+          if (window.top) {
+            window.top.location.href = url;
+            return;
+          }
+        } catch { /* cross-origin blocked */ }
+        // Last resort in iframe: clickable toast with the checkout link
+        toast.message("Tap to continue to secure checkout", {
+          duration: 20000,
+          action: {
+            label: "Open Checkout",
+            onClick: () => window.open(url, "_blank", "noopener,noreferrer"),
+          },
+        });
         return;
       }
-      // Try opening a new tab now (may be blocked); if blocked, navigate top.
-      const opened = window.open(url, "_blank", "noopener,noreferrer");
-      if (!opened) {
-        if (inIframe && window.top) {
-          window.top.location.href = url;
-        } else {
-          window.location.href = url;
-        }
-      }
+      window.location.href = url;
     };
 
     try {
