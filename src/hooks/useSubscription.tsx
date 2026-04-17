@@ -43,6 +43,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [welcomeEmailSent, setWelcomeEmailSent] = useState(false);
+  const [checkoutRedirectUrl, setCheckoutRedirectUrl] = useState<string | null>(null);
 
   const checkSubscription = useCallback(async () => {
     try {
