@@ -1,12 +1,5 @@
 import { getTradeNameForCategory } from "./tradeNameMap";
-
-const NAVY = "#00172F";
-const PRIMARY = "#E8530A";
-const CREAM = "#FDF6EE";
-const TEXT_SECONDARY = "#5A6A7A";
-const PAGE_W = 210;
-const MARGIN = 20;
-const CONTENT_W = PAGE_W - MARGIN * 2;
+import { buildTradesmanPdf, downloadPdf } from "./pdfDelivery";
 
 function addPageBg(doc: any) {
   doc.setFillColor(253, 246, 238);
@@ -58,9 +51,9 @@ export async function generateTradesmanPdf(
   diagnosis: any,
   imageUrl?: string | null,
 ) {
-  const { default: jsPDF } = await import("jspdf");
-  const doc = new jsPDF({ unit: "mm", format: "a4" });
-  const tradeName = getTradeNameForCategory(triage?.category);
+  const built = await buildTradesmanPdf(triage, diagnosis, imageUrl);
+  await downloadPdf(built);
+}
 
   // Background
   doc.setFillColor(253, 246, 238);
