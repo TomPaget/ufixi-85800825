@@ -74,22 +74,36 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   const startCheckout = useCallback(async () => {
     const native = typeof window !== "undefined" && window.Capacitor?.isNativePlatform?.();
+    const inIframe = typeof window !== "undefined" && window.self !== window.top;
 
-    // Open a placeholder tab SYNCHRONOUSLY (in the click handler) so popup blockers allow it.
-    // We'll set its location once we have the Stripe URL.
+    // Try to open a placeholder tab synchronously so popup blockers allow it.
+    // Skip in iframes (preview) and native apps where this pattern doesn't apply.
     let checkoutWindow: Window | null = null;
-    if (!native) {
-      checkoutWindow = window.open("about:blank", "_blank");
+    if (!native && !inIframe) {
+      try {
+        checkoutWindow = window.open("about:blank", "_blank");
+      } catch {
+        checkoutWindow = null;
+      }
     }
 
     const navigateTo = (url: string) => {
       if (native) {
         Browser.open({ url });
-      } else if (checkoutWindow && !checkoutWindow.closed) {
+        return;
+      }
+      if (checkoutWindow && !checkoutWindow.closed) {
         checkoutWindow.location.href = url;
-      } else {
-        // Popup was blocked — fall back to same-tab navigation
-        window.location.href = url;
+        return;
+      }
+      // Try opening a new tab now (may be blocked); if blocked, navigate top.
+      const opened = window.open(url, "_blank", "noopener,noreferrer");
+      if (!opened) {
+        if (inIframe && window.top) {
+          window.top.location.href = url;
+        } else {
+          window.location.href = url;
+        }
       }
     };
 
