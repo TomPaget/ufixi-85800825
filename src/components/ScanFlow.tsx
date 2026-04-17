@@ -464,10 +464,19 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
       // Record follow-up for 1-week push notification
       try {
         const { data: { user: authUser } } = await supabase.auth.getUser();
-        await supabase.from("scan_follow_ups").insert({
+        const sessionId = crypto.randomUUID();
+        const issueTitle = data.triage?.issue_title || "Unknown Issue";
+        const cat = data.triage?.category || category || null;
+        const now = Date.now();
+        const followUps = [3, 7, 14].map((days) => ({
           user_id: authUser?.id || null,
-          session_id: crypto.randomUUID(),
-          issue_title: data.triage?.issue_title || "Unknown Issue",
+          session_id: sessionId,
+          issue_title: issueTitle,
+          category: cat,
+          follow_up_at: new Date(now + days * 86_400_000).toISOString(),
+          notification_sent: false,
+        }));
+        await supabase.from("scan_follow_ups").insert(followUps as any);
           category: data.triage?.category || category,
         } as any);
       } catch (e) {
