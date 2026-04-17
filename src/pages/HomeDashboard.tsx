@@ -13,6 +13,7 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { supabase } from "@/integrations/supabase/client";
 import { isNativeApp } from "@/lib/appNavigation";
+import { loadRecentScans, MAX_AUTO_RECENT, AUTO_RECENT_DAYS } from "@/lib/autoSaveScan";
 
 const ScanFlow = lazy(() => import("@/components/ScanFlow"));
 
@@ -83,20 +84,33 @@ export default function HomeDashboard() {
   const [activeCount, setActiveCount] = useState(0);
   const [fixSoonCount, setFixSoonCount] = useState(0);
   const [resolvedCount, setResolvedCount] = useState(0);
+  const [recentScans, setRecentScans] = useState<any[]>([]);
 
   useEffect(() => {
     if (isPremium) loadCounts();
-  }, [isPremium]);
+  }, [isPremium, showScanFlow]);
+
+  // Reload recent scans when the scan flow closes (so a fresh auto-saved scan shows up)
+  useEffect(() => {
+    if (isPremium && !showScanFlow) loadCounts();
+  }, [showScanFlow, isPremium]);
 
   const loadCounts = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const { data } = await supabase.from("saved_issues").select("status, urgency").eq("user_id", user.id);
-    if (!data) return;
-    setActiveCount(data.filter(i => i.status === "active").length);
-    setFixSoonCount(data.filter(i => i.urgency === "fix_now" || i.urgency === "fix_soon").length);
-    setResolvedCount(data.filter(i => i.status === "resolved").length);
-    setSavedIssues(data);
+    const { data } = await supabase
+      .from("saved_issues")
+      .select("status, urgency")
+      .eq("user_id", user.id)
+      .neq("status", "auto_recent");
+    if (data) {
+      setActiveCount(data.filter(i => i.status === "active").length);
+      setFixSoonCount(data.filter(i => i.urgency === "fix_now" || i.urgency === "fix_soon").length);
+      setResolvedCount(data.filter(i => i.status === "resolved").length);
+      setSavedIssues(data);
+    }
+    const recent = await loadRecentScans(user.id);
+    setRecentScans(recent);
   };
 
   const handleRecentScansClick = () => {
