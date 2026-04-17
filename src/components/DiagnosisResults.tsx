@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronDown, ChevronUp, AlertTriangle, ExternalLink,
   Lightbulb, Wrench, ShieldAlert, PoundSterling, CheckCircle2,
-  Stethoscope, Youtube, ShoppingBag, Clock, Phone
+  Stethoscope, Youtube, ShoppingBag, Clock, Phone, Share2
 } from "lucide-react";
 import GradientButton from "./GradientButton";
 import DiagnosisChatbot from "./DiagnosisChatbot";
@@ -20,6 +20,8 @@ interface DiagnosisResultsProps {
   uploadedFileType: string | null;
   onSave: () => void;
   onClose: () => void;
+  /** When true, hides the Save / Close-without-saving buttons (used in IssueDetail view of saved issues). */
+  hideSaveActions?: boolean;
 }
 
 const navy = "#00172F";
@@ -90,6 +92,7 @@ export default function DiagnosisResults({
   uploadedFileType,
   onSave,
   onClose,
+  hideSaveActions = false,
 }: DiagnosisResultsProps) {
   const [expandedSection, setExpandedSection] = useState<string | null>("causes");
   const { isPremium } = useSubscription();
@@ -618,26 +621,55 @@ export default function DiagnosisResults({
         proCostRange={`£${proMin}–£${proMax}`}
       />
 
-      {/* Export PDF */}
+      {/* Export PDF + Share (premium) */}
       {isPremium ? (
-        <button
-          onClick={async () => {
-            const { toast } = await import("sonner");
-            try {
-              toast.loading("Generating your PDF report...", { id: "pdf-gen" });
-              await generateTradesmanPdf(triage, diagnosis, uploadedPreviewUrl);
-              toast.success("Report downloaded ✓", { id: "pdf-gen" });
-            } catch (e: any) {
-              console.error("PDF generation failed:", e);
-              toast.error(e?.message || "Failed to generate report", { id: "pdf-gen" });
-            }
-          }}
-          className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl text-base font-semibold transition-all active:scale-95"
-          style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", color: navy, minHeight: 52 }}
-        >
-          <FileText className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
-          Export Report for {tradeName}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              const { toast } = await import("sonner");
+              try {
+                toast.loading("Generating your PDF report...", { id: "pdf-gen" });
+                await generateTradesmanPdf(triage, diagnosis, uploadedPreviewUrl);
+                toast.success("Report downloaded ✓", { id: "pdf-gen" });
+              } catch (e: any) {
+                console.error("PDF generation failed:", e);
+                toast.error(e?.message || "Failed to generate report", { id: "pdf-gen" });
+              }
+            }}
+            className="flex-1 flex items-center justify-center gap-2 p-4 rounded-2xl text-sm font-semibold transition-all active:scale-95"
+            style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", color: navy, minHeight: 52 }}
+          >
+            <FileText className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
+            Export PDF
+          </button>
+          <button
+            onClick={async () => {
+              const { toast } = await import("sonner");
+              const shareTitle = `Ufixi diagnosis: ${issueTitle}`;
+              const shareText = `${issueTitle}${briefDescription ? ` — ${briefDescription}` : ""}\n\nDiagnosed by Ufixi.`;
+              try {
+                if (navigator.share) {
+                  await navigator.share({ title: shareTitle, text: shareText });
+                } else if (navigator.clipboard) {
+                  await navigator.clipboard.writeText(`${shareTitle}\n\n${shareText}`);
+                  toast.success("Diagnosis copied to clipboard");
+                } else {
+                  toast.error("Sharing not supported on this device");
+                }
+              } catch (e: any) {
+                if (e?.name !== "AbortError") {
+                  console.error("Share failed:", e);
+                  toast.error("Couldn't share — try Export PDF instead");
+                }
+              }
+            }}
+            className="flex-1 flex items-center justify-center gap-2 p-4 rounded-2xl text-sm font-semibold transition-all active:scale-95"
+            style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", color: navy, minHeight: 52 }}
+          >
+            <Share2 className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
+            Share
+          </button>
+        </div>
       ) : (
         <button
           onClick={() => navigate("/upgrade")}
@@ -698,13 +730,26 @@ export default function DiagnosisResults({
         </button>
       )}
 
-      {/* Save / Close buttons */}
-      <GradientButton size="lg" onClick={onSave}>
-        Save Diagnosis & Close
-      </GradientButton>
-      <button onClick={onClose} className="w-full text-center py-3 text-base" style={{ color: textSecondary }}>
-        Close without saving
-      </button>
+      {/* Save / Close buttons (hidden when viewing an already-saved issue) */}
+      {!hideSaveActions && (
+        <>
+          <GradientButton size="lg" onClick={onSave}>
+            Save Diagnosis & Close
+          </GradientButton>
+          <button onClick={onClose} className="w-full text-center py-3 text-base" style={{ color: textSecondary }}>
+            Close without saving
+          </button>
+        </>
+      )}
+      {hideSaveActions && (
+        <button
+          onClick={onClose}
+          className="w-full text-center py-3 text-base font-semibold"
+          style={{ color: "var(--color-primary)" }}
+        >
+          Back to My Issues
+        </button>
+      )}
     </motion.div>
   );
 }
