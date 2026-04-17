@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
+import { Browser } from "@capacitor/browser";
 import { toast } from "sonner";
 import { getInAppPath } from "@/lib/appNavigation";
 
@@ -92,7 +93,15 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         throw new Error(data.error);
       }
       if (data?.url) {
-        window.location.assign(data.url);
+        const native = typeof window !== "undefined" && window.Capacitor?.isNativePlatform?.();
+        if (native) {
+          await Browser.open({ url: data.url });
+        } else {
+          const opened = window.open(data.url, "_blank", "noopener,noreferrer");
+          if (!opened) {
+            window.location.href = data.url;
+          }
+        }
       } else {
         throw new Error("No checkout URL returned");
       }
