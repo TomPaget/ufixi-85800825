@@ -44,11 +44,38 @@ serve(async (req) => {
       customerId = customers.data[0].id;
     }
 
+    // Determine if user has ever had a subscription — if so, no first-month discount
+    let isFirstSubscription = true;
+    if (customerId) {
+      const allSubs = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "all",
+        limit: 5,
+      });
+      isFirstSubscription = allSubs.data.length === 0;
+    }
+    // Also check our DB record for prior usage
+    try {
+      const adminClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+        { auth: { persistSession: false } }
+      );
+      const { data: hist } = await adminClient
+        .from("subscription_history")
+        .select("first_month_discount_used")
+        .eq("user_id", userData.user.id)
+        .maybeSingle();
+      if (hist?.first_month_discount_used) isFirstSubscription = false;
+    } catch (_) { /* non-fatal */ }
+
+    logStep("Discount eligibility", { isFirstSubscription });
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : email,
       line_items: [{ price: "price_1TFLVVCWrYMm2oxkEqhtGZfA", quantity: 1 }],
-      discounts: [{ coupon: "35pNFRFD" }],
+      ...(isFirstSubscription ? { discounts: [{ coupon: "35pNFRFD" }] } : {}),
       mode: "subscription",
       success_url: `${req.headers.get("origin")}/home?upgraded=true`,
       cancel_url: `${req.headers.get("origin")}/upgrade`,
