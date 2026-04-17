@@ -647,7 +647,7 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
               <div className="rounded-2xl p-4 space-y-3" style={{ background: "rgba(232,83,10,0.04)", border: "1px solid rgba(232,83,10,0.15)" }}>
                 <p className="text-sm font-semibold" style={{ color: navy }}>
                   <Crown className="w-4 h-4 inline mr-1" style={{ color: "var(--color-primary)" }} />
-                  Upgrade to Premium for £0.99/mo
+                  Upgrade to Premium for {hasEverSubscribed ? "£1.99/mo" : "£0.99/mo"}
                 </p>
                 <p className="text-xs" style={{ color: textSecondary }}>
                   Automatically save your progress and resume any scan where you left off.
@@ -723,7 +723,7 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
                 <Crown className="w-8 h-8 mx-auto" style={{ color: "var(--color-primary)" }} />
                 <p className="text-sm font-bold" style={{ color: navy }}>Go Premium — No ads, unlimited scans</p>
                 <p className="text-lg font-bold" style={{ background: "var(--gradient-primary)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                  Just £0.99/month
+                  Just {hasEverSubscribed ? "£1.99" : "£0.99"}/month
                 </p>
               </div>
             </div>
@@ -831,7 +831,7 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
               </div>
 
               <GradientButton size="lg" onClick={startCheckout}>
-                Upgrade to Premium — £0.99/mo
+                Upgrade to Premium — {hasEverSubscribed ? "£1.99/mo" : "£0.99/mo"}
               </GradientButton>
 
               <button onClick={() => setShowSavePrompt(null)} className="w-full text-center py-3 text-base" style={{ color: textSecondary }}>
