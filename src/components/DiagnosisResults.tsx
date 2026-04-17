@@ -621,7 +621,17 @@ export default function DiagnosisResults({
       {/* Export PDF */}
       {isPremium ? (
         <button
-          onClick={() => generateTradesmanPdf(triage, diagnosis, uploadedPreviewUrl)}
+          onClick={async () => {
+            const { toast } = await import("sonner");
+            try {
+              toast.loading("Generating your PDF report...", { id: "pdf-gen" });
+              await generateTradesmanPdf(triage, diagnosis, uploadedPreviewUrl);
+              toast.success("Report downloaded ✓", { id: "pdf-gen" });
+            } catch (e: any) {
+              console.error("PDF generation failed:", e);
+              toast.error(e?.message || "Failed to generate report", { id: "pdf-gen" });
+            }
+          }}
           className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl text-base font-semibold transition-all active:scale-95"
           style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", color: navy, minHeight: 52 }}
         >
