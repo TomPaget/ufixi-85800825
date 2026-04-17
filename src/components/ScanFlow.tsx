@@ -22,6 +22,7 @@ import GradientButton from "./GradientButton";
 import LavaLampBackground from "./LavaLampBackground";
 import DiagnosisResults from "./DiagnosisResults";
 import { autoSaveRecentScan } from "@/lib/autoSaveScan";
+import { resolveScanMediaUrl, uploadScanMedia } from "@/lib/scanMedia";
 
 const CATEGORIES = [
   { id: "plumbing", label: "Plumbing", icon: Droplets },
@@ -97,6 +98,7 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
   const [currentScanId, setCurrentScanId] = useState<string | null>(resumeScanId || null);
   // Tracks the auto-saved (status=auto_recent) row created when a premium scan completes
   const [autoSavedId, setAutoSavedId] = useState<string | null>(null);
+  const [storedMediaPath, setStoredMediaPath] = useState<string | null>(resumeData?.uploadedFileUrl || null);
   const [postcode, setPostcode] = useState("");
 
   // Ad state
@@ -109,6 +111,17 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
   const { isPremium, hasEverSubscribed, startCheckout, user } = useSubscription();
   const { showInterstitial, isNative } = useAdMob();
   const { saveScanProgress, deleteScan } = useInProgressScan();
+
+  useEffect(() => {
+    if (uploadedFile) setStoredMediaPath(null);
+  }, [uploadedFile]);
+
+  useEffect(() => {
+    if (!resumeData?.uploadedFileUrl || uploadedFile) return;
+    resolveScanMediaUrl(resumeData.uploadedFileUrl).then((url) => {
+      if (url) setUploadedPreviewUrl(url);
+    });
+  }, [resumeData?.uploadedFileUrl, uploadedFile]);
 
   const handleUploadMedia = async () => {
     try {
@@ -503,6 +516,11 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
         setTriage(data.triage);
         setDiagnosis(data.diagnosis);
         setStep(5);
+        let persistedImagePath = storedMediaPath;
+        if (!persistedImagePath && user && uploadedFile) {
+          persistedImagePath = await uploadScanMedia(user.id, uploadedFile);
+          setStoredMediaPath(persistedImagePath);
+        }
         // Delete in-progress scan since it's now complete
         if (currentScanId) {
           deleteScan(currentScanId);
@@ -516,7 +534,7 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
             triage: data.triage,
             diagnosis: data.diagnosis,
             category,
-            imageUrl: uploadedPreviewUrl,
+            imageUrl: persistedImagePath || uploadedPreviewUrl,
           });
           if (autoId) setAutoSavedId(autoId);
         }
@@ -591,11 +609,20 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
       if (autoSavedId) {
         const { error: upErr } = await supabase
           .from("saved_issues")
-          .update({ status: "active", expires_at: null } as any)
+          .update({
+            status: "active",
+            expires_at: null,
+            image_url: storedMediaPath || uploadedPreviewUrl || null,
+          } as any)
           .eq("id", autoSavedId)
           .eq("user_id", authUser.id);
         if (upErr) throw upErr;
       } else {
+        let persistedImagePath = storedMediaPath;
+        if (!persistedImagePath && uploadedFile) {
+          persistedImagePath = await uploadScanMedia(authUser.id, uploadedFile);
+          setStoredMediaPath(persistedImagePath);
+        }
         const { error } = await supabase.from("saved_issues").insert({
           user_id: authUser.id,
           issue_title: triage?.issue_title || "Untitled Issue",
@@ -604,7 +631,7 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
           urgency: diagnosis?.urgency_assessment?.level || null,
           diagnosis_data: diagnosis,
           triage_data: triage,
-          image_url: uploadedPreviewUrl || null,
+          image_url: persistedImagePath || uploadedPreviewUrl || null,
           status: "active",
         });
         if (error) throw error;

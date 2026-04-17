@@ -8,6 +8,7 @@ import DiagnosisResults from "@/components/DiagnosisResults";
 import AppErrorBoundary from "@/components/AppErrorBoundary";
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
+import { resolveSavedIssueMedia } from "@/lib/scanMedia";
 
 const textSec = "#5A6A7A";
 
@@ -60,7 +61,7 @@ export default function IssueDetail() {
           return;
         }
 
-        setIssue(data);
+        setIssue(data ? await resolveSavedIssueMedia(data) : null);
       } catch (e: any) {
         console.error("[IssueDetail] Unexpected error:", e);
         if (!cancelled) {

@@ -11,6 +11,7 @@ import LavaLampBackground from "@/components/LavaLampBackground";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useInProgressScan, InProgressScan } from "@/hooks/useInProgressScan";
 import { supabase } from "@/integrations/supabase/client";
+import { resolveSavedIssueMedia } from "@/lib/scanMedia";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
@@ -56,15 +57,14 @@ export default function MyIssues() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<{ ids: string[]; label: string } | null>(null);
   const navigate = useNavigate();
-  const { isPremium, hasEverSubscribed, startCheckout } = useSubscription();
+  const { isPremium, hasEverSubscribed, startCheckout, authReady, user } = useSubscription();
   const { loadInProgressScans, deleteScan } = useInProgressScan();
 
-  useEffect(() => { loadIssues(); }, [isPremium]);
+  useEffect(() => { void loadIssues(); }, [isPremium, authReady, user?.id]);
 
   const loadIssues = async () => {
-    if (!isPremium) { setLoading(false); return; }
+    if (!isPremium || !authReady) { setLoading(!authReady && isPremium); return; }
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
       const [{ data }, scans] = await Promise.all([
         supabase
@@ -75,7 +75,8 @@ export default function MyIssues() {
           .order("created_at", { ascending: false }),
         loadInProgressScans(),
       ]);
-      setIssues(data || []);
+      const resolvedIssues = await Promise.all((data || []).map((issue) => resolveSavedIssueMedia(issue)));
+      setIssues(resolvedIssues);
       setInProgressScans(scans);
     } catch (err) {
       console.error(err);
