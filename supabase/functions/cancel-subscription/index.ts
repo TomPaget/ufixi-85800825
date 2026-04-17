@@ -93,7 +93,7 @@ serve(async (req) => {
       cancel_at_period_end: true,
     });
 
-    const updatedEnd = new Date(updatedSubscription.current_period_end * 1000).toISOString();
+    const updatedEnd = getPeriodEnd(updatedSubscription) ?? subscriptionEnd;
     logStep("Subscription cancellation scheduled", {
       subscriptionId: updatedSubscription.id,
       subscriptionEnd: updatedEnd,
