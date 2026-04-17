@@ -4,6 +4,7 @@ import { User } from "@supabase/supabase-js";
 import { Browser } from "@capacitor/browser";
 import { toast } from "sonner";
 import { getInAppPath } from "@/lib/appNavigation";
+import CheckoutRedirectModal from "@/components/CheckoutRedirectModal";
 
 interface SubscriptionState {
   isPremium: boolean;
@@ -42,6 +43,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [welcomeEmailSent, setWelcomeEmailSent] = useState(false);
+  const [checkoutRedirectUrl, setCheckoutRedirectUrl] = useState<string | null>(null);
 
   const checkSubscription = useCallback(async () => {
     try {
@@ -123,14 +125,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
             return;
           }
         } catch { /* cross-origin blocked */ }
-        // Last resort in iframe: clickable toast with the checkout link
-        toast.message("Tap to continue to secure checkout", {
-          duration: 20000,
-          action: {
-            label: "Open Checkout",
-            onClick: () => window.open(url, "_blank", "noopener,noreferrer"),
-          },
-        });
+        // Last resort in iframe: full-screen modal with auto-redirect
+        setCheckoutRedirectUrl(url);
         return;
       }
       window.location.href = url;
@@ -223,6 +219,10 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   return (
     <SubscriptionContext.Provider value={{ isPremium, subscriptionEnd, cancelAtPeriodEnd, hasEverSubscribed, loading, user, authReady, checkSubscription, startCheckout, renewSubscription, signOut }}>
       {children}
+      <CheckoutRedirectModal
+        url={checkoutRedirectUrl}
+        onClose={() => setCheckoutRedirectUrl(null)}
+      />
     </SubscriptionContext.Provider>
   );
 }
