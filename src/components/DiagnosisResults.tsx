@@ -647,20 +647,45 @@ export default function DiagnosisResults({
               const { toast } = await import("sonner");
               const shareTitle = `Ufixi diagnosis: ${issueTitle}`;
               const shareText = `${issueTitle}${briefDescription ? ` — ${briefDescription}` : ""}\n\nDiagnosed by Ufixi.`;
+              const fullText = `${shareTitle}\n\n${shareText}`;
+
+              const copyToClipboard = async () => {
+                try {
+                  if (navigator.clipboard?.writeText) {
+                    await navigator.clipboard.writeText(fullText);
+                    toast.success("Diagnosis copied to clipboard");
+                    return true;
+                  }
+                } catch {}
+                try {
+                  const ta = document.createElement("textarea");
+                  ta.value = fullText;
+                  ta.style.position = "fixed";
+                  ta.style.opacity = "0";
+                  document.body.appendChild(ta);
+                  ta.select();
+                  const ok = document.execCommand("copy");
+                  document.body.removeChild(ta);
+                  if (ok) {
+                    toast.success("Diagnosis copied to clipboard");
+                    return true;
+                  }
+                } catch {}
+                return false;
+              };
+
               try {
-                if (navigator.share) {
+                if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
                   await navigator.share({ title: shareTitle, text: shareText });
-                } else if (navigator.clipboard) {
-                  await navigator.clipboard.writeText(`${shareTitle}\n\n${shareText}`);
-                  toast.success("Diagnosis copied to clipboard");
-                } else {
-                  toast.error("Sharing not supported on this device");
+                  return;
                 }
+                if (await copyToClipboard()) return;
+                toast.error("Sharing not supported — try Export PDF instead");
               } catch (e: any) {
-                if (e?.name !== "AbortError") {
-                  console.error("Share failed:", e);
-                  toast.error("Couldn't share — try Export PDF instead");
-                }
+                if (e?.name === "AbortError") return;
+                console.warn("navigator.share failed, falling back to clipboard:", e);
+                if (await copyToClipboard()) return;
+                toast.error("Couldn't share — try Export PDF instead");
               }
             }}
             className="flex-1 flex items-center justify-center gap-2 p-4 rounded-2xl text-sm font-semibold transition-all active:scale-95"

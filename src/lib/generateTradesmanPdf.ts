@@ -240,9 +240,26 @@ export async function generateTradesmanPdf(
     doc.text("ufixi.co.uk", PAGE_W / 2, 289, { align: "center" });
   }
 
-  // Save
+  // Save — use Blob + manual anchor click for reliable download in iframes/preview contexts
   const filename = `ufixi-report-${title.toLowerCase().replace(/\s+/g, "-").slice(0, 30)}.pdf`;
-  doc.save(filename);
+  try {
+    const blob: Blob = doc.output("blob");
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.rel = "noopener";
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 1000);
+  } catch (e) {
+    console.warn("Blob download failed, falling back to doc.save():", e);
+    doc.save(filename);
+  }
 }
 
 /**
