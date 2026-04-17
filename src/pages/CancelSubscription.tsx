@@ -37,6 +37,7 @@ export default function CancelSubscription() {
   const [selectedReason, setSelectedReason] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
   const [claimingOffer, setClaimingOffer] = useState(false);
+  const [cancelledUntil, setCancelledUntil] = useState<string | null>(null);
 
   const navy = "#00172F";
   const textSecondary = "#5A6A7A";
@@ -59,12 +60,22 @@ export default function CancelSubscription() {
   const handleCancel = async () => {
     setCancelling(true);
     try {
-      const { data, error } = await supabase.functions.invoke("customer-portal");
+      const { data, error } = await supabase.functions.invoke("cancel-subscription", {
+        body: {
+          reason: selectedReason,
+        },
+      });
       if (error) throw error;
-      if (data?.url) {
-        // Open Stripe portal for actual cancellation (App Store/Play Store compliant)
-        window.open(data.url, "_blank");
-        setStep("done");
+      if (data?.error) throw new Error(data.error);
+
+      setCancelledUntil(data?.subscription_end || subscriptionEnd || null);
+      setStep("done");
+      await checkSubscription();
+
+      if (data?.already_cancelled) {
+        toast.info("Your subscription was already set to cancel at the end of the billing period.");
+      } else {
+        toast.success("Your subscription will now end at the close of the current billing period.");
       }
     } catch (err: any) {
       toast.error(err.message || "Could not process cancellation");
@@ -280,7 +291,7 @@ export default function CancelSubscription() {
                 </div>
 
                 <p className="text-xs text-center" style={{ color: textSecondary }}>
-                  You'll be redirected to securely manage your subscription. You can resubscribe at any time.
+                  Cancelling now stops future renewals. Your Premium access stays active until the end of the current billing period.
                 </p>
 
                 <button
@@ -289,7 +300,7 @@ export default function CancelSubscription() {
                   className="w-full py-3.5 rounded-2xl text-sm font-semibold transition-all"
                   style={{ background: "rgba(220,38,38,0.08)", color: "#DC2626", border: "1px solid rgba(220,38,38,0.15)" }}
                 >
-                  {cancelling ? "Processing..." : "Cancel My Subscription"}
+                  {cancelling ? "Cancelling..." : "Cancel My Subscription"}
                 </button>
 
                 <GradientButton size="lg" onClick={() => navigate("/settings")}>
@@ -312,9 +323,9 @@ export default function CancelSubscription() {
                 <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto" style={{ background: "rgba(0,23,47,0.05)" }}>
                   <Check className="w-8 h-8" style={{ color: textSecondary }} />
                 </div>
-                <h2 className="text-xl font-bold" style={{ color: navy }}>Cancellation Initiated</h2>
+                <h2 className="text-xl font-bold" style={{ color: navy }}>Cancellation Scheduled</h2>
                 <p className="text-sm" style={{ color: textSecondary }}>
-                  If you confirmed in the subscription portal, your plan will remain active until the end of your current billing period. You can resubscribe any time.
+                  Your billing has been cancelled and Premium stays active until {new Date(cancelledUntil || subscriptionEnd || Date.now()).toLocaleDateString()}.
                 </p>
                 <button
                   onClick={() => {
