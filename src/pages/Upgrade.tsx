@@ -12,7 +12,7 @@ const PLANS = [
     name: "Free",
     price: "£0",
     period: "forever",
-    features: ["3 scans per month", "45-day scan history", "Community forum access", "Basic AI diagnosis"],
+    features: ["3 scans per month", "Basic AI diagnosis", "Ad-supported"],
     current: true,
   },
   {
@@ -21,7 +21,7 @@ const PLANS = [
     priceAfter: "£1.99",
     period: "first month",
     periodAfter: "per month after",
-    features: ["Unlimited scans", "Extended scan history", "Priority AI analysis", "Detailed cost estimates", "PDF & email reports", "Ad-free experience"],
+    features: ["Unlimited scans", "Save scans to your account", "45-day scan history", "Priority AI analysis", "Detailed cost estimates", "PDF & email reports", "Ad-free experience"],
     current: false,
     recommended: true,
   },
