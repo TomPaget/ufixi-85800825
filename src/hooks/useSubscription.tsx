@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
+import { Browser } from "@capacitor/browser";
 import { toast } from "sonner";
 import { getInAppPath } from "@/lib/appNavigation";
 
