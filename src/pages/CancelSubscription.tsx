@@ -37,6 +37,7 @@ export default function CancelSubscription() {
   const [selectedReason, setSelectedReason] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
   const [claimingOffer, setClaimingOffer] = useState(false);
+  const [cancelledUntil, setCancelledUntil] = useState<string | null>(null);
 
   const navy = "#00172F";
   const textSecondary = "#5A6A7A";
@@ -59,12 +60,22 @@ export default function CancelSubscription() {
   const handleCancel = async () => {
     setCancelling(true);
     try {
-      const { data, error } = await supabase.functions.invoke("customer-portal");
+      const { data, error } = await supabase.functions.invoke("cancel-subscription", {
+        body: {
+          reason: selectedReason,
+        },
+      });
       if (error) throw error;
-      if (data?.url) {
-        // Open Stripe portal for actual cancellation (App Store/Play Store compliant)
-        window.open(data.url, "_blank");
-        setStep("done");
+      if (data?.error) throw new Error(data.error);
+
+      setCancelledUntil(data?.subscription_end || subscriptionEnd || null);
+      setStep("done");
+      await checkSubscription();
+
+      if (data?.already_cancelled) {
+        toast.info("Your subscription was already set to cancel at the end of the billing period.");
+      } else {
+        toast.success("Your subscription will now end at the close of the current billing period.");
       }
     } catch (err: any) {
       toast.error(err.message || "Could not process cancellation");
