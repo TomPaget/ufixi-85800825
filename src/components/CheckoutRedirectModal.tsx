@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ExternalLink, Zap } from "lucide-react";
 
 interface Props {
@@ -6,27 +6,64 @@ interface Props {
   onClose: () => void;
 }
 
+/**
+ * Stripe Checkout sets X-Frame-Options: DENY, so it CANNOT load inside an iframe.
+ * We must break out to the top-level window. If that fails (cross-origin), we
+ * give the user a button that opens a real new tab via user gesture.
+ */
 export default function CheckoutRedirectModal({ url, onClose }: Props) {
-  const [countdown, setCountdown] = useState(3);
+  const [needsManualClick, setNeedsManualClick] = useState(false);
+  const triedAuto = useRef(false);
 
   useEffect(() => {
-    if (!url) return;
-    setCountdown(3);
-    const interval = setInterval(() => {
-      setCountdown((c) => {
-        if (c <= 1) {
-          clearInterval(interval);
-          // Auto-redirect in same tab — guaranteed to work
-          window.location.href = url;
-          return 0;
-        }
-        return c - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
+    if (!url) {
+      triedAuto.current = false;
+      setNeedsManualClick(false);
+      return;
+    }
+    if (triedAuto.current) return;
+    triedAuto.current = true;
+
+    // Try to break out of any iframe to top-level window
+    try {
+      if (window.top && window.top !== window.self) {
+        window.top.location.href = url;
+        return;
+      }
+    } catch {
+      // Cross-origin — top-level navigation blocked
+    }
+
+    // Try a same-window navigation (works when not in iframe)
+    try {
+      const inIframe = window.self !== window.top;
+      if (!inIframe) {
+        window.location.href = url;
+        return;
+      }
+    } catch {
+      /* ignore */
+    }
+
+    // Fall back to manual click required
+    setNeedsManualClick(true);
   }, [url]);
 
   if (!url) return null;
+
+  const handleManualOpen = () => {
+    // User gesture — opens in a real new tab, escapes iframe
+    const win = window.open(url, "_blank", "noopener,noreferrer");
+    if (!win) {
+      // Popup blocked too — last resort, navigate top
+      try {
+        if (window.top) window.top.location.href = url;
+        else window.location.href = url;
+      } catch {
+        window.location.href = url;
+      }
+    }
+  };
 
   return (
     <div
@@ -44,20 +81,21 @@ export default function CheckoutRedirectModal({ url, onClose }: Props) {
           <Zap className="w-7 h-7 text-white" />
         </div>
         <h2 className="text-xl font-bold" style={{ color: "var(--color-navy)" }}>
-          Redirecting to secure checkout
+          {needsManualClick ? "Open secure checkout" : "Redirecting…"}
         </h2>
         <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
-          Taking you to Stripe in {countdown}…
+          {needsManualClick
+            ? "Tap below to open Stripe checkout in a new tab."
+            : "Taking you to Stripe to complete payment."}
         </p>
-        <a
-          href={url}
-          rel="noopener noreferrer"
+        <button
+          onClick={handleManualOpen}
           className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold text-white"
           style={{ background: "var(--gradient-primary)" }}
         >
           <ExternalLink className="w-4 h-4" />
-          Continue to checkout now
-        </a>
+          Continue to checkout
+        </button>
         <button
           onClick={onClose}
           className="w-full text-xs"
