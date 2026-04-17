@@ -71,14 +71,18 @@ serve(async (req) => {
 
     logStep("Discount eligibility", { isFirstSubscription });
 
+    // Always use the public app URL for return — never the iframe preview origin,
+    // which can break the post-checkout redirect.
+    const APP_URL = "https://ufixi.lovable.app";
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : email,
       line_items: [{ price: "price_1TFLVVCWrYMm2oxkEqhtGZfA", quantity: 1 }],
       ...(isFirstSubscription ? { discounts: [{ coupon: "35pNFRFD" }] } : {}),
       mode: "subscription",
-      success_url: `${req.headers.get("origin")}/home?upgraded=true`,
-      cancel_url: `${req.headers.get("origin")}/upgrade`,
+      success_url: `${APP_URL}/home?upgraded=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${APP_URL}/upgrade`,
     });
 
     logStep("Checkout session created", { sessionId: session.id });
