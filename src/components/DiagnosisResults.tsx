@@ -20,6 +20,8 @@ interface DiagnosisResultsProps {
   uploadedFileType: string | null;
   onSave: () => void;
   onClose: () => void;
+  /** When true, hides the Save / Close-without-saving buttons (used in IssueDetail view of saved issues). */
+  hideSaveActions?: boolean;
 }
 
 const navy = "#00172F";
@@ -90,6 +92,7 @@ export default function DiagnosisResults({
   uploadedFileType,
   onSave,
   onClose,
+  hideSaveActions = false,
 }: DiagnosisResultsProps) {
   const [expandedSection, setExpandedSection] = useState<string | null>("causes");
   const { isPremium } = useSubscription();
