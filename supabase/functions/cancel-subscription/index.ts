@@ -151,18 +151,31 @@ serve(async (req) => {
           status: 200,
         });
       }
-      // Apply 100%-off coupon to the active subscription's next invoice
+      // Compute new billing date: push next charge by one month from current period end (or now)
+      const currentEndTs =
+        (ongoingSubscription as any)?.current_period_end ??
+        (ongoingSubscription as any)?.items?.data?.[0]?.current_period_end ??
+        Math.floor(Date.now() / 1000);
+      const newBillingDate = new Date(currentEndTs * 1000);
+      newBillingDate.setMonth(newBillingDate.getMonth() + 1);
+      const newTrialEnd = Math.floor(newBillingDate.getTime() / 1000);
+
+      // Apply 100%-off coupon AND extend the billing cycle by one month via trial_end
       await stripe.subscriptions.update(ongoingSubscription.id, {
         discounts: [{ coupon: "A9GyYOlx" }],
+        trial_end: newTrialEnd,
+        proration_behavior: "none",
       });
+
       await adminClient.from("subscription_history").update({
         free_month_claimed: true,
         free_month_claimed_at: new Date().toISOString(),
       }).eq("user_id", userId);
-      logStep("Free month claimed", { customerId: customer.id });
+      logStep("Free month claimed", { customerId: customer.id, newBillingDate: newBillingDate.toISOString() });
       return new Response(JSON.stringify({
         success: true,
         free_month_claimed: true,
+        new_billing_date: newBillingDate.toISOString(),
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
