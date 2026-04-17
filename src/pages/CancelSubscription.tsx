@@ -291,7 +291,7 @@ export default function CancelSubscription() {
                 </div>
 
                 <p className="text-xs text-center" style={{ color: textSecondary }}>
-                  You'll be redirected to securely manage your subscription. You can resubscribe at any time.
+                  Cancelling now stops future renewals. Your Premium access stays active until the end of the current billing period.
                 </p>
 
                 <button
@@ -300,7 +300,7 @@ export default function CancelSubscription() {
                   className="w-full py-3.5 rounded-2xl text-sm font-semibold transition-all"
                   style={{ background: "rgba(220,38,38,0.08)", color: "#DC2626", border: "1px solid rgba(220,38,38,0.15)" }}
                 >
-                  {cancelling ? "Processing..." : "Cancel My Subscription"}
+                  {cancelling ? "Cancelling..." : "Cancel My Subscription"}
                 </button>
 
                 <GradientButton size="lg" onClick={() => navigate("/settings")}>
@@ -323,9 +323,9 @@ export default function CancelSubscription() {
                 <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto" style={{ background: "rgba(0,23,47,0.05)" }}>
                   <Check className="w-8 h-8" style={{ color: textSecondary }} />
                 </div>
-                <h2 className="text-xl font-bold" style={{ color: navy }}>Cancellation Initiated</h2>
+                <h2 className="text-xl font-bold" style={{ color: navy }}>Cancellation Scheduled</h2>
                 <p className="text-sm" style={{ color: textSecondary }}>
-                  If you confirmed in the subscription portal, your plan will remain active until the end of your current billing period. You can resubscribe any time.
+                  Your billing has been cancelled and Premium stays active until {new Date(cancelledUntil || subscriptionEnd || Date.now()).toLocaleDateString()}.
                 </p>
                 <button
                   onClick={() => {
