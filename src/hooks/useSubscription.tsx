@@ -4,6 +4,7 @@ import { User } from "@supabase/supabase-js";
 import { Browser } from "@capacitor/browser";
 import { toast } from "sonner";
 import { getInAppPath } from "@/lib/appNavigation";
+import CheckoutRedirectModal from "@/components/CheckoutRedirectModal";
 
 interface SubscriptionState {
   isPremium: boolean;
