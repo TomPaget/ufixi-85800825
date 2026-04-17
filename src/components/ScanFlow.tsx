@@ -103,7 +103,7 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
   const [adElapsed, setAdElapsed] = useState(0);
   const [adDone, setAdDone] = useState(false);
   const [pendingResults, setPendingResults] = useState<{ triage: any; diagnosis: any } | null>(null);
-  const { isPremium, startCheckout, user } = useSubscription();
+  const { isPremium, hasEverSubscribed, startCheckout, user } = useSubscription();
   const { showInterstitial, isNative } = useAdMob();
   const { saveScanProgress, deleteScan } = useInProgressScan();
 
