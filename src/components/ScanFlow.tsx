@@ -1,7 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Capacitor } from "@capacitor/core";
 import {
-  X, Camera, Upload, ArrowLeft, MapPin, Tag,
+  Camera,
+  CameraResultType,
+  CameraSource,
+} from "@capacitor/camera";
+import {
+  X, Camera as CameraIcon, Upload, ArrowLeft, MapPin, Tag,
   Droplets, Zap, Building2, Wind, Cpu, Wrench,
   Bot, ChevronDown, ChevronUp, AlertTriangle,
   Loader2, CheckCircle2, UserPlus, Crown, Lock, FileText, Mail
@@ -103,32 +109,35 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
 
   const handleUploadMedia = async () => {
     try {
-      // On native iOS/Android, use Capacitor Camera API to avoid crashes
-      // from the HTML file input + capture attribute on iPad
       const native = (window as any).Capacitor?.isNativePlatform?.();
+
       if (native) {
         try {
-          const { Camera, CameraResultType, CameraSource } = await import("@capacitor/camera");
           const photo = await Camera.getPhoto({
-            quality: 80,
+            quality: 70,
             allowEditing: false,
-            resultType: CameraResultType.Base64,
+            resultType: CameraResultType.Uri,
             source: CameraSource.Camera,
             saveToGallery: false,
+            correctOrientation: true,
           });
-          if (photo?.base64String) {
-            const byteString = atob(photo.base64String);
-            const arr = new Uint8Array(byteString.length);
-            for (let i = 0; i < byteString.length; i++) arr[i] = byteString.charCodeAt(i);
-            const blob = new Blob([arr], { type: `image/${photo.format || "jpeg"}` });
-            const file = new File([blob], `photo.${photo.format || "jpg"}`, { type: blob.type });
-            setUploadedFile(file);
-            setUploadedPreviewUrl(URL.createObjectURL(blob));
-            setUploadMethod("upload");
+
+          const photoUrl = photo.webPath || (photo.path ? Capacitor.convertFileSrc(photo.path) : null);
+          if (!photoUrl) {
+            throw new Error("No photo URL returned from camera");
           }
+
+          const response = await fetch(photoUrl);
+          const blob = await response.blob();
+          const fileExtension = photo.format || "jpg";
+          const fileType = blob.type || `image/${fileExtension === "jpeg" ? "jpeg" : fileExtension}`;
+          const file = new File([blob], `photo.${fileExtension}`, { type: fileType });
+
+          setUploadedFile(file);
+          setUploadedPreviewUrl(photoUrl);
+          setUploadMethod("upload");
           return;
         } catch (camErr: any) {
-          // User cancelled or permission denied — fail silently for cancel
           if (camErr?.message?.toLowerCase?.().includes("cancel")) return;
           console.error("Native camera error:", camErr);
           toast.error("Could not open camera. Check camera permission in Settings.");
@@ -136,7 +145,6 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
         }
       }
 
-      // Web fallback
       const input = document.createElement("input");
       input.type = "file";
       input.accept = "image/*,video/*";
