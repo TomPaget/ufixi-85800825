@@ -83,14 +83,23 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       toast.loading("Preparing checkout…", { id: "checkout" });
       const { data, error } = await supabase.functions.invoke("create-checkout");
       toast.dismiss("checkout");
-      if (error) throw error;
+      if (error) {
+        console.error("create-checkout error:", error);
+        throw error;
+      }
+      if (data?.error) {
+        console.error("create-checkout returned error:", data.error);
+        throw new Error(data.error);
+      }
       if (data?.url) {
         window.location.assign(data.url);
+      } else {
+        throw new Error("No checkout URL returned");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Checkout error:", err);
       toast.dismiss("checkout");
-      toast.error("Could not start checkout. Please try again.");
+      toast.error(err?.message || "Could not start checkout. Please try again.");
     }
   }, []);
 
