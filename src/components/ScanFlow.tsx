@@ -347,7 +347,38 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
     }
   };
 
+  const checkFreeScanLimit = async (): Promise<boolean> => {
+    if (isPremium) return true;
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+
+    if (user) {
+      const { count } = await supabase
+        .from("scan_follow_ups")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .gte("scanned_at", monthStart.toISOString());
+      if ((count || 0) >= 3) return false;
+    } else {
+      const key = `ufixi_scan_count_${monthStart.toISOString().slice(0, 7)}`;
+      const used = parseInt(localStorage.getItem(key) || "0", 10);
+      if (used >= 3) return false;
+      localStorage.setItem(key, String(used + 1));
+    }
+    return true;
+  };
+
   const runAIAnalysis = async (finalAnswers: string[]) => {
+    // Enforce free-tier 3 scans / month
+    const allowed = await checkFreeScanLimit();
+    if (!allowed) {
+      toast.error("You've used all 3 free scans this month. Upgrade to Premium for unlimited scans.");
+      setShowSavePrompt("upgrade");
+      setStep(1);
+      return;
+    }
+
     setIsAnalysing(true);
     setAiError(null);
 
