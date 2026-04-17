@@ -7,7 +7,8 @@ import {
 } from "lucide-react";
 import GradientButton from "./GradientButton";
 import DiagnosisChatbot from "./DiagnosisChatbot";
-import { generateTradesmanPdf, generateTradesmanEmail } from "@/lib/generateTradesmanPdf";
+import { generateTradesmanEmail } from "@/lib/generateTradesmanPdf";
+import { buildTradesmanPdf, downloadPdf, sharePdf, emailPdfToTradesperson } from "@/lib/pdfDelivery";
 import { getTradeNameForCategory } from "@/lib/tradeNameMap";
 import { useSubscription } from "@/hooks/useSubscription";
 import { FileText, Mail, Lock, Crown } from "lucide-react";
@@ -629,8 +630,9 @@ export default function DiagnosisResults({
               const { toast } = await import("sonner");
               try {
                 toast.loading("Generating your PDF report...", { id: "pdf-gen" });
-                await generateTradesmanPdf(triage, diagnosis, uploadedPreviewUrl);
-                toast.success("Report downloaded ✓", { id: "pdf-gen" });
+                const built = await buildTradesmanPdf(triage, diagnosis, uploadedPreviewUrl);
+                await downloadPdf(built);
+                toast.success("Report ready", { id: "pdf-gen" });
               } catch (e: any) {
                 console.error("PDF generation failed:", e);
                 toast.error(e?.message || "Failed to generate report", { id: "pdf-gen" });
@@ -645,47 +647,16 @@ export default function DiagnosisResults({
           <button
             onClick={async () => {
               const { toast } = await import("sonner");
-              const shareTitle = `Ufixi diagnosis: ${issueTitle}`;
-              const shareText = `${issueTitle}${briefDescription ? ` — ${briefDescription}` : ""}\n\nDiagnosed by Ufixi.`;
-              const fullText = `${shareTitle}\n\n${shareText}`;
-
-              // 1. Try native Capacitor Share (full iOS/Android share sheet: Messages, WhatsApp, AirDrop, Mail, etc.)
               try {
-                const { Capacitor } = await import("@capacitor/core");
-                if (Capacitor.isNativePlatform()) {
-                  const { Share } = await import("@capacitor/share");
-                  await Share.share({
-                    title: shareTitle,
-                    text: shareText,
-                    dialogTitle: "Share diagnosis",
-                  });
-                  return;
-                }
+                toast.loading("Preparing your report to share...", { id: "pdf-share" });
+                const built = await buildTradesmanPdf(triage, diagnosis, uploadedPreviewUrl);
+                const message = `Ufixi diagnosis: ${issueTitle}${briefDescription ? `\n\n${briefDescription}` : ""}\n\nFull report attached.`;
+                await sharePdf(built, message);
+                toast.success("Ready to share", { id: "pdf-share" });
               } catch (e: any) {
-                if (e?.message?.toLowerCase?.().includes("cancel")) return;
-                console.warn("Capacitor share failed:", e);
+                console.error("Share failed:", e);
+                toast.error(e?.message || "Could not share. Try Export PDF instead.", { id: "pdf-share" });
               }
-
-              // 2. Try Web Share API (mobile browsers get a real share sheet)
-              try {
-                if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
-                  await navigator.share({ title: shareTitle, text: shareText });
-                  return;
-                }
-              } catch (e: any) {
-                if (e?.name === "AbortError") return;
-                console.warn("navigator.share failed:", e);
-              }
-
-              // 3. Desktop fallback — clipboard (full native share sheets aren't available on desktop browsers)
-              try {
-                if (navigator.clipboard?.writeText) {
-                  await navigator.clipboard.writeText(fullText);
-                  toast.success("Diagnosis copied — paste into Messages, Mail, WhatsApp, etc.");
-                  return;
-                }
-              } catch {}
-              toast.error("Sharing not supported on this device — try Export PDF instead");
             }}
             className="flex-1 flex items-center justify-center gap-2 p-4 rounded-2xl text-sm font-semibold transition-all active:scale-95"
             style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", color: navy, minHeight: 52 }}
@@ -720,9 +691,22 @@ export default function DiagnosisResults({
       {/* Email tradesman — premium only */}
       {isPremium && (
       <button
-          onClick={() => {
-            const { subject, body } = generateTradesmanEmail(triage, diagnosis);
-            window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, "_self");
+          onClick={async () => {
+            const { toast } = await import("sonner");
+            try {
+              toast.loading(`Preparing email to your ${tradeName.toLowerCase()}...`, { id: "pdf-email" });
+              const built = await buildTradesmanPdf(triage, diagnosis, uploadedPreviewUrl);
+              const { subject, body } = generateTradesmanEmail(triage, diagnosis);
+              const result = await emailPdfToTradesperson(built, subject, body);
+              if (result.method === "native") {
+                toast.success("Pick Mail to send with the report attached", { id: "pdf-email" });
+              } else {
+                toast.success("Report downloaded. Attach it to the email that just opened.", { id: "pdf-email" });
+              }
+            } catch (e: any) {
+              console.error("Email tradesman failed:", e);
+              toast.error(e?.message || "Could not start email. Try Export PDF instead.", { id: "pdf-email" });
+            }
           }}
           className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl text-base font-semibold transition-all active:scale-95"
           style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", color: navy, minHeight: 52 }}
