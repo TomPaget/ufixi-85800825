@@ -111,6 +111,28 @@ export default function HomeDashboard() {
 
   return (
     <PageTransition>
+      {verifyingUpgrade && !isPremium && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-5"
+          style={{ background: "rgba(0,23,47,0.7)", backdropFilter: "blur(8px)" }}
+        >
+          <div
+            className="w-full max-w-sm rounded-3xl p-6 text-center space-y-3"
+            style={{ background: "white", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}
+          >
+            <div
+              className="w-12 h-12 mx-auto rounded-full animate-spin border-4"
+              style={{ borderColor: "var(--color-primary)", borderTopColor: "transparent" }}
+            />
+            <h2 className="text-lg font-bold" style={{ color: "var(--color-navy)" }}>
+              Activating your Premium…
+            </h2>
+            <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+              Confirming your payment with Stripe. This usually takes a few seconds.
+            </p>
+          </div>
+        </div>
+      )}
       <div className="min-h-screen relative overflow-hidden" style={{ background: "transparent", minHeight: "100dvh", paddingBottom: "var(--app-page-bottom-space)" }}>
         <LavaLampBackground />
 
