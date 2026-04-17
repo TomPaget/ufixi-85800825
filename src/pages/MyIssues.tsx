@@ -332,22 +332,44 @@ export default function MyIssues() {
                         <X className="w-4 h-4" />
                       </button>
                     )}
-                    <div className={`flex items-center justify-between ${selectMode ? "pl-7" : "pr-6"}`}>
-                      <h3 className="text-base font-semibold" style={{ color: navy }}>{issue.issue_title}</h3>
-                      <span className="text-xs px-2 py-0.5 rounded-full" style={{
-                        background: issue.urgency === "fix_now" ? "rgba(220,38,38,0.1)" : issue.urgency === "fix_soon" ? "rgba(240,144,10,0.1)" : "rgba(107,122,141,0.1)",
-                        color: issue.urgency === "fix_now" ? "#DC2626" : issue.urgency === "fix_soon" ? "#F0900A" : "#6B7A8D",
-                      }}>
-                        {issue.urgency?.replace("_", " ") || "unknown"}
-                      </span>
-                    </div>
-                    {issue.brief_description && (
-                      <p className={`text-sm ${selectMode ? "pl-7" : ""}`} style={{ color: textSec }}>{issue.brief_description}</p>
-                    )}
-                    <div className={`flex items-center gap-2 ${selectMode ? "pl-7" : ""}`}>
-                      <span className="text-xs" style={{ color: textSec }}>{issue.category}</span>
-                      <span className="text-xs" style={{ color: textSec }}>•</span>
-                      <span className="text-xs" style={{ color: textSec }}>{new Date(issue.created_at).toLocaleDateString("en-GB")}</span>
+                    <div className={`flex gap-3 ${selectMode ? "pl-7" : "pr-6"}`}>
+                      {issue.image_url ? (
+                        <img
+                          src={issue.image_url}
+                          alt={issue.issue_title}
+                          className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
+                          style={{ border: "1px solid rgba(0,23,47,0.08)" }}
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div
+                          className="w-16 h-16 rounded-xl flex-shrink-0 flex items-center justify-center"
+                          style={{ background: "rgba(232,83,10,0.08)", border: "1px solid rgba(0,23,47,0.06)" }}
+                        >
+                          <span className="text-[10px] font-semibold uppercase" style={{ color: "var(--color-primary)" }}>
+                            {(issue.category || "?").slice(0, 3)}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <h3 className="text-base font-semibold leading-tight" style={{ color: navy }}>{issue.issue_title}</h3>
+                          <span className="text-xs px-2 py-0.5 rounded-full flex-shrink-0" style={{
+                            background: issue.urgency === "fix_now" ? "rgba(220,38,38,0.1)" : issue.urgency === "fix_soon" ? "rgba(240,144,10,0.1)" : "rgba(107,122,141,0.1)",
+                            color: issue.urgency === "fix_now" ? "#DC2626" : issue.urgency === "fix_soon" ? "#F0900A" : "#6B7A8D",
+                          }}>
+                            {issue.urgency?.replace("_", " ") || "unknown"}
+                          </span>
+                        </div>
+                        {issue.brief_description && (
+                          <p className="text-sm line-clamp-2" style={{ color: textSec }}>{issue.brief_description}</p>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs capitalize" style={{ color: textSec }}>{issue.category}</span>
+                          <span className="text-xs" style={{ color: textSec }}>•</span>
+                          <span className="text-xs" style={{ color: textSec }}>{new Date(issue.created_at).toLocaleDateString("en-GB")}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 );
