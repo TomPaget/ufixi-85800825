@@ -111,6 +111,23 @@ export default function MyIssues() {
   const navy = "#00172F";
   const textSec = "#5A6A7A";
 
+  // Filter + sort (must run before any early return to keep hook order stable)
+  const filtered = useMemo(() => {
+    let list = issues.filter((i) =>
+      i.issue_title?.toLowerCase().includes(search.toLowerCase())
+    );
+    list.sort((a, b) => {
+      switch (sortKey) {
+        case "old": return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case "severe": return (URGENCY_RANK[b.urgency] || 0) - (URGENCY_RANK[a.urgency] || 0);
+        case "minor": return (URGENCY_RANK[a.urgency] || 0) - (URGENCY_RANK[b.urgency] || 0);
+        case "new":
+        default: return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+    return list;
+  }, [issues, search, sortKey]);
+
   // Free user — show premium lock
   if (!isPremium) {
     return (
@@ -156,22 +173,7 @@ export default function MyIssues() {
     );
   }
 
-  // Filter + sort
-  const filtered = useMemo(() => {
-    let list = issues.filter((i) =>
-      i.issue_title?.toLowerCase().includes(search.toLowerCase())
-    );
-    list.sort((a, b) => {
-      switch (sortKey) {
-        case "old": return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-        case "severe": return (URGENCY_RANK[b.urgency] || 0) - (URGENCY_RANK[a.urgency] || 0);
-        case "minor": return (URGENCY_RANK[a.urgency] || 0) - (URGENCY_RANK[b.urgency] || 0);
-        case "new":
-        default: return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      }
-    });
-    return list;
-  }, [issues, search, sortKey]);
+  // (filtered computed above before early return)
 
   return (
     <PageTransition>
