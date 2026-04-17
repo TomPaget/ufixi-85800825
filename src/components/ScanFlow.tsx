@@ -825,9 +825,9 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
 
               {/* Upload section */}
                <div className="space-y-2">
-                <label className="text-base font-semibold flex items-center gap-2" style={{ color: navy }}>
-                  <Camera className="w-4 h-4" style={{ color: "var(--color-primary)" }} /> Upload Issue
-                </label>
+                 <label className="text-base font-semibold flex items-center gap-2" style={{ color: navy }}>
+                   <CameraIcon className="w-4 h-4" style={{ color: "var(--color-primary)" }} /> Upload Issue
+                 </label>
                 {uploadedFile ? (
                   <button
                     onClick={handleUploadFromGallery}
@@ -855,7 +855,7 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
                       style={{ background: "white", border: "2px solid rgba(0,23,47,0.08)", minHeight: 56 }}
                     >
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(232,83,10,0.08)" }}>
-                        <Camera className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
+                        <CameraIcon className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
                       </div>
                       <p className="text-sm font-semibold" style={{ color: navy }}>Take Photo</p>
                     </button>
