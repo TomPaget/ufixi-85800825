@@ -12,7 +12,7 @@ const PLANS = [
     name: "Free",
     price: "£0",
     period: "forever",
-    features: ["3 scans per month", "Basic AI diagnosis", "Ad-supported"],
+    features: ["3 scans per month", "Basic AI diagnosis", "Ads"],
     current: true,
   },
   {
