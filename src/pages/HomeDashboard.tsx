@@ -7,6 +7,7 @@ import GlassCard from "@/components/GlassCard";
 import BottomNavDemo from "@/components/BottomNavDemo";
 import PageTransition from "@/components/PageTransition";
 import ufixiLogo from "@/assets/ufixi-logo.svg";
+import PullToRefresh from "@/components/PullToRefresh";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useNotifications } from "@/hooks/useNotifications";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
@@ -150,20 +151,25 @@ export default function HomeDashboard() {
             </div>
 
             <div className="flex items-center gap-2 ml-auto flex-shrink-0">
-              <motion.button
-                onClick={() => navigate("/upgrade")}
-                animate={nativeApp ? undefined : { scale: [1, 1.02, 1] }}
-                transition={nativeApp ? undefined : { duration: 2.2, ease: "easeInOut", repeat: Infinity }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-all active:scale-95"
-                style={{ background: "var(--gradient-primary)", color: "#fff", minHeight: 44 }}
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                Go Premium
-              </motion.button>
+              {!isPremium ? (
+                <motion.button
+                  onClick={() => navigate("/upgrade")}
+                  animate={nativeApp ? undefined : { scale: [1, 1.02, 1] }}
+                  transition={nativeApp ? undefined : { duration: 2.2, ease: "easeInOut", repeat: Infinity }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-all active:scale-95"
+                  style={{ background: "var(--gradient-primary)", color: "#fff", minHeight: 44 }}
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Go Premium
+                </motion.button>
+              ) : (
+                <div style={{ minWidth: 44, minHeight: 44 }} />
+              )}
             </div>
           </div>
         </motion.header>
 
+        <PullToRefresh onRefresh={loadCounts}>
         <main className="max-w-lg mx-auto px-5 py-6 space-y-10">
           {/* Welcome */}
           <motion.div

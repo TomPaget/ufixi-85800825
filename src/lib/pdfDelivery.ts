@@ -293,19 +293,34 @@ export async function downloadPdf(built: BuiltPdf): Promise<void> {
     console.warn("Native PDF save failed, falling back to web download:", nativeErr);
   }
 
-  // Web: anchor download
+  // Web: download. iOS Safari blocks anchor downloads of object URLs from
+  // async handlers, so we open a same-tab data URL on iOS — the user can
+  // then save it with the share sheet.
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+  const isIosSafari = /iPad|iPhone|iPod/.test(ua) && /Safari/.test(ua) && !/CriOS|FxiOS/.test(ua);
+
+  if (isIosSafari) {
+    const dataUrl = `data:application/pdf;base64,${built.base64}`;
+    window.location.href = dataUrl;
+    return;
+  }
+
   const url = URL.createObjectURL(built.blob);
   const a = document.createElement("a");
   a.href = url;
   a.download = built.filename;
   a.rel = "noopener";
+  a.target = "_blank";
   a.style.display = "none";
   document.body.appendChild(a);
   a.click();
+  // Some browsers (Firefox, older Safari) need a fallback if the click was
+  // suppressed. Open the blob URL in a new tab so the user can save it.
   setTimeout(() => {
     try { document.body.removeChild(a); } catch {}
-    URL.revokeObjectURL(url);
-  }, 5000);
+    try { window.open(url, "_blank", "noopener,noreferrer"); } catch {}
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  }, 250);
 }
 
 /**
