@@ -464,26 +464,33 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
       // Record follow-up for 1-week push notification
       try {
         const { data: { user: authUser } } = await supabase.auth.getUser();
-        await supabase.from("scan_follow_ups").insert({
+        const sessionId = crypto.randomUUID();
+        const issueTitle = data.triage?.issue_title || "Unknown Issue";
+        const cat = data.triage?.category || category || null;
+        const now = Date.now();
+        const followUps = [3, 7, 14].map((days) => ({
           user_id: authUser?.id || null,
-          session_id: crypto.randomUUID(),
-          issue_title: data.triage?.issue_title || "Unknown Issue",
-          category: data.triage?.category || category,
-        } as any);
+          session_id: sessionId,
+          issue_title: issueTitle,
+          category: cat,
+          follow_up_at: new Date(now + days * 86_400_000).toISOString(),
+          notification_sent: false,
+        }));
+        await supabase.from("scan_follow_ups").insert(followUps as any);
       } catch (e) {
         console.warn("Follow-up recording failed:", e);
       }
 
       // Send notification + push for premium users
       if (isPremium && user) {
-        const issueTitle = data.triage?.issue_title || "your issue";
+        const notifyTitle = data.triage?.issue_title || "your issue";
         const priority = data.diagnosis?.urgency_assessment?.level === "fix_now" ? "urgent" : "normal";
         try {
           // In-app notification (also handled by the edge function, but this ensures immediate display)
           await supabase.from("notifications").insert({
             user_id: user.id,
             title: "Scan Complete",
-            message: `Your diagnosis for "${issueTitle}" is ready to view.`,
+            message: `Your diagnosis for "${notifyTitle}" is ready to view.`,
             type: "scan_complete",
             priority,
             action_url: null,
@@ -494,7 +501,7 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
             body: {
               user_id: user.id,
               title: "Scan Complete ✓",
-              body: `Your diagnosis for "${issueTitle}" is ready to view.`,
+              body: `Your diagnosis for "${notifyTitle}" is ready to view.`,
               data: { type: "scan_complete", priority, action_url: "/notifications" },
             },
           }).catch((e) => console.warn("Push notification failed:", e));

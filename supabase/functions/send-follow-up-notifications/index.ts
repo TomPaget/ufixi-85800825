@@ -14,12 +14,13 @@ serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Find follow-ups due for notification (1 week after scan)
+    // Find follow-ups due for notification (3, 7, or 14 days after scan)
     const now = new Date().toISOString();
     const { data: pendingFollowUps, error } = await supabase
       .from("scan_follow_ups")
-      .select("id, user_id, issue_title, category")
+      .select("id, user_id, issue_title, category, follow_up_at, scanned_at, issue_resolved")
       .eq("notification_sent", false)
+      .or("issue_resolved.is.null,issue_resolved.eq.false")
       .lte("follow_up_at", now)
       .limit(100);
 
@@ -33,8 +34,61 @@ serve(async (req) => {
     const processed: string[] = [];
 
     for (const followUp of pendingFollowUps) {
-      // Get user email for notification
+      // Skip silently if the user has since deleted/resolved the issue.
       if (followUp.user_id) {
+        const { data: stillActive } = await supabase
+          .from("saved_issues")
+          .select("id, status")
+          .eq("user_id", followUp.user_id)
+          .eq("issue_title", followUp.issue_title)
+          .neq("status", "resolved")
+          .limit(1);
+
+        // If the issue is gone or marked resolved, drop the reminder.
+        if (!stillActive || stillActive.length === 0) {
+          await supabase
+            .from("scan_follow_ups")
+            .update({ notification_sent: true, issue_resolved: true })
+            .eq("id", followUp.id);
+          continue;
+        }
+
+        // Pick a friendly message based on how long it's been
+        const days = Math.max(
+          1,
+          Math.round((Date.now() - new Date(followUp.scanned_at as any).getTime()) / 86_400_000),
+        );
+        const subject = `Have you fixed your "${followUp.issue_title}" issue yet?`;
+        const intro = days >= 14
+          ? "It's been two weeks"
+          : days >= 7
+            ? "It's been a week"
+            : "It's been a few days";
+
+        // In-app notification + native push
+        await supabase.from("notifications").insert({
+          user_id: followUp.user_id,
+          title: "Time to check on your repair",
+          message: `${intro} since you scanned "${followUp.issue_title}". Tap to update its status.`,
+          type: "follow_up",
+          priority: "normal",
+          action_url: "/issues",
+        } as any);
+
+        try {
+          await supabase.functions.invoke("send-push-notification", {
+            body: {
+              user_id: followUp.user_id,
+              title: "Have you fixed it yet?",
+              body: `${intro} since you scanned "${followUp.issue_title}". Tap to update.`,
+              data: { type: "follow_up", action_url: "/issues" },
+            },
+          });
+        } catch (pushErr) {
+          console.warn("Follow-up push failed:", pushErr);
+        }
+
+        // Email reminder (best effort)
         const { data: profile } = await supabase
           .from("profiles")
           .select("email, full_name")
@@ -42,14 +96,13 @@ serve(async (req) => {
           .single();
 
         if (profile?.email) {
-          // Queue email notification
           const payload = {
             to: profile.email,
-            subject: `Have you fixed your "${followUp.issue_title}" issue?`,
+            subject,
             html: `
               <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
                 <h2 style="color: #00172F;">Hi${profile.full_name ? ` ${profile.full_name}` : ''},</h2>
-                <p>It's been a week since you scanned your <strong>${followUp.issue_title}</strong> issue on Ufixi.</p>
+                <p>${intro} since you scanned your <strong>${followUp.issue_title}</strong> issue on Ufixi.</p>
                 <p>Have you managed to fix it? Open the app to update your issue status or get more help.</p>
                 <a href="https://ufixi.lovable.app/issues" 
                    style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #E8530A, #D93870); color: white; text-decoration: none; border-radius: 8px; margin-top: 16px;">
