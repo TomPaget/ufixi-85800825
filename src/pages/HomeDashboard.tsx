@@ -26,7 +26,35 @@ export default function HomeDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const nativeApp = isNativeApp();
-  const { isPremium, hasEverSubscribed, startCheckout } = useSubscription();
+  const { isPremium, hasEverSubscribed, startCheckout, checkSubscription } = useSubscription();
+  const [verifyingUpgrade, setVerifyingUpgrade] = useState(false);
+
+  // Post-checkout: poll for subscription activation
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("upgraded") !== "true") return;
+    setVerifyingUpgrade(true);
+    let cancelled = false;
+    let attempts = 0;
+    const MAX = 12;
+    const poll = async () => {
+      while (!cancelled && attempts < MAX) {
+        attempts++;
+        await checkSubscription();
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+      if (!cancelled) setVerifyingUpgrade(false);
+      // Clean URL
+      window.history.replaceState({}, "", "/home");
+    };
+    poll();
+    return () => { cancelled = true; };
+  }, [checkSubscription]);
+
+  // Hide overlay as soon as premium activates
+  useEffect(() => {
+    if (verifyingUpgrade && isPremium) setVerifyingUpgrade(false);
+  }, [isPremium, verifyingUpgrade]);
   const { unreadCount } = useNotifications();
 
   // Register native push notifications — navigate on tap
