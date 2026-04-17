@@ -239,4 +239,6 @@ const DiagnosisChatbot = forwardRef<HTMLDivElement, DiagnosisChatbotProps>(funct
             </div>
     </div>
   );
-}
+});
+
+export default DiagnosisChatbot;
