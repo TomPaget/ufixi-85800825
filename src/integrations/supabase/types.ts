@@ -323,6 +323,7 @@ export type Database = {
           category: string
           created_at: string | null
           diagnosis_data: Json | null
+          expires_at: string | null
           id: string
           image_url: string | null
           issue_title: string
@@ -336,6 +337,7 @@ export type Database = {
           category: string
           created_at?: string | null
           diagnosis_data?: Json | null
+          expires_at?: string | null
           id?: string
           image_url?: string | null
           issue_title: string
@@ -349,6 +351,7 @@ export type Database = {
           category?: string
           created_at?: string | null
           diagnosis_data?: Json | null
+          expires_at?: string | null
           id?: string
           image_url?: string | null
           issue_title?: string

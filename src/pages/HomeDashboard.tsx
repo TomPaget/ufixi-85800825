@@ -13,6 +13,7 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { supabase } from "@/integrations/supabase/client";
 import { isNativeApp } from "@/lib/appNavigation";
+import { loadRecentScans, MAX_AUTO_RECENT, AUTO_RECENT_DAYS } from "@/lib/autoSaveScan";
 
 const ScanFlow = lazy(() => import("@/components/ScanFlow"));
 
@@ -83,20 +84,33 @@ export default function HomeDashboard() {
   const [activeCount, setActiveCount] = useState(0);
   const [fixSoonCount, setFixSoonCount] = useState(0);
   const [resolvedCount, setResolvedCount] = useState(0);
+  const [recentScans, setRecentScans] = useState<any[]>([]);
 
   useEffect(() => {
     if (isPremium) loadCounts();
-  }, [isPremium]);
+  }, [isPremium, showScanFlow]);
+
+  // Reload recent scans when the scan flow closes (so a fresh auto-saved scan shows up)
+  useEffect(() => {
+    if (isPremium && !showScanFlow) loadCounts();
+  }, [showScanFlow, isPremium]);
 
   const loadCounts = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const { data } = await supabase.from("saved_issues").select("status, urgency").eq("user_id", user.id);
-    if (!data) return;
-    setActiveCount(data.filter(i => i.status === "active").length);
-    setFixSoonCount(data.filter(i => i.urgency === "fix_now" || i.urgency === "fix_soon").length);
-    setResolvedCount(data.filter(i => i.status === "resolved").length);
-    setSavedIssues(data);
+    const { data } = await supabase
+      .from("saved_issues")
+      .select("status, urgency")
+      .eq("user_id", user.id)
+      .neq("status", "auto_recent");
+    if (data) {
+      setActiveCount(data.filter(i => i.status === "active").length);
+      setFixSoonCount(data.filter(i => i.urgency === "fix_now" || i.urgency === "fix_soon").length);
+      setResolvedCount(data.filter(i => i.status === "resolved").length);
+      setSavedIssues(data);
+    }
+    const recent = await loadRecentScans(user.id);
+    setRecentScans(recent);
   };
 
   const handleRecentScansClick = () => {
@@ -270,7 +284,7 @@ export default function HomeDashboard() {
                 <History className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
                 Recent Scans
                 <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(232,83,10,0.1)", color: "var(--color-primary)" }}>
-                  0
+                  {isPremium ? `${recentScans.length} / ${MAX_AUTO_RECENT}` : "0"}
                 </span>
               </span>
               {(showRecentIssues || showPremiumPrompt) ? <ChevronUp className="w-5 h-5" style={{ color: "#9aa5b4" }} /> : <ChevronDown className="w-5 h-5" style={{ color: "#9aa5b4" }} />}
@@ -309,6 +323,81 @@ export default function HomeDashboard() {
                     <GradientButton onClick={startCheckout}>
                       <span className="flex items-center justify-center gap-2"><Crown className="w-4 h-4" /> Upgrade to Premium — {hasEverSubscribed ? "£1.99/mo" : "£0.99/mo"}</span>
                     </GradientButton>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Recent scans list for premium users */}
+              {showRecentIssues && isPremium && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-3 space-y-2">
+                    {recentScans.length === 0 ? (
+                      <div className="rounded-2xl p-6 text-center" style={{ background: "rgba(255,255,255,0.95)", border: "1px solid rgba(0,23,47,0.08)" }}>
+                        <p className="text-sm font-semibold" style={{ color: "var(--color-navy)" }}>No recent scans yet</p>
+                        <p className="text-xs mt-1" style={{ color: "var(--color-text-secondary)" }}>
+                          Completed scans appear here for {AUTO_RECENT_DAYS} days. Save the ones you want to keep.
+                        </p>
+                      </div>
+                    ) : (
+                      recentScans.map((scan) => {
+                        const expiresIn = scan.expires_at
+                          ? Math.max(0, Math.ceil((new Date(scan.expires_at).getTime() - Date.now()) / 86400000))
+                          : null;
+                        const urgencyColor =
+                          scan.urgency === "fix_now" ? "#DC2626" :
+                          scan.urgency === "fix_soon" ? "#F0900A" : "#6B7A8D";
+                        const urgencyBg =
+                          scan.urgency === "fix_now" ? "rgba(220,38,38,0.1)" :
+                          scan.urgency === "fix_soon" ? "rgba(240,144,10,0.1)" : "rgba(107,122,141,0.1)";
+                        return (
+                          <button
+                            key={scan.id}
+                            onClick={() => navigate(`/issue/${scan.id}`)}
+                            className="w-full flex gap-3 p-3 rounded-2xl text-left transition-all active:scale-[0.98]"
+                            style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", boxShadow: "var(--shadow-card)" }}
+                          >
+                            {scan.image_url ? (
+                              <img
+                                src={scan.image_url}
+                                alt={scan.issue_title}
+                                className="w-14 h-14 rounded-xl object-cover flex-shrink-0"
+                                style={{ border: "1px solid rgba(0,23,47,0.08)" }}
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="w-14 h-14 rounded-xl flex-shrink-0 flex items-center justify-center" style={{ background: "rgba(232,83,10,0.08)" }}>
+                                <span className="text-[10px] font-semibold uppercase" style={{ color: "var(--color-primary)" }}>
+                                  {(scan.category || "?").slice(0, 3)}
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0 space-y-1">
+                              <div className="flex items-start justify-between gap-2">
+                                <h4 className="text-sm font-semibold leading-tight truncate" style={{ color: "var(--color-navy)" }}>
+                                  {scan.issue_title}
+                                </h4>
+                                {scan.urgency && (
+                                  <span className="text-[10px] px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: urgencyBg, color: urgencyColor }}>
+                                    {scan.urgency.replace("_", " ")}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 text-[11px]" style={{ color: "var(--color-text-secondary)" }}>
+                                <span className="capitalize">{scan.category}</span>
+                                <span>•</span>
+                                <span>Auto-saved · {expiresIn !== null ? `${expiresIn}d left` : "saved"}</span>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })
+                    )}
                   </div>
                 </motion.div>
               )}

@@ -21,6 +21,7 @@ import ufixiLogo from "@/assets/ufixi-logo.svg";
 import GradientButton from "./GradientButton";
 import LavaLampBackground from "./LavaLampBackground";
 import DiagnosisResults from "./DiagnosisResults";
+import { autoSaveRecentScan } from "@/lib/autoSaveScan";
 
 const CATEGORIES = [
   { id: "plumbing", label: "Plumbing", icon: Droplets },
@@ -94,6 +95,8 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
   const [aiError, setAiError] = useState<string | null>(null);
   const [showExitWarning, setShowExitWarning] = useState(false);
   const [currentScanId, setCurrentScanId] = useState<string | null>(resumeScanId || null);
+  // Tracks the auto-saved (status=auto_recent) row created when a premium scan completes
+  const [autoSavedId, setAutoSavedId] = useState<string | null>(null);
   const [postcode, setPostcode] = useState("");
 
   // Ad state
@@ -505,6 +508,18 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
           deleteScan(currentScanId);
           setCurrentScanId(null);
         }
+        // Auto-save to Recent Scans (7 days, max 20) so premium users can revisit
+        // any completed scan even if they don't manually save it
+        if (user) {
+          const autoId = await autoSaveRecentScan({
+            userId: user.id,
+            triage: data.triage,
+            diagnosis: data.diagnosis,
+            category,
+            imageUrl: uploadedPreviewUrl,
+          });
+          if (autoId) setAutoSavedId(autoId);
+        }
       }
     } catch (err: any) {
       console.error("AI analysis error:", err);
@@ -570,24 +585,37 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
         setShowSavePrompt("auth");
         return;
       }
-      const { error } = await supabase.from("saved_issues").insert({
-        user_id: authUser.id,
-        issue_title: triage?.issue_title || "Untitled Issue",
-        brief_description: triage?.brief_description || "",
-        category: triage?.category || category || "other",
-        urgency: diagnosis?.urgency_assessment?.level || null,
-        diagnosis_data: diagnosis,
-        triage_data: triage,
-        image_url: uploadedPreviewUrl || null,
-        status: "active",
-      });
-      if (error) throw error;
 
-      // Enforce max 30 saved issues — delete oldest beyond that
+      // If we already auto-saved this scan as "auto_recent", just promote it to "active"
+      // instead of inserting a duplicate row.
+      if (autoSavedId) {
+        const { error: upErr } = await supabase
+          .from("saved_issues")
+          .update({ status: "active", expires_at: null } as any)
+          .eq("id", autoSavedId)
+          .eq("user_id", authUser.id);
+        if (upErr) throw upErr;
+      } else {
+        const { error } = await supabase.from("saved_issues").insert({
+          user_id: authUser.id,
+          issue_title: triage?.issue_title || "Untitled Issue",
+          brief_description: triage?.brief_description || "",
+          category: triage?.category || category || "other",
+          urgency: diagnosis?.urgency_assessment?.level || null,
+          diagnosis_data: diagnosis,
+          triage_data: triage,
+          image_url: uploadedPreviewUrl || null,
+          status: "active",
+        });
+        if (error) throw error;
+      }
+
+      // Enforce max 30 manually-saved (active/resolved) issues — auto_recent rows are NOT counted
       const { data: all } = await supabase
         .from("saved_issues")
         .select("id, created_at")
         .eq("user_id", authUser.id)
+        .neq("status", "auto_recent")
         .order("created_at", { ascending: false });
       if (all && all.length > 30) {
         const toDelete = all.slice(30).map((r) => r.id);

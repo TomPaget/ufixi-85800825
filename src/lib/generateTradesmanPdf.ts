@@ -242,6 +242,39 @@ export async function generateTradesmanPdf(
 
   // Save — use Blob + manual anchor click for reliable download in iframes/preview contexts
   const filename = `ufixi-report-${title.toLowerCase().replace(/\s+/g, "-").slice(0, 30)}.pdf`;
+
+  // === Native (Capacitor) path: write to Documents & open with native viewer/share sheet ===
+  try {
+    const { Capacitor } = await import("@capacitor/core");
+    if (Capacitor.isNativePlatform()) {
+      const dataUriString: string = doc.output("datauristring");
+      const base64 = dataUriString.split(",")[1];
+      const { Filesystem, Directory } = await import("@capacitor/filesystem");
+      const written = await Filesystem.writeFile({
+        path: filename,
+        data: base64,
+        directory: Directory.Documents,
+      });
+      try {
+        const { Share } = await import("@capacitor/share");
+        await Share.share({
+          title: "Ufixi diagnosis report",
+          url: written.uri,
+          dialogTitle: "Save or share your report",
+        });
+      } catch (shareErr: any) {
+        // User-cancelled share is fine — file is already saved to Documents
+        if (!shareErr?.message?.toLowerCase?.().includes("cancel")) {
+          console.warn("Native share after PDF write failed (file saved anyway):", shareErr);
+        }
+      }
+      return;
+    }
+  } catch (nativeErr) {
+    console.warn("Native PDF save failed, falling back to web download:", nativeErr);
+  }
+
+  // === Web path: blob URL + anchor click, with new-tab fallback ===
   try {
     const blob: Blob = doc.output("blob");
     const url = URL.createObjectURL(blob);
@@ -249,13 +282,25 @@ export async function generateTradesmanPdf(
     a.href = url;
     a.download = filename;
     a.rel = "noopener";
+    a.target = "_blank";
     a.style.display = "none";
     document.body.appendChild(a);
     a.click();
+    // Also try opening in a new tab as a fallback in case the iframe sandbox
+    // silently blocked the download (e.g. inside the Lovable preview iframe).
+    // The browser will not double-trigger the download.
     setTimeout(() => {
-      document.body.removeChild(a);
+      try {
+        // Only open new tab if we appear to be inside an iframe (likely sandboxed)
+        if (window.self !== window.top) {
+          window.open(url, "_blank", "noopener,noreferrer");
+        }
+      } catch {}
+    }, 250);
+    setTimeout(() => {
+      try { document.body.removeChild(a); } catch {}
       URL.revokeObjectURL(url);
-    }, 1000);
+    }, 5000);
   } catch (e) {
     console.warn("Blob download failed, falling back to doc.save():", e);
     doc.save(filename);

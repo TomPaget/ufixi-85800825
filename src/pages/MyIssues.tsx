@@ -71,6 +71,7 @@ export default function MyIssues() {
           .from("saved_issues")
           .select("*")
           .eq("user_id", user.id)
+          .neq("status", "auto_recent")
           .order("created_at", { ascending: false }),
         loadInProgressScans(),
       ]);
