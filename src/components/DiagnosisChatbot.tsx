@@ -19,7 +19,7 @@ interface DiagnosisChatbotProps {
   proCostRange: string;
 }
 
-export default function DiagnosisChatbot({
+const DiagnosisChatbot = forwardRef<HTMLDivElement, DiagnosisChatbotProps>(function DiagnosisChatbot({
   issueTitle,
   category,
   briefDescription,
@@ -28,7 +28,7 @@ export default function DiagnosisChatbot({
   safetyWarnings,
   diyCostRange,
   proCostRange,
-}: DiagnosisChatbotProps) {
+}, forwardedRef) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
