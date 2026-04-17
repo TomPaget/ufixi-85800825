@@ -256,6 +256,7 @@ export default function HomeDashboard() {
             </p>
           </div>
         </main>
+        </PullToRefresh>
 
         <BottomNavDemo />
 
