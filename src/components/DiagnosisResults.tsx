@@ -700,7 +700,7 @@ export default function DiagnosisResults({
 
       {/* Save / Close buttons */}
       <GradientButton size="lg" onClick={onSave}>
-        Save Full Diagnosis
+        Save Diagnosis & Close
       </GradientButton>
       <button onClick={onClose} className="w-full text-center py-3 text-base" style={{ color: textSecondary }}>
         Close without saving
