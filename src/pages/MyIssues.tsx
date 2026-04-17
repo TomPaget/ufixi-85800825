@@ -303,7 +303,7 @@ export default function MyIssues() {
                     key={issue.id}
                     onClick={() => {
                       if (selectMode) toggleSelect(issue.id);
-                      else navigate(`/issue/${issue.id}`);
+                      else navigate(`/issue/${issue.id}`, { state: { issue } });
                     }}
                     className="relative rounded-2xl p-4 space-y-2 cursor-pointer transition-all active:scale-[0.98]"
                     style={{

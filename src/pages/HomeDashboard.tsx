@@ -90,19 +90,28 @@ export default function HomeDashboard() {
 
     const { data } = await supabase
       .from("saved_issues")
-      .select("status, urgency")
+      .select("*")
       .eq("user_id", user.id)
-      .neq("status", "auto_recent");
+      .order("created_at", { ascending: false });
 
     if (data) {
-      setActiveCount(data.filter(i => i.status === "active").length);
-      setFixSoonCount(data.filter(i => i.urgency === "fix_now" || i.urgency === "fix_soon").length);
-      setResolvedCount(data.filter(i => i.status === "resolved").length);
-      setSavedIssues(data);
-    }
+      const manualIssues = data.filter(i => i.status !== "auto_recent");
+      setActiveCount(manualIssues.filter(i => i.status === "active").length);
+      setFixSoonCount(manualIssues.filter(i => i.urgency === "fix_now" || i.urgency === "fix_soon").length);
+      setResolvedCount(manualIssues.filter(i => i.status === "resolved").length);
+      setSavedIssues(manualIssues);
 
-    const recent = await loadRecentScans(user.id);
-    setRecentScans(recent);
+      const recent = await loadRecentScans(user.id);
+      if (recent.length > 0) {
+        setRecentScans(recent);
+      } else {
+        const recentFallback = data.filter((issue) => {
+          const createdAt = issue.created_at ? new Date(issue.created_at).getTime() : 0;
+          return createdAt >= Date.now() - AUTO_RECENT_DAYS * 86400000;
+        }).slice(0, MAX_AUTO_RECENT);
+        setRecentScans(recentFallback);
+      }
+    }
   };
 
   useEffect(() => {
@@ -118,6 +127,7 @@ export default function HomeDashboard() {
       setShowPremiumPrompt(!showPremiumPrompt);
       setShowRecentIssues(false);
     } else {
+      void loadCounts();
       setShowRecentIssues(!showRecentIssues);
       setShowPremiumPrompt(false);
     }
@@ -358,7 +368,7 @@ export default function HomeDashboard() {
                         return (
                           <button
                             key={scan.id}
-                            onClick={() => navigate(`/issue/${scan.id}`)}
+                            onClick={() => navigate(`/issue/${scan.id}`, { state: { issue: scan } })}
                             className="w-full flex gap-3 p-3 rounded-2xl text-left transition-all active:scale-[0.98]"
                             style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", boxShadow: "var(--shadow-card)" }}
                           >

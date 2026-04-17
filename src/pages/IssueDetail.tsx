@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
 import LavaLampBackground from "@/components/LavaLampBackground";
@@ -14,18 +14,26 @@ const textSec = "#5A6A7A";
 export default function IssueDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { authReady, user } = useSubscription();
-  const [issue, setIssue] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [issue, setIssue] = useState<any>((location.state as any)?.issue ?? null);
+  const [loading, setLoading] = useState(!(location.state as any)?.issue);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    const preloadedIssue = (location.state as any)?.issue;
 
     const loadIssue = async () => {
       try {
         if (!id) {
           setError("Missing issue ID");
+          return;
+        }
+
+        if (preloadedIssue?.id === id) {
+          setIssue(preloadedIssue);
+          setError(null);
           return;
         }
 
@@ -60,17 +68,17 @@ export default function IssueDetail() {
           setIssue(null);
         }
       } finally {
-        if (!cancelled && authReady) setLoading(false);
+        if (!cancelled && (authReady || preloadedIssue)) setLoading(false);
       }
     };
 
-    setLoading(true);
+    setLoading(!preloadedIssue);
     loadIssue();
 
     return () => {
       cancelled = true;
     };
-  }, [id, authReady, user]);
+  }, [id, authReady, user, location.state]);
 
   return (
     <PageTransition>
