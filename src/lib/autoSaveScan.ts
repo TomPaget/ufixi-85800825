@@ -85,14 +85,15 @@ export async function loadRecentScans(userId: string) {
     .lt("expires_at", nowIso)
     .then(() => {});
 
-  // Pull a generous window of recent rows (any status), then filter client-side
+  // Pull ALL of the user's saved_issues rows (RLS already restricts to this user).
+  // We then filter client side so we never miss auto_recent rows whose created_at
+  // happens to fall outside a window that doesn't account for the 7 day expiry.
   const { data, error } = await supabase
     .from("saved_issues")
     .select("*")
     .eq("user_id", userId)
-    .gte("created_at", cutoffIso)
     .order("created_at", { ascending: false })
-    .limit(MAX_AUTO_RECENT * 2);
+    .limit(200);
 
   if (error) {
     console.warn("loadRecentScans error:", error);
@@ -100,9 +101,13 @@ export async function loadRecentScans(userId: string) {
   }
 
   const rows = (data || []).filter((r: any) => {
-    // Drop expired auto-recent rows that the background delete hasn't cleared yet
-    if (r.status === AUTO_RECENT_STATUS && r.expires_at && r.expires_at < nowIso) return false;
-    return true;
+    // Always keep auto_recent rows whose expiry is still in the future
+    if (r.status === AUTO_RECENT_STATUS) {
+      if (!r.expires_at) return true;
+      return r.expires_at >= nowIso;
+    }
+    // Manually saved rows from the last 7 days also surface in Recent Scans
+    return r.created_at && r.created_at >= cutoffIso;
   });
 
   return rows.slice(0, MAX_AUTO_RECENT);
