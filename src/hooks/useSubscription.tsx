@@ -73,40 +73,47 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   }, [welcomeEmailSent]);
 
   const startCheckout = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      toast.error("Please create an account first to subscribe");
-      window.location.assign(getInAppPath("/auth?redirect=upgrade"));
-      return;
+    const native = typeof window !== "undefined" && window.Capacitor?.isNativePlatform?.();
+
+    // Open a placeholder tab SYNCHRONOUSLY (in the click handler) so popup blockers allow it.
+    // We'll set its location once we have the Stripe URL.
+    let checkoutWindow: Window | null = null;
+    if (!native) {
+      checkoutWindow = window.open("about:blank", "_blank");
     }
 
+    const navigateTo = (url: string) => {
+      if (native) {
+        Browser.open({ url });
+      } else if (checkoutWindow && !checkoutWindow.closed) {
+        checkoutWindow.location.href = url;
+      } else {
+        // Popup was blocked — fall back to same-tab navigation
+        window.location.href = url;
+      }
+    };
+
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        checkoutWindow?.close();
+        toast.error("Please create an account first to subscribe");
+        window.location.assign(getInAppPath("/auth?redirect=upgrade"));
+        return;
+      }
+
       toast.loading("Preparing checkout…", { id: "checkout" });
       const { data, error } = await supabase.functions.invoke("create-checkout");
       toast.dismiss("checkout");
-      if (error) {
-        console.error("create-checkout error:", error);
-        throw error;
-      }
-      if (data?.error) {
-        console.error("create-checkout returned error:", data.error);
-        throw new Error(data.error);
-      }
-      if (data?.url) {
-        const native = typeof window !== "undefined" && window.Capacitor?.isNativePlatform?.();
-        if (native) {
-          await Browser.open({ url: data.url });
-        } else {
-          const opened = window.open(data.url, "_blank", "noopener,noreferrer");
-          if (!opened) {
-            window.location.href = data.url;
-          }
-        }
-      } else {
-        throw new Error("No checkout URL returned");
-      }
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (!data?.url) throw new Error("No checkout URL returned");
+
+      navigateTo(data.url);
     } catch (err: any) {
       console.error("Checkout error:", err);
+      checkoutWindow?.close();
       toast.dismiss("checkout");
       toast.error(err?.message || "Could not start checkout. Please try again.");
     }
