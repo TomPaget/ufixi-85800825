@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageSquare, Send, Bot, User, ChevronDown, ChevronUp } from "lucide-react";
 
