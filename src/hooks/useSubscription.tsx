@@ -125,14 +125,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
             return;
           }
         } catch { /* cross-origin blocked */ }
-        // Last resort in iframe: clickable toast with the checkout link
-        toast.message("Tap to continue to secure checkout", {
-          duration: 20000,
-          action: {
-            label: "Open Checkout",
-            onClick: () => window.open(url, "_blank", "noopener,noreferrer"),
-          },
-        });
+        // Last resort in iframe: full-screen modal with auto-redirect
+        setCheckoutRedirectUrl(url);
         return;
       }
       window.location.href = url;
