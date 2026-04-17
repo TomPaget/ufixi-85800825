@@ -151,8 +151,10 @@ serve(async (req) => {
           status: 200,
         });
       }
-      // Apply coupon to the customer (covers next invoice)
-      await stripe.customers.update(customer.id, { coupon: "A9GyYOlx" });
+      // Apply 100%-off coupon to the active subscription's next invoice
+      await stripe.subscriptions.update(ongoingSubscription.id, {
+        discounts: [{ coupon: "A9GyYOlx" }],
+      });
       await adminClient.from("subscription_history").update({
         free_month_claimed: true,
         free_month_claimed_at: new Date().toISOString(),
