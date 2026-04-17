@@ -582,7 +582,9 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
         status: "active",
       });
       if (error) throw error;
-      toast.success("Diagnosis saved to your account ✓");
+      toast.success("Diagnosis saved to My Issues ✓");
+      // Close the scan flow after saving — user can reopen from My Issues
+      setTimeout(() => onClose(), 400);
     } catch (err: any) {
       console.error("Save error:", err);
       toast.error(err.message || "Failed to save diagnosis");
@@ -1096,11 +1098,6 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
                 <h2 className="text-2xl tracking-tight" style={{ color: navy }}>Generating Your Diagnosis</h2>
                 <p className="text-base" style={{ color: textSecondary }}>Our AI is analysing the image and building a repair guide...</p>
                 <p className="text-sm" style={{ color: textSecondary }}>This usually takes 10–20 seconds</p>
-                {isPremium && (
-                  <p className="text-xs" style={{ color: "var(--color-success)" }}>
-                    ✓ You can close the app — we'll notify you when it's done
-                  </p>
-                )}
               </div>
             </motion.div>
           )}

@@ -35,10 +35,28 @@ function drawGradientBar(doc: any, x: number, y: number, w: number, h: number) {
   }
 }
 
+async function urlToDataUrl(url: string): Promise<{ data: string; format: "JPEG" | "PNG" } | null> {
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    const isPng = blob.type.includes("png");
+    const dataUrl: string = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+    return { data: dataUrl, format: isPng ? "PNG" : "JPEG" };
+  } catch (e) {
+    console.warn("urlToDataUrl failed:", e);
+    return null;
+  }
+}
+
 export async function generateTradesmanPdf(
   triage: any,
   diagnosis: any,
-  imageDataUrl?: string | null,
+  imageUrl?: string | null,
 ) {
   const { default: jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "mm", format: "a4" });
@@ -72,16 +90,19 @@ export async function generateTradesmanPdf(
   doc.line(MARGIN, y, PAGE_W - MARGIN, y);
 
   // === Uploaded Image ===
-  if (imageDataUrl) {
-    y += 6;
-    y = checkPageBreak(doc, y, 65);
-    try {
-      const imgW = CONTENT_W;
-      const imgH = 60;
-      doc.addImage(imageDataUrl, "JPEG", MARGIN, y, imgW, imgH);
-      y += imgH + 4;
-    } catch (e) {
-      console.warn("Could not embed image in PDF:", e);
+  if (imageUrl) {
+    const img = await urlToDataUrl(imageUrl);
+    if (img) {
+      y += 6;
+      y = checkPageBreak(doc, y, 65);
+      try {
+        const imgW = CONTENT_W;
+        const imgH = 60;
+        doc.addImage(img.data, img.format, MARGIN, y, imgW, imgH);
+        y += imgH + 4;
+      } catch (e) {
+        console.warn("Could not embed image in PDF:", e);
+      }
     }
   }
 
