@@ -1,27 +1,22 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Plus, History, Sparkles, TrendingUp, Calendar, ChevronDown, ChevronUp, Bell, Crown, CheckCircle2, Lock } from "lucide-react";
+import { Plus, History, Sparkles, TrendingUp, Calendar, Bell } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import LavaLampBackground from "@/components/LavaLampBackground";
 import GlassCard from "@/components/GlassCard";
 import BottomNavDemo from "@/components/BottomNavDemo";
 import PageTransition from "@/components/PageTransition";
-import GradientButton from "@/components/GradientButton";
 import ufixiLogo from "@/assets/ufixi-logo.svg";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useNotifications } from "@/hooks/useNotifications";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { supabase } from "@/integrations/supabase/client";
 import { isNativeApp } from "@/lib/appNavigation";
-import { loadRecentScans, MAX_AUTO_RECENT, AUTO_RECENT_DAYS } from "@/lib/autoSaveScan";
 
 const ScanFlow = lazy(() => import("@/components/ScanFlow"));
 
 export default function HomeDashboard() {
-  const [showRecentIssues, setShowRecentIssues] = useState(false);
   const [showScanFlow, setShowScanFlow] = useState(false);
-  const [showPremiumPrompt, setShowPremiumPrompt] = useState(false);
-  const [savedIssues, setSavedIssues] = useState<any[]>([]);
   const [resumeScanId, setResumeScanId] = useState<string | null>(null);
   const [resumeData, setResumeData] = useState<any>(null);
   const navigate = useNavigate();
@@ -71,6 +66,7 @@ export default function HomeDashboard() {
         description: state.resumeData?.description || "",
         location: state.resumeData?.location || "",
         category: state.resumeData?.category || null,
+          uploadedFileUrl: state.resumeData?.uploaded_file_url || null,
         answers: state.resumeData?.answers || [],
         triageData: state.resumeData?.triage_data || null,
         diagnosisData: state.resumeData?.diagnosis_data || null,
@@ -83,7 +79,6 @@ export default function HomeDashboard() {
   const [activeCount, setActiveCount] = useState(0);
   const [fixSoonCount, setFixSoonCount] = useState(0);
   const [resolvedCount, setResolvedCount] = useState(0);
-  const [recentScans, setRecentScans] = useState<any[]>([]);
 
   const loadCounts = async () => {
     if (!authReady || !user) return;
@@ -99,39 +94,12 @@ export default function HomeDashboard() {
       setActiveCount(manualIssues.filter(i => i.status === "active").length);
       setFixSoonCount(manualIssues.filter(i => i.urgency === "fix_now" || i.urgency === "fix_soon").length);
       setResolvedCount(manualIssues.filter(i => i.status === "resolved").length);
-      setSavedIssues(manualIssues);
-
-      const recent = await loadRecentScans(user.id);
-      if (recent.length > 0) {
-        setRecentScans(recent);
-      } else {
-        const recentFallback = data.filter((issue) => {
-          const createdAt = issue.created_at ? new Date(issue.created_at).getTime() : 0;
-          return createdAt >= Date.now() - AUTO_RECENT_DAYS * 86400000;
-        }).slice(0, MAX_AUTO_RECENT);
-        setRecentScans(recentFallback);
-      }
     }
   };
 
   useEffect(() => {
-    if (authReady && isPremium && user) loadCounts();
-  }, [authReady, isPremium, user, showScanFlow]);
-
-  useEffect(() => {
-    if (authReady && isPremium && user && !showScanFlow) loadCounts();
-  }, [authReady, showScanFlow, isPremium, user]);
-
-  const handleRecentScansClick = () => {
-    if (!isPremium) {
-      setShowPremiumPrompt(!showPremiumPrompt);
-      setShowRecentIssues(false);
-    } else {
-      void loadCounts();
-      setShowRecentIssues(!showRecentIssues);
-      setShowPremiumPrompt(false);
-    }
-  };
+    if (authReady && user && !showScanFlow) loadCounts();
+  }, [authReady, showScanFlow, user]);
 
   return (
     <PageTransition>
@@ -273,146 +241,6 @@ export default function HomeDashboard() {
             </button>
             <p className="text-sm mt-4" style={{ color: "#6B6A8E" }}>Tap to scan a new issue</p>
           </motion.div>
-
-          {/* Recent Issues / Premium Gate */}
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.15 }}
-          >
-            <button
-              onClick={handleRecentScansClick}
-              className="w-full flex items-center justify-between p-4 rounded-2xl transition-all hover:shadow-md active:scale-[0.99]"
-              style={{
-                background: "var(--glass-bg)",
-                backdropFilter: "var(--glass-backdrop)",
-                border: "1px solid var(--glass-border)",
-                minHeight: 44,
-              }}
-            >
-              <span className="flex items-center gap-2" style={{ color: "var(--color-navy)" }}>
-                <History className="w-5 h-5" style={{ color: "var(--color-primary)" }} />
-                Recent Scans
-                <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(232,83,10,0.1)", color: "var(--color-primary)" }}>
-                  {isPremium ? `${recentScans.length} / ${MAX_AUTO_RECENT}` : "0"}
-                </span>
-              </span>
-              {(showRecentIssues || showPremiumPrompt) ? <ChevronUp className="w-5 h-5" style={{ color: "#9aa5b4" }} /> : <ChevronDown className="w-5 h-5" style={{ color: "#9aa5b4" }} />}
-            </button>
-
-            <AnimatePresence>
-              {/* Premium upsell for free users */}
-              {showPremiumPrompt && !isPremium && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="overflow-hidden"
-                >
-                  <div className="mt-3 rounded-2xl p-6 space-y-4" style={{ background: "rgba(255,255,255,0.95)", border: "1px solid rgba(0,23,47,0.08)", boxShadow: "var(--shadow-card)" }}>
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "var(--gradient-primary)" }}>
-                        <Lock className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-bold" style={{ color: "var(--color-navy)" }}>Premium Feature</h3>
-                        <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>Scan history requires Premium</p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      {["Save unlimited diagnoses", "Access 45-day scan history", "No ads during diagnosis", "Export as PDF"].map((b) => (
-                        <div key={b} className="flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: "var(--color-success)" }} />
-                          <span className="text-sm" style={{ color: "var(--color-navy)" }}>{b}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <GradientButton onClick={startCheckout}>
-                      <span className="flex items-center justify-center gap-2"><Crown className="w-4 h-4" /> Upgrade to Premium — {hasEverSubscribed ? "£1.99/mo" : "£0.99/mo"}</span>
-                    </GradientButton>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Recent scans list for premium users */}
-              {showRecentIssues && isPremium && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="overflow-hidden"
-                >
-                  <div className="mt-3 space-y-2">
-                    {recentScans.length === 0 ? (
-                      <div className="rounded-2xl p-6 text-center" style={{ background: "rgba(255,255,255,0.95)", border: "1px solid rgba(0,23,47,0.08)" }}>
-                        <p className="text-sm font-semibold" style={{ color: "var(--color-navy)" }}>No recent scans yet</p>
-                        <p className="text-xs mt-1" style={{ color: "var(--color-text-secondary)" }}>
-                          Completed scans appear here for {AUTO_RECENT_DAYS} days. Save the ones you want to keep.
-                        </p>
-                      </div>
-                    ) : (
-                      recentScans.map((scan) => {
-                        const expiresIn = scan.expires_at
-                          ? Math.max(0, Math.ceil((new Date(scan.expires_at).getTime() - Date.now()) / 86400000))
-                          : null;
-                        const urgencyColor =
-                          scan.urgency === "fix_now" ? "#DC2626" :
-                          scan.urgency === "fix_soon" ? "#F0900A" : "#6B7A8D";
-                        const urgencyBg =
-                          scan.urgency === "fix_now" ? "rgba(220,38,38,0.1)" :
-                          scan.urgency === "fix_soon" ? "rgba(240,144,10,0.1)" : "rgba(107,122,141,0.1)";
-                        return (
-                          <button
-                            key={scan.id}
-                            onClick={() => navigate(`/issue/${scan.id}`, { state: { issue: scan } })}
-                            className="w-full flex gap-3 p-3 rounded-2xl text-left transition-all active:scale-[0.98]"
-                            style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", boxShadow: "var(--shadow-card)" }}
-                          >
-                            {scan.image_url ? (
-                              <img
-                                src={scan.image_url}
-                                alt={scan.issue_title}
-                                className="w-14 h-14 rounded-xl object-cover flex-shrink-0"
-                                style={{ border: "1px solid rgba(0,23,47,0.08)" }}
-                                loading="lazy"
-                              />
-                            ) : (
-                              <div className="w-14 h-14 rounded-xl flex-shrink-0 flex items-center justify-center" style={{ background: "rgba(232,83,10,0.08)" }}>
-                                <span className="text-[10px] font-semibold uppercase" style={{ color: "var(--color-primary)" }}>
-                                  {(scan.category || "?").slice(0, 3)}
-                                </span>
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0 space-y-1">
-                              <div className="flex items-start justify-between gap-2">
-                                <h4 className="text-sm font-semibold leading-tight truncate" style={{ color: "var(--color-navy)" }}>
-                                  {scan.issue_title}
-                                </h4>
-                                {scan.urgency && (
-                                  <span className="text-[10px] px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: urgencyBg, color: urgencyColor }}>
-                                    {scan.urgency.replace("_", " ")}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2 text-[11px]" style={{ color: "var(--color-text-secondary)" }}>
-                                <span className="capitalize">{scan.category}</span>
-                                <span>•</span>
-                                <span>Auto-saved · {expiresIn !== null ? `${expiresIn}d left` : "saved"}</span>
-                              </div>
-                            </div>
-                          </button>
-                        );
-                      })
-                    )}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.section>
 
           {/* Disclaimer */}
           <div className="text-center pb-4">
