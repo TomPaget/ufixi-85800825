@@ -8,7 +8,7 @@ const REVENUECAT_IOS_KEY = "appl_WaXjCvKSQUwZNmQfPqwqxyBtVLG";
 const REVENUECAT_ANDROID_KEY = "goog_PASTE_ANDROID_KEY_HERE";
 
 export const PREMIUM_ENTITLEMENT_ID = "premium";
-export const PREMIUM_PRODUCT_ID = "premium_subscription";
+export const PREMIUM_PRODUCT_ID = "premium_subscription_v2";
 
 type RevenueCatModule = typeof import("@revenuecat/purchases-capacitor");
 
