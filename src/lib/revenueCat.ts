@@ -13,6 +13,7 @@ export const PREMIUM_PRODUCT_ID = "premium_subscription";
 type RevenueCatModule = typeof import("@revenuecat/purchases-capacitor");
 
 let initialized = false;
+let lastInitError: string | null = null;
 let revenueCatModulePromise: Promise<RevenueCatModule> | null = null;
 
 function getPlatform(): "ios" | "android" | "web" {
