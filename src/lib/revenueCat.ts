@@ -1,6 +1,6 @@
 // RevenueCat helper — used on native iOS/Android only.
 // Web continues to use Stripe via existing edge functions.
-import { Purchases, LOG_LEVEL, type CustomerInfo, type PurchasesOffering } from "@revenuecat/purchases-capacitor";
+import type { CustomerInfo, PurchasesOffering } from "@revenuecat/purchases-capacitor";
 
 // PUBLISHABLE keys — safe to ship in the client.
 // (RevenueCat publishable keys are not secrets; they identify the app to RC.)
@@ -10,11 +10,27 @@ const REVENUECAT_ANDROID_KEY = "goog_PASTE_ANDROID_KEY_HERE";
 export const PREMIUM_ENTITLEMENT_ID = "premium";
 export const PREMIUM_PRODUCT_ID = "premium_subscription";
 
+type RevenueCatModule = typeof import("@revenuecat/purchases-capacitor");
+
 let initialized = false;
+let revenueCatModulePromise: Promise<RevenueCatModule> | null = null;
 
 function getPlatform(): "ios" | "android" | "web" {
   if (typeof window === "undefined") return "web";
   return window.Capacitor?.getPlatform?.() ?? "web";
+}
+
+async function getRevenueCatModule(): Promise<RevenueCatModule | null> {
+  if (!isRevenueCatPlatform()) return null;
+
+  try {
+    revenueCatModulePromise ??= import("@revenuecat/purchases-capacitor");
+    return await revenueCatModulePromise;
+  } catch (err) {
+    revenueCatModulePromise = null;
+    console.error("[RevenueCat] Plugin load failed (non-fatal):", err);
+    return null;
+  }
 }
 
 export function isRevenueCatPlatform(): boolean {
@@ -24,26 +40,36 @@ export function isRevenueCatPlatform(): boolean {
 
 export async function initRevenueCat(appUserId?: string | null): Promise<void> {
   if (!isRevenueCatPlatform() || initialized) return;
+
   const platform = getPlatform();
   const apiKey = platform === "ios" ? REVENUECAT_IOS_KEY : REVENUECAT_ANDROID_KEY;
   if (!apiKey || apiKey.includes("PASTE_")) {
     console.warn("[RevenueCat] API key not configured for", platform);
     return;
   }
+
+  const revenueCat = await getRevenueCatModule();
+  if (!revenueCat) return;
+
   try {
+    const { Purchases, LOG_LEVEL } = revenueCat;
     await Purchases.setLogLevel({ level: LOG_LEVEL.WARN });
     await Purchases.configure({ apiKey, appUserID: appUserId ?? undefined });
     initialized = true;
     console.log("[RevenueCat] Initialised", { platform, appUserId });
   } catch (err) {
-    // Never let RC init crash the app on launch — log and continue.
     console.error("[RevenueCat] Init failed (non-fatal):", err);
   }
 }
 
 export async function setRevenueCatUser(userId: string | null): Promise<void> {
   if (!isRevenueCatPlatform() || !initialized) return;
+
+  const revenueCat = await getRevenueCatModule();
+  if (!revenueCat) return;
+
   try {
+    const { Purchases } = revenueCat;
     if (userId) {
       await Purchases.logIn({ appUserID: userId });
     } else {
@@ -56,7 +82,12 @@ export async function setRevenueCatUser(userId: string | null): Promise<void> {
 
 export async function getCustomerInfo(): Promise<CustomerInfo | null> {
   if (!isRevenueCatPlatform() || !initialized) return null;
+
+  const revenueCat = await getRevenueCatModule();
+  if (!revenueCat) return null;
+
   try {
+    const { Purchases } = revenueCat;
     const { customerInfo } = await Purchases.getCustomerInfo();
     return customerInfo;
   } catch (err) {
@@ -88,7 +119,12 @@ export function statusFromCustomerInfo(info: CustomerInfo | null): RcStatus {
 
 export async function getCurrentOffering(): Promise<PurchasesOffering | null> {
   if (!isRevenueCatPlatform() || !initialized) return null;
+
+  const revenueCat = await getRevenueCatModule();
+  if (!revenueCat) return null;
+
   try {
+    const { Purchases } = revenueCat;
     const { current } = await Purchases.getOfferings();
     return current ?? null;
   } catch (err) {
@@ -98,22 +134,46 @@ export async function getCurrentOffering(): Promise<PurchasesOffering | null> {
 }
 
 export async function purchasePremium(): Promise<RcStatus> {
-  if (!isRevenueCatPlatform() || !initialized) {
+  if (!isRevenueCatPlatform()) {
     throw new Error("RevenueCat not available on this platform");
   }
+
+  if (!initialized) {
+    await initRevenueCat();
+  }
+
+  const revenueCat = await getRevenueCatModule();
+  if (!revenueCat || !initialized) {
+    throw new Error("RevenueCat not available on this platform");
+  }
+
+  const { Purchases } = revenueCat;
   const offering = await getCurrentOffering();
   const pkg = offering?.availablePackages?.find(
     (p) => p.product?.identifier === PREMIUM_PRODUCT_ID,
   ) ?? offering?.monthly ?? offering?.availablePackages?.[0];
+
   if (!pkg) throw new Error("No subscription package available");
+
   const { customerInfo } = await Purchases.purchasePackage({ aPackage: pkg });
   return statusFromCustomerInfo(customerInfo);
 }
 
 export async function restorePurchases(): Promise<RcStatus> {
-  if (!isRevenueCatPlatform() || !initialized) {
+  if (!isRevenueCatPlatform()) {
     return { isPremium: false, expiresAt: null, willRenew: false, hasEverSubscribed: false };
   }
+
+  if (!initialized) {
+    await initRevenueCat();
+  }
+
+  const revenueCat = await getRevenueCatModule();
+  if (!revenueCat || !initialized) {
+    return { isPremium: false, expiresAt: null, willRenew: false, hasEverSubscribed: false };
+  }
+
+  const { Purchases } = revenueCat;
   const { customerInfo } = await Purchases.restorePurchases();
   return statusFromCustomerInfo(customerInfo);
 }
