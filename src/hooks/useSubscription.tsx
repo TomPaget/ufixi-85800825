@@ -5,6 +5,15 @@ import { Browser } from "@capacitor/browser";
 import { toast } from "sonner";
 import { getInAppPath } from "@/lib/appNavigation";
 import CheckoutRedirectModal from "@/components/CheckoutRedirectModal";
+import {
+  initRevenueCat,
+  setRevenueCatUser,
+  getCustomerInfo,
+  statusFromCustomerInfo,
+  purchasePremium,
+  restorePurchases,
+  isRevenueCatPlatform,
+} from "@/lib/revenueCat";
 
 interface SubscriptionState {
   isPremium: boolean;
