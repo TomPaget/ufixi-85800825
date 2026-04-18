@@ -7,10 +7,12 @@ import BottomNavDemo from "@/components/BottomNavDemo";
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { isRevenueCatPlatform } from "@/lib/revenueCat";
 
 export default function Settings() {
   const navigate = useNavigate();
   const { user, isPremium, subscriptionEnd, cancelAtPeriodEnd, signOut, authReady, renewSubscription } = useSubscription();
+  const native = isRevenueCatPlatform();
 
   const handleSignOut = async () => {
     await signOut();
@@ -21,6 +23,15 @@ export default function Settings() {
   const handleManageSubscription = async () => {
     if (!isPremium) {
       navigate("/upgrade");
+      return;
+    }
+    if (native) {
+      // Apple/Google require subscription management to happen in the platform store.
+      const platform = window.Capacitor?.getPlatform?.();
+      const url = platform === "ios"
+        ? "https://apps.apple.com/account/subscriptions"
+        : "https://play.google.com/store/account/subscriptions";
+      window.open(url, "_blank");
       return;
     }
     try {
@@ -49,7 +60,7 @@ export default function Settings() {
   const MENU_ITEMS = [
     { icon: User, label: "Profile", sub: `${displayName}`, path: "/profile" },
     { icon: Crown, label: "Subscription", sub: subDescription, action: handleManageSubscription },
-    ...(isPremium && !cancelAtPeriodEnd
+    ...(isPremium && !cancelAtPeriodEnd && !native
       ? [{ icon: XCircle, label: "Cancel Subscription", sub: "Cancel your Premium plan", path: "/cancel-subscription" }]
       : []),
     ...(isPremium && cancelAtPeriodEnd

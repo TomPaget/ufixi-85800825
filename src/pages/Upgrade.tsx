@@ -164,15 +164,17 @@ export default function Upgrade() {
                 className="w-full text-center py-3 text-base font-semibold"
                 style={{ color: "var(--color-primary)" }}
               >
-                Manage Subscription
+                {native ? "Manage Subscription in App Store" : "Manage Subscription"}
               </button>
-              <button
-                onClick={() => navigate("/cancel-subscription")}
-                className="w-full text-center py-2 text-sm"
-                style={{ color: "#DC2626" }}
-              >
-                Cancel Subscription
-              </button>
+              {!native && (
+                <button
+                  onClick={() => navigate("/cancel-subscription")}
+                  className="w-full text-center py-2 text-sm"
+                  style={{ color: "#DC2626" }}
+                >
+                  Cancel Subscription
+                </button>
+              )}
             </div>
           )}
 

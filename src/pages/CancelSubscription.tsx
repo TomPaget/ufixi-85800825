@@ -10,6 +10,8 @@ import GradientButton from "@/components/GradientButton";
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useEffect } from "react";
+import { isRevenueCatPlatform } from "@/lib/revenueCat";
 
 const CANCEL_REASONS = [
   "Too expensive",
@@ -43,6 +45,21 @@ export default function CancelSubscription() {
 
   const navy = "#00172F";
   const textSecondary = "#5A6A7A";
+  const native = isRevenueCatPlatform();
+
+  // On native iOS/Android, all subscription management must happen in the platform store.
+  useEffect(() => {
+    if (native) {
+      const platform = window.Capacitor?.getPlatform?.();
+      const url = platform === "ios"
+        ? "https://apps.apple.com/account/subscriptions"
+        : "https://play.google.com/store/account/subscriptions";
+      window.open(url, "_blank");
+      navigate("/settings");
+    }
+  }, [native, navigate]);
+
+  if (native) return null;
 
   if (!isPremium || cancelAtPeriodEnd) {
     return (
