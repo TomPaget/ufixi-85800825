@@ -6,11 +6,13 @@ import GradientButton from "@/components/GradientButton";
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { isRevenueCatPlatform, restorePurchases } from "@/lib/revenueCat";
 
 export default function Upgrade() {
   const { isPremium, subscriptionEnd, cancelAtPeriodEnd, hasEverSubscribed, startCheckout, renewSubscription, user, checkSubscription } = useSubscription();
   const navigate = useNavigate();
   const eligibleForFirstMonth = !hasEverSubscribed;
+  const native = isRevenueCatPlatform();
 
   const PLANS = [
     {
@@ -33,6 +35,15 @@ export default function Upgrade() {
   ];
 
   const handleManage = async () => {
+    if (native) {
+      // Apple/Google require subscription management to happen in the platform store.
+      const platform = window.Capacitor?.getPlatform?.();
+      const url = platform === "ios"
+        ? "https://apps.apple.com/account/subscriptions"
+        : "https://play.google.com/store/account/subscriptions";
+      window.open(url, "_blank");
+      return;
+    }
     try {
       const { data, error } = await supabase.functions.invoke("customer-portal");
       if (error) throw error;
@@ -40,6 +51,21 @@ export default function Upgrade() {
     } catch (err: any) {
       toast.error(err.message || "Could not open subscription manager");
     }
+  };
+
+  const handleRestore = async () => {
+    if (native) {
+      try {
+        const status = await restorePurchases();
+        toast.info(status.isPremium ? "Subscription restored!" : "No active subscription found.");
+        await checkSubscription();
+      } catch (err: any) {
+        toast.error(err?.message || "Restore failed");
+      }
+      return;
+    }
+    await checkSubscription();
+    toast.info(isPremium ? "Subscription restored!" : "No active subscription found.");
   };
 
   const handleUpgrade = () => {
@@ -54,6 +80,7 @@ export default function Upgrade() {
     }
     startCheckout();
   };
+
 
   return (
     <PageTransition>
@@ -152,10 +179,7 @@ export default function Upgrade() {
           {/* Restore purchases — required by Apple App Store */}
           {!isPremium && (
             <button
-              onClick={async () => {
-                await checkSubscription();
-                toast.info(isPremium ? "Subscription restored!" : "No active subscription found.");
-              }}
+              onClick={handleRestore}
               className="w-full text-center py-2 text-sm"
               style={{ color: "var(--color-text-secondary)" }}
             >

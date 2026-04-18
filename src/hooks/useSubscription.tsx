@@ -5,6 +5,15 @@ import { Browser } from "@capacitor/browser";
 import { toast } from "sonner";
 import { getInAppPath } from "@/lib/appNavigation";
 import CheckoutRedirectModal from "@/components/CheckoutRedirectModal";
+import {
+  initRevenueCat,
+  setRevenueCatUser,
+  getCustomerInfo,
+  statusFromCustomerInfo,
+  purchasePremium,
+  restorePurchases,
+  isRevenueCatPlatform,
+} from "@/lib/revenueCat";
 
 interface SubscriptionState {
   isPremium: boolean;
@@ -57,6 +66,31 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      // On native (iOS/Android) prefer RevenueCat as source of truth.
+      if (isRevenueCatPlatform()) {
+        const info = await getCustomerInfo();
+        const status = statusFromCustomerInfo(info);
+        setIsPremium(status.isPremium);
+        setSubscriptionEnd(status.expiresAt);
+        setCancelAtPeriodEnd(status.isPremium && !status.willRenew);
+        setHasEverSubscribed(status.hasEverSubscribed);
+
+        if (status.isPremium && !welcomeEmailSent) {
+          setWelcomeEmailSent(true);
+          const fullName = session.user.user_metadata?.full_name;
+          supabase.functions.invoke("send-transactional-email", {
+            body: {
+              templateName: "welcome-to-premium",
+              recipientEmail: session.user.email,
+              idempotencyKey: `welcome-premium-${session.user.id}`,
+              templateData: { name: fullName || undefined },
+            },
+          }).catch((err) => console.warn("Welcome email failed:", err));
+        }
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke("check-subscription");
       if (error) throw error;
 
@@ -87,6 +121,31 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   }, [welcomeEmailSent]);
 
   const startCheckout = useCallback(async () => {
+    // On native, use RevenueCat in-app purchase (required by Apple/Google).
+    if (isRevenueCatPlatform()) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          toast.error("Please create an account first to subscribe");
+          window.location.assign(getInAppPath("/auth?redirect=upgrade"));
+          return;
+        }
+        toast.loading("Opening purchase…", { id: "checkout" });
+        const status = await purchasePremium();
+        toast.dismiss("checkout");
+        if (status.isPremium) {
+          toast.success("Welcome to Premium!");
+          await checkSubscription();
+        }
+      } catch (err: any) {
+        toast.dismiss("checkout");
+        if (err?.userCancelled || err?.code === "PURCHASE_CANCELLED") return;
+        console.error("RC purchase error:", err);
+        toast.error(err?.message || "Could not complete purchase");
+      }
+      return;
+    }
+
     const native = typeof window !== "undefined" && window.Capacitor?.isNativePlatform?.();
     const inIframe = typeof window !== "undefined" && window.self !== window.top;
 
@@ -159,6 +218,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    if (isRevenueCatPlatform()) await setRevenueCatUser(null);
     await supabase.auth.signOut();
     setUser(null);
     setIsPremium(false);
@@ -168,6 +228,26 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const renewSubscription = useCallback(async () => {
+    // On native, "renew" means restoring purchases / re-subscribing via store.
+    if (isRevenueCatPlatform()) {
+      try {
+        toast.loading("Restoring…", { id: "renew" });
+        const status = await restorePurchases();
+        toast.dismiss("renew");
+        if (status.isPremium) {
+          toast.success("Subscription restored!");
+          await checkSubscription();
+        } else {
+          // No active sub — kick off purchase flow
+          await startCheckout();
+        }
+      } catch (err: any) {
+        toast.dismiss("renew");
+        toast.error(err?.message || "Could not restore subscription");
+      }
+      return;
+    }
+
     try {
       toast.loading("Renewing subscription…", { id: "renew" });
       const { data, error } = await supabase.functions.invoke("renew-subscription");
@@ -184,13 +264,20 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       toast.dismiss("renew");
       toast.error(err?.message || "Could not renew subscription");
     }
-  }, [checkSubscription]);
+  }, [checkSubscription, startCheckout]);
+
 
   useEffect(() => {
+    // Initialise RevenueCat once on native, then bind to the auth user.
+    if (isRevenueCatPlatform()) {
+      initRevenueCat().catch(() => {});
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setAuthReady(true);
       if (session?.user) {
+        if (isRevenueCatPlatform()) setRevenueCatUser(session.user.id).catch(() => {});
         checkSubscription();
       } else {
         setLoading(false);
@@ -200,8 +287,10 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
+        if (isRevenueCatPlatform()) setRevenueCatUser(session.user.id).catch(() => {});
         checkSubscription();
       } else {
+        if (isRevenueCatPlatform()) setRevenueCatUser(null).catch(() => {});
         setIsPremium(false);
         setSubscriptionEnd(null);
         setLoading(false);
@@ -215,6 +304,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       clearInterval(interval);
     };
   }, [checkSubscription]);
+
 
   return (
     <SubscriptionContext.Provider value={{ isPremium, subscriptionEnd, cancelAtPeriodEnd, hasEverSubscribed, loading, user, authReady, checkSubscription, startCheckout, renewSubscription, signOut }}>
