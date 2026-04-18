@@ -8,7 +8,7 @@ const REVENUECAT_IOS_KEY = "appl_PASTE_NEW_IOS_KEY_HERE";
 const REVENUECAT_ANDROID_KEY = "goog_PASTE_ANDROID_KEY_HERE";
 
 export const PREMIUM_ENTITLEMENT_ID = "premium";
-export const PREMIUM_PRODUCT_ID = "com.ufixi.app.premium.monthly";
+export const PREMIUM_PRODUCT_ID = "premium_subscription";
 
 let initialized = false;
 
