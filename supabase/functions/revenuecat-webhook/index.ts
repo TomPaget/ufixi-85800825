@@ -17,12 +17,14 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const expected = Deno.env.get("REVENUECAT_WEBHOOK_SECRET");
+    const expected = (Deno.env.get("REVENUECAT_WEBHOOK_SECRET") ?? "").trim();
     if (expected) {
-      const auth = req.headers.get("authorization") ?? "";
-      const provided = auth.replace(/^Bearer\s+/i, "");
+      const auth = (req.headers.get("authorization") ?? "").trim();
+      const provided = auth.replace(/^Bearer\s+/i, "").trim();
       if (provided !== expected) {
-        log("Unauthorized");
+        const mask = (s: string) =>
+          s.length === 0 ? "<empty>" : `${s.slice(0, 3)}…${s.slice(-3)} (len=${s.length})`;
+        log("Unauthorized", { provided: mask(provided), expected: mask(expected) });
         return new Response(JSON.stringify({ error: "unauthorized" }), {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
