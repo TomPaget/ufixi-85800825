@@ -272,38 +272,53 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
 
   useEffect(() => {
-    // Initialise RevenueCat once on native, then bind to the auth user.
-    if (isRevenueCatPlatform()) {
-      initRevenueCat().catch(() => {});
-    }
+    let cancelled = false;
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const syncNativeSubscriptionUser = async (nextUser: User | null) => {
+      if (!isRevenueCatPlatform()) return;
+      await initRevenueCat(nextUser?.id ?? null).catch(() => {});
+      await setRevenueCatUser(nextUser?.id ?? null).catch(() => {});
+    };
+
+    const bootstrap = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (cancelled) return;
+
       setUser(session?.user ?? null);
       setAuthReady(true);
+
+      await syncNativeSubscriptionUser(session?.user ?? null);
+      if (cancelled) return;
+
       if (session?.user) {
-        if (isRevenueCatPlatform()) setRevenueCatUser(session.user.id).catch(() => {});
-        checkSubscription();
+        await checkSubscription();
       } else {
         setLoading(false);
       }
-    });
+    };
+
+    void bootstrap();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user) {
-        if (isRevenueCatPlatform()) setRevenueCatUser(session.user.id).catch(() => {});
-        checkSubscription();
-      } else {
-        if (isRevenueCatPlatform()) setRevenueCatUser(null).catch(() => {});
-        setIsPremium(false);
-        setSubscriptionEnd(null);
-        setLoading(false);
-      }
+
+      void (async () => {
+        await syncNativeSubscriptionUser(session?.user ?? null);
+
+        if (session?.user) {
+          await checkSubscription();
+        } else {
+          setIsPremium(false);
+          setSubscriptionEnd(null);
+          setLoading(false);
+        }
+      })();
     });
 
     const interval = setInterval(checkSubscription, 60000);
 
     return () => {
+      cancelled = true;
       subscription.unsubscribe();
       clearInterval(interval);
     };
