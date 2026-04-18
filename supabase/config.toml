@@ -17,3 +17,5 @@ project_id = "rvxpqwscfmygfqanxfbq"
     verify_jwt = false
   [functions.renew-subscription]
     verify_jwt = false
+  [functions.revenuecat-webhook]
+    verify_jwt = false
