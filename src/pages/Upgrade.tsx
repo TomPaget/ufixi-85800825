@@ -179,10 +179,7 @@ export default function Upgrade() {
           {/* Restore purchases — required by Apple App Store */}
           {!isPremium && (
             <button
-              onClick={async () => {
-                await checkSubscription();
-                toast.info(isPremium ? "Subscription restored!" : "No active subscription found.");
-              }}
+              onClick={handleRestore}
               className="w-full text-center py-2 text-sm"
               style={{ color: "var(--color-text-secondary)" }}
             >
