@@ -11,6 +11,7 @@ import { generateTradesmanEmail } from "@/lib/generateTradesmanPdf";
 import { buildTradesmanPdf, downloadPdf, sharePdf, emailPdfToTradesperson } from "@/lib/pdfDelivery";
 import { getTradeNameForCategory } from "@/lib/tradeNameMap";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useAdMob } from "@/hooks/useAdMob";
 import { FileText, Mail, Lock, Crown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -97,7 +98,23 @@ export default function DiagnosisResults({
 }: DiagnosisResultsProps) {
   const [expandedSection, setExpandedSection] = useState<string | null>("causes");
   const { isPremium } = useSubscription();
+  const { showInterstitial, isNative } = useAdMob();
   const tradeName = getTradeNameForCategory(triage?.category);
+
+  // Show an interstitial ad for non-premium users when they close/leave the diagnosis view.
+  // No-ops on web (only runs on native iOS/Android with AdMob initialised).
+  const runWithAd = async (action: () => void) => {
+    if (!isPremium && isNative) {
+      try {
+        await showInterstitial();
+      } catch (err) {
+        console.warn("Interstitial ad failed:", err);
+      }
+    }
+    action();
+  };
+  const handleClose = () => runWithAd(onClose);
+  const handleSave = () => runWithAd(onSave);
   const navigate = useNavigate();
 
   const issueTitle = triage?.issue_title || "Issue Detected";
@@ -741,17 +758,17 @@ export default function DiagnosisResults({
       {/* Save / Close buttons (hidden when viewing an already-saved issue) */}
       {!hideSaveActions && (
         <>
-          <GradientButton size="lg" onClick={onSave}>
+          <GradientButton size="lg" onClick={handleSave}>
             Save Full Diagnosis
           </GradientButton>
-          <button onClick={onClose} className="w-full text-center py-3 text-base" style={{ color: textSecondary }}>
+          <button onClick={handleClose} className="w-full text-center py-3 text-base" style={{ color: textSecondary }}>
             Close without saving
           </button>
         </>
       )}
       {hideSaveActions && (
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="w-full text-center py-3 text-base font-semibold"
           style={{ color: "var(--color-primary)" }}
         >
