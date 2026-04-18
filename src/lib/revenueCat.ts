@@ -140,7 +140,7 @@ export async function getCurrentOffering(): Promise<PurchasesOffering | null> {
 
 export async function purchasePremium(): Promise<RcStatus> {
   if (!isRevenueCatPlatform()) {
-    throw new Error("RevenueCat not available on this platform");
+    throw new Error("In-app purchases only available in the iOS/Android app");
   }
 
   if (!initialized) {
@@ -149,7 +149,7 @@ export async function purchasePremium(): Promise<RcStatus> {
 
   const revenueCat = await getRevenueCatModule();
   if (!revenueCat || !initialized) {
-    throw new Error("RevenueCat not available on this platform");
+    throw new Error(lastInitError ?? "RevenueCat failed to initialise. Please reinstall the app.");
   }
 
   const { Purchases } = revenueCat;
