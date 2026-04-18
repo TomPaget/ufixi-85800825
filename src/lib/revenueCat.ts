@@ -36,7 +36,8 @@ export async function initRevenueCat(appUserId?: string | null): Promise<void> {
     initialized = true;
     console.log("[RevenueCat] Initialised", { platform, appUserId });
   } catch (err) {
-    console.error("[RevenueCat] Init failed:", err);
+    // Never let RC init crash the app on launch — log and continue.
+    console.error("[RevenueCat] Init failed (non-fatal):", err);
   }
 }
 
