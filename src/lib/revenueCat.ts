@@ -4,7 +4,7 @@ import { Purchases, LOG_LEVEL, type CustomerInfo, type PurchasesOffering } from 
 
 // PUBLISHABLE keys — safe to ship in the client.
 // (RevenueCat publishable keys are not secrets; they identify the app to RC.)
-const REVENUECAT_IOS_KEY = "appl_PASTE_NEW_IOS_KEY_HERE";
+const REVENUECAT_IOS_KEY = "appl_WaXjCvKSQUwZNmQfPqwqxyBtVLG";
 const REVENUECAT_ANDROID_KEY = "goog_PASTE_ANDROID_KEY_HERE";
 
 export const PREMIUM_ENTITLEMENT_ID = "premium";
