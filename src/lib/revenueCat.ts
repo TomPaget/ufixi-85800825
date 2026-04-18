@@ -4,7 +4,7 @@ import { Purchases, LOG_LEVEL, type CustomerInfo, type PurchasesOffering } from 
 
 // PUBLISHABLE keys — safe to ship in the client.
 // (RevenueCat publishable keys are not secrets; they identify the app to RC.)
-const REVENUECAT_IOS_KEY = "appl_PASTE_NEW_IOS_KEY_HERE";
+const REVENUECAT_IOS_KEY = "appl_WaXjCvKSQUwZNmQfPqwqxyBtVLG";
 const REVENUECAT_ANDROID_KEY = "goog_PASTE_ANDROID_KEY_HERE";
 
 export const PREMIUM_ENTITLEMENT_ID = "premium";
@@ -36,7 +36,8 @@ export async function initRevenueCat(appUserId?: string | null): Promise<void> {
     initialized = true;
     console.log("[RevenueCat] Initialised", { platform, appUserId });
   } catch (err) {
-    console.error("[RevenueCat] Init failed:", err);
+    // Never let RC init crash the app on launch — log and continue.
+    console.error("[RevenueCat] Init failed (non-fatal):", err);
   }
 }
 
