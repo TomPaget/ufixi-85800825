@@ -47,14 +47,13 @@ export default function CancelSubscription() {
   const textSecondary = "#5A6A7A";
   const native = isRevenueCatPlatform();
 
-  // On native iOS/Android, all subscription management must happen in the platform store.
   useEffect(() => {
     if (native) {
       const platform = window.Capacitor?.getPlatform?.();
       const url = platform === "ios"
-        ? "https://apps.apple.com/account/subscriptions"
+        ? "itms-apps://apps.apple.com/account/subscriptions"
         : "https://play.google.com/store/account/subscriptions";
-      window.open(url, "_blank");
+      window.location.href = url;
       navigate("/settings");
     }
   }, [native, navigate]);
@@ -84,6 +83,7 @@ export default function CancelSubscription() {
     setCancelling(true);
     try {
       const { data, error } = await supabase.functions.invoke("cancel-subscription", {
+        headers: { "x-ufixi-billing-client": "web" },
         body: {
           action: "cancel",
           reason: selectedReason,
@@ -112,6 +112,7 @@ export default function CancelSubscription() {
     setClaimingOffer(true);
     try {
       const { data, error } = await supabase.functions.invoke("cancel-subscription", {
+        headers: { "x-ufixi-billing-client": "web" },
         body: { action: "claim_free_month" },
       });
       if (error) throw error;
@@ -131,6 +132,7 @@ export default function CancelSubscription() {
     setTrackingAttempt(true);
     try {
       const { data, error } = await supabase.functions.invoke("cancel-subscription", {
+        headers: { "x-ufixi-billing-client": "web" },
         body: { action: "track_attempt", reason: selectedReason },
       });
       if (error) throw error;
@@ -138,7 +140,6 @@ export default function CancelSubscription() {
       setOfferEligible(eligible);
       setStep(eligible ? "offer" : "confirm");
     } catch (err: any) {
-      // If tracking fails, default to showing confirm
       setOfferEligible(false);
       setStep("confirm");
     } finally {

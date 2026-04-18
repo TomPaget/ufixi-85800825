@@ -201,7 +201,9 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       }
 
       toast.loading("Preparing checkout…", { id: "checkout" });
-      const { data, error } = await supabase.functions.invoke("create-checkout");
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        headers: { "x-ufixi-billing-client": "web" },
+      });
       toast.dismiss("checkout");
 
       if (error) throw error;
@@ -250,7 +252,9 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
     try {
       toast.loading("Renewing subscription…", { id: "renew" });
-      const { data, error } = await supabase.functions.invoke("renew-subscription");
+      const { data, error } = await supabase.functions.invoke("renew-subscription", {
+        headers: { "x-ufixi-billing-client": "web" },
+      });
       toast.dismiss("renew");
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
