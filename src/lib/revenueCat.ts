@@ -13,6 +13,7 @@ export const PREMIUM_PRODUCT_ID = "premium_subscription";
 type RevenueCatModule = typeof import("@revenuecat/purchases-capacitor");
 
 let initialized = false;
+let lastInitError: string | null = null;
 let revenueCatModulePromise: Promise<RevenueCatModule> | null = null;
 
 function getPlatform(): "ios" | "android" | "web" {
@@ -28,7 +29,8 @@ async function getRevenueCatModule(): Promise<RevenueCatModule | null> {
     return await revenueCatModulePromise;
   } catch (err) {
     revenueCatModulePromise = null;
-    console.error("[RevenueCat] Plugin load failed (non-fatal):", err);
+    lastInitError = `Plugin load failed: ${(err as Error)?.message ?? err}`;
+    console.error("[RevenueCat] Plugin load failed:", err);
     return null;
   }
 }
@@ -44,7 +46,8 @@ export async function initRevenueCat(appUserId?: string | null): Promise<void> {
   const platform = getPlatform();
   const apiKey = platform === "ios" ? REVENUECAT_IOS_KEY : REVENUECAT_ANDROID_KEY;
   if (!apiKey || apiKey.includes("PASTE_")) {
-    console.warn("[RevenueCat] API key not configured for", platform);
+    lastInitError = `API key not configured for ${platform}`;
+    console.warn("[RevenueCat]", lastInitError);
     return;
   }
 
@@ -56,9 +59,11 @@ export async function initRevenueCat(appUserId?: string | null): Promise<void> {
     await Purchases.setLogLevel({ level: LOG_LEVEL.WARN });
     await Purchases.configure({ apiKey, appUserID: appUserId ?? undefined });
     initialized = true;
+    lastInitError = null;
     console.log("[RevenueCat] Initialised", { platform, appUserId });
   } catch (err) {
-    console.error("[RevenueCat] Init failed (non-fatal):", err);
+    lastInitError = `configure() failed: ${(err as Error)?.message ?? err}`;
+    console.error("[RevenueCat] Init failed:", err);
   }
 }
 
@@ -135,7 +140,7 @@ export async function getCurrentOffering(): Promise<PurchasesOffering | null> {
 
 export async function purchasePremium(): Promise<RcStatus> {
   if (!isRevenueCatPlatform()) {
-    throw new Error("RevenueCat not available on this platform");
+    throw new Error("In-app purchases only available in the iOS/Android app");
   }
 
   if (!initialized) {
@@ -144,7 +149,7 @@ export async function purchasePremium(): Promise<RcStatus> {
 
   const revenueCat = await getRevenueCatModule();
   if (!revenueCat || !initialized) {
-    throw new Error("RevenueCat not available on this platform");
+    throw new Error(lastInitError ?? "RevenueCat failed to initialise. Please reinstall the app.");
   }
 
   const { Purchases } = revenueCat;
