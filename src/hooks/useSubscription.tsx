@@ -66,6 +66,31 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      // On native (iOS/Android) prefer RevenueCat as source of truth.
+      if (isRevenueCatPlatform()) {
+        const info = await getCustomerInfo();
+        const status = statusFromCustomerInfo(info);
+        setIsPremium(status.isPremium);
+        setSubscriptionEnd(status.expiresAt);
+        setCancelAtPeriodEnd(status.isPremium && !status.willRenew);
+        setHasEverSubscribed(status.hasEverSubscribed);
+
+        if (status.isPremium && !welcomeEmailSent) {
+          setWelcomeEmailSent(true);
+          const fullName = session.user.user_metadata?.full_name;
+          supabase.functions.invoke("send-transactional-email", {
+            body: {
+              templateName: "welcome-to-premium",
+              recipientEmail: session.user.email,
+              idempotencyKey: `welcome-premium-${session.user.id}`,
+              templateData: { name: fullName || undefined },
+            },
+          }).catch((err) => console.warn("Welcome email failed:", err));
+        }
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke("check-subscription");
       if (error) throw error;
 
@@ -96,6 +121,31 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   }, [welcomeEmailSent]);
 
   const startCheckout = useCallback(async () => {
+    // On native, use RevenueCat in-app purchase (required by Apple/Google).
+    if (isRevenueCatPlatform()) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          toast.error("Please create an account first to subscribe");
+          window.location.assign(getInAppPath("/auth?redirect=upgrade"));
+          return;
+        }
+        toast.loading("Opening purchase…", { id: "checkout" });
+        const status = await purchasePremium();
+        toast.dismiss("checkout");
+        if (status.isPremium) {
+          toast.success("Welcome to Premium!");
+          await checkSubscription();
+        }
+      } catch (err: any) {
+        toast.dismiss("checkout");
+        if (err?.userCancelled || err?.code === "PURCHASE_CANCELLED") return;
+        console.error("RC purchase error:", err);
+        toast.error(err?.message || "Could not complete purchase");
+      }
+      return;
+    }
+
     const native = typeof window !== "undefined" && window.Capacitor?.isNativePlatform?.();
     const inIframe = typeof window !== "undefined" && window.self !== window.top;
 
