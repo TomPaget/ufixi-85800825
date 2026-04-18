@@ -121,7 +121,7 @@ export default function HomeDashboard() {
               Activating your Premium…
             </h2>
             <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
-              Confirming your payment with Stripe. This usually takes a few seconds.
+              Confirming your purchase. This usually takes a few seconds.
             </p>
           </div>
         </div>

@@ -381,7 +381,7 @@ export default function AdminDashboard() {
               <p className="text-sm" style={{ color: textSec }}>
                 {page === "users" && "User management will be available when users sign up. View profiles, roles, and subscription status here."}
                 {page === "scans" && "All saved scans across users will appear here. Search, filter, and manage issues."}
-                {page === "subscriptions" && "Stripe subscription data will appear here once payments are connected."}
+                {page === "subscriptions" && "Subscription data will appear here once payments are connected."}
                 {page === "notifications" && "Send push/in-app notifications to all users, premium users, or individuals from here."}
               </p>
             </div>

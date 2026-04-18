@@ -7,7 +7,7 @@ interface Props {
 }
 
 /**
- * Stripe Checkout sets X-Frame-Options: DENY, so it CANNOT load inside an iframe.
+ * Hosted checkout pages cannot load inside an iframe.
  * We must break out to the top-level window. If that fails (cross-origin), we
  * give the user a button that opens a real new tab via user gesture.
  */
@@ -24,7 +24,6 @@ export default function CheckoutRedirectModal({ url, onClose }: Props) {
     if (triedAuto.current) return;
     triedAuto.current = true;
 
-    // Try to break out of any iframe to top-level window
     try {
       if (window.top && window.top !== window.self) {
         window.top.location.href = url;
@@ -34,7 +33,6 @@ export default function CheckoutRedirectModal({ url, onClose }: Props) {
       // Cross-origin — top-level navigation blocked
     }
 
-    // Try a same-window navigation (works when not in iframe)
     try {
       const inIframe = window.self !== window.top;
       if (!inIframe) {
@@ -45,17 +43,14 @@ export default function CheckoutRedirectModal({ url, onClose }: Props) {
       /* ignore */
     }
 
-    // Fall back to manual click required
     setNeedsManualClick(true);
   }, [url]);
 
   if (!url) return null;
 
   const handleManualOpen = () => {
-    // User gesture — opens in a real new tab, escapes iframe
     const win = window.open(url, "_blank", "noopener,noreferrer");
     if (!win) {
-      // Popup blocked too — last resort, navigate top
       try {
         if (window.top) window.top.location.href = url;
         else window.location.href = url;
@@ -85,8 +80,8 @@ export default function CheckoutRedirectModal({ url, onClose }: Props) {
         </h2>
         <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
           {needsManualClick
-            ? "Tap below to open Stripe checkout in a new tab."
-            : "Taking you to Stripe to complete payment."}
+            ? "Tap below to open secure checkout in a new tab."
+            : "Taking you to secure checkout."}
         </p>
         <button
           onClick={handleManualOpen}

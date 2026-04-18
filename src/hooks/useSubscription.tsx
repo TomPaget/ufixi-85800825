@@ -201,7 +201,9 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       }
 
       toast.loading("Preparing checkout…", { id: "checkout" });
-      const { data, error } = await supabase.functions.invoke("create-checkout");
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        headers: { "x-ufixi-billing-client": "web" },
+      });
       toast.dismiss("checkout");
 
       if (error) throw error;

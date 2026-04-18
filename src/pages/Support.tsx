@@ -71,7 +71,7 @@ function getSupportResponse(input: string, msgCount: number): { text: string; es
     return { text: "If you're having trouble signing in:\n\n1. Try the 'Forgot Password' link on the login page\n2. Check your spam folder for the reset email\n3. Make sure you're using the same email you signed up with\n\nIf you're still locked out after trying these, let me know.", escalate: false };
 
   if (lower.includes("billing") || lower.includes("charge") || lower.includes("payment"))
-    return { text: "All payments are processed securely through Stripe. You can view your billing history in Settings → Subscription. If you see an unexpected charge, could you tell me the date and amount? I'll help investigate.", escalate: false };
+    return { text: "For billing help, open Settings → Subscription to manage your plan in the place you purchased it. If you see an unexpected charge, tell me the date and amount and I'll help investigate.", escalate: false };
 
   return { text: "Thanks for sharing that. Could you give me a bit more detail so I can help you better? For example, what were you trying to do, and what happened instead?", escalate: false };
 }

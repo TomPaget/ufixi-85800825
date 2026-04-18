@@ -26,16 +26,17 @@ export default function Settings() {
       return;
     }
     if (native) {
-      // Apple/Google require subscription management to happen in the platform store.
       const platform = window.Capacitor?.getPlatform?.();
       const url = platform === "ios"
-        ? "https://apps.apple.com/account/subscriptions"
+        ? "itms-apps://apps.apple.com/account/subscriptions"
         : "https://play.google.com/store/account/subscriptions";
-      window.open(url, "_blank");
+      window.location.href = url;
       return;
     }
     try {
-      const { data, error } = await supabase.functions.invoke("customer-portal");
+      const { data, error } = await supabase.functions.invoke("customer-portal", {
+        headers: { "x-ufixi-billing-client": "web" },
+      });
       if (error) throw error;
       if (data?.url) window.open(data.url, "_blank");
     } catch (err: any) {

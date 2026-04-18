@@ -39,7 +39,7 @@ export default function TermsOfService() {
                 <li>Payment will be charged to your account at confirmation of purchase</li>
                 <li>Your subscription automatically renews unless cancelled at least 24 hours before the end of the current billing period</li>
                 <li>Your account will be charged for renewal within 24 hours prior to the end of the current period at the same price</li>
-                <li>You can manage and cancel your subscription at any time from the Settings page within the app</li>
+                <li>You can manage and cancel your subscription from the place you purchased it</li>
                 <li>No refunds will be granted for any unused portion of a subscription period, except where required by applicable law</li>
               </ul>
               <p className="mt-3">For subscriptions purchased via the Apple App Store or Google Play Store, the store's payment terms and cancellation policies apply. You must cancel through the respective store's subscription management.</p>
@@ -79,7 +79,7 @@ export default function TermsOfService() {
 
             <section>
               <h2 className="text-lg font-semibold text-foreground">10. Third-party services</h2>
-              <p>Ufixi uses third-party services including payment processors (Stripe), cloud infrastructure, and AI models. Your use of these services is subject to their respective terms and privacy policies. Ufixi displays advertisements via Google AdMob (mobile) and Google AdSense (web) to free-tier users. Ad personalisation is governed by Google's advertising policies.</p>
+              <p>Ufixi uses third-party services including payment services, cloud infrastructure, and AI models. Your use of these services is subject to their respective terms and privacy policies. Ufixi displays advertisements via Google AdMob (mobile) and Google AdSense (web) to free-tier users. Ad personalisation is governed by Google's advertising policies.</p>
             </section>
 
             <section>
