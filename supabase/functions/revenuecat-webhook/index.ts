@@ -22,9 +22,7 @@ serve(async (req) => {
       const auth = (req.headers.get("authorization") ?? "").trim();
       const provided = auth.replace(/^Bearer\s+/i, "").trim();
       if (provided !== expected) {
-        const mask = (s: string) =>
-          s.length === 0 ? "<empty>" : `${s.slice(0, 3)}…${s.slice(-3)} (len=${s.length})`;
-        log("Unauthorized", { provided: mask(provided), expected: mask(expected) });
+        log("Unauthorized");
         return new Response(JSON.stringify({ error: "unauthorized" }), {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
