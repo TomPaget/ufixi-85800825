@@ -19,3 +19,5 @@ project_id = "rvxpqwscfmygfqanxfbq"
     verify_jwt = false
   [functions.revenuecat-webhook]
     verify_jwt = false
+  [functions.delete-account]
+    verify_jwt = false
