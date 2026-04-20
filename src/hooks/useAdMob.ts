@@ -7,8 +7,8 @@ const ADMOB_CONFIG = {
     interstitialId: "ca-app-pub-9591380465147865/8859554738",
   },
   ios: {
-    appId: "ca-app-pub-9591380465147865~3443454625",
-    interstitialId: "ca-app-pub-9591380465147865/2130372952",
+    appId: "ca-app-pub-9591380465147865~7363598276",
+    interstitialId: "ca-app-pub-9591380465147865/5858944911",
   },
   test: {
     interstitialId: "ca-app-pub-3940256099942544/1033173712",
