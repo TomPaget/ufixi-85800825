@@ -32,8 +32,8 @@ export function useAdMob() {
       return;
     }
     try {
-      const mod = await import("@capacitor-community/app-tracking-transparency");
-      const ATT = (mod as any).AppTrackingTransparency;
+      const mod: any = await (Function('return import("@capacitor-community/app-tracking-transparency")')() as Promise<any>);
+      const ATT = mod?.AppTrackingTransparency;
       if (!ATT) throw new Error("ATT plugin not found");
       const { status } = await ATT.getStatus();
       console.log("[ATT] current status:", status);
