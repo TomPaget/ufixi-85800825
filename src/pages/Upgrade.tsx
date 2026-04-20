@@ -147,12 +147,25 @@ export default function Upgrade() {
                     Current Plan
                   </button>
                 ) : plan.recommended ? (
-                  <GradientButton size="lg" onClick={handleUpgrade}>
-                    <span className="flex items-center justify-center gap-2">
-                      <Zap className="w-4 h-4" />
-                      {isPremium && cancelAtPeriodEnd ? "Renew Now" : "Upgrade Now"}
-                    </span>
-                  </GradientButton>
+                  <>
+                    {/* Apple-required subscription disclosure */}
+                    <div className="text-[11px] leading-relaxed pt-1" style={{ color: "var(--color-text-secondary)" }}>
+                      <p><strong style={{ color: "var(--color-navy)" }}>Ufixi Premium</strong> — Auto-renewing monthly subscription.</p>
+                      <p>Length: 1 month. Price: {eligibleForFirstMonth ? "£0.99 for the first month, then £1.99/month" : "£1.99/month"}, billed monthly.</p>
+                      <p>Payment is charged to your Apple ID at confirmation of purchase. Subscription automatically renews unless cancelled at least 24 hours before the end of the current period. Manage or cancel in your App Store account settings.</p>
+                      <p className="pt-1">
+                        <a href="/terms" className="underline">Terms of Use (EULA)</a>
+                        {" · "}
+                        <a href="/privacy" className="underline">Privacy Policy</a>
+                      </p>
+                    </div>
+                    <GradientButton size="lg" onClick={handleUpgrade}>
+                      <span className="flex items-center justify-center gap-2">
+                        <Zap className="w-4 h-4" />
+                        {isPremium && cancelAtPeriodEnd ? "Renew Now" : "Upgrade Now"}
+                      </span>
+                    </GradientButton>
+                  </>
                 ) : null}
               </div>
             );
