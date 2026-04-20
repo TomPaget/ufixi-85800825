@@ -34,15 +34,18 @@ export default function TermsOfService() {
 
             <section>
               <h2 className="text-lg font-semibold text-foreground">4. Subscriptions &amp; auto-renewal</h2>
-              <p>Ufixi offers a free tier and a Premium subscription (£0.99/month). By subscribing to Premium:</p>
+              <p>Ufixi offers a free tier and a Premium subscription. Premium is offered as an introductory price of <strong>£0.99 for the first month</strong>, then <strong>£1.99 per month</strong> thereafter, automatically renewing each month until cancelled. By subscribing to Premium:</p>
               <ul className="list-disc pl-5 space-y-1 mt-2">
-                <li>Payment will be charged to your account at confirmation of purchase</li>
-                <li>Your subscription automatically renews unless cancelled at least 24 hours before the end of the current billing period</li>
-                <li>Your account will be charged for renewal within 24 hours prior to the end of the current period at the same price</li>
-                <li>You can manage and cancel your subscription from the place you purchased it</li>
+                <li>Payment will be charged to your Apple ID, Google Play account, or chosen payment method at confirmation of purchase</li>
+                <li>The introductory price of £0.99 applies only to the first monthly billing period for new subscribers; subsequent renewals are charged at the standard price of £1.99 per month</li>
+                <li>Your subscription automatically renews unless auto-renew is turned off at least 24 hours before the end of the current billing period</li>
+                <li>Your account will be charged for renewal within 24 hours prior to the end of the current period at the then-current price (£1.99/month after the first month)</li>
+                <li>The length of the subscription is one (1) month, renewing monthly</li>
+                <li>You can manage your subscription and turn off auto-renewal at any time by going to your account settings in the App Store (iOS) or Google Play Store (Android) after purchase</li>
+                <li>Any unused portion of a free trial period (if offered) will be forfeited when you purchase a subscription</li>
                 <li>No refunds will be granted for any unused portion of a subscription period, except where required by applicable law</li>
               </ul>
-              <p className="mt-3">For subscriptions purchased via the Apple App Store or Google Play Store, the store's payment terms and cancellation policies apply. You must cancel through the respective store's subscription management.</p>
+              <p className="mt-3">For subscriptions purchased via the Apple App Store, the standard <a href="https://www.apple.com/legal/internet-services/itunes/" target="_blank" rel="noopener noreferrer" className="text-primary underline">Apple Media Services Terms and Conditions</a> apply, and you must cancel through your Apple ID subscription settings. For Google Play purchases, Google's payment terms apply and you must cancel through Google Play's subscription management.</p>
             </section>
 
             <section>
