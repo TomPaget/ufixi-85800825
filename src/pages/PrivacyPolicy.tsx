@@ -68,6 +68,17 @@ export default function PrivacyPolicy() {
             </section>
 
             <section>
+              <h2 className="text-lg font-semibold text-foreground">4a. Third-party AI processing</h2>
+              <p>To generate diagnostic results, the images, videos and text descriptions you submit are securely transmitted to third-party artificial intelligence providers for processing. We currently use:</p>
+              <ul className="list-disc pl-5 space-y-1 mt-2">
+                <li><strong>OpenAI</strong> (GPT models) — for natural language analysis and follow-up chat</li>
+                <li><strong>Google</strong> (Gemini models) — for image analysis and diagnosis</li>
+              </ul>
+              <p className="mt-3">All requests are made server-to-server through our secure backend. We do <strong>not</strong> send your name, email address, or any other directly identifying personal information to these AI providers — only the scan content you submit and a temporary session identifier. These providers are contractually required to process the data only to fulfil the request and not to train their models on your inputs (in accordance with their respective enterprise / API data policies). Data is retained by these providers in line with their published policies (see <a href="https://openai.com/policies/api-data-usage-policies" target="_blank" rel="noopener noreferrer" className="text-primary underline">OpenAI</a> and <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline">Google AI</a>).</p>
+              <p className="mt-3">By submitting a scan you consent to this processing. If you do not wish to share content with third-party AI providers, please do not use the diagnostic scanner.</p>
+            </section>
+
+            <section>
               <h2 className="text-lg font-semibold text-foreground">5. How we protect your data</h2>
               <p>Your personal data is stored securely with encryption at rest and in transit. We use row-level security policies to ensure you can only access your own data. We never sell your personal data.</p>
             </section>
