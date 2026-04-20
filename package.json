@@ -10,7 +10,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "capacitor:copy:after": "node scripts/patch-ios-info-plist.mjs",
+    "capacitor:sync:after": "node scripts/patch-ios-info-plist.mjs"
   },
   "dependencies": {
     "@capacitor-community/admob": "^8.0.0",
