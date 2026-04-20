@@ -32,13 +32,14 @@ export function useAdMob() {
       return;
     }
     try {
-      // Dynamic import — only resolves in native iOS builds with the plugin installed
-      const mod = await (Function('return import("@capacitor-community/app-tracking-transparency")')() as Promise<any>);
+      const mod: any = await (Function('return import("@capacitor-community/app-tracking-transparency")')() as Promise<any>);
       const ATT = mod?.AppTrackingTransparency;
       if (!ATT) throw new Error("ATT plugin not found");
       const { status } = await ATT.getStatus();
+      console.log("[ATT] current status:", status);
       if (status === "notDetermined") {
-        await ATT.requestPermission();
+        const res = await ATT.requestPermission();
+        console.log("[ATT] permission result:", res?.status);
       }
       attRequested = true;
     } catch (err) {

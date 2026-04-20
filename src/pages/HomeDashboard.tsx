@@ -57,6 +57,28 @@ export default function HomeDashboard() {
   // Register native push notifications — navigate on tap
   usePushNotifications((actionUrl) => navigate(actionUrl));
 
+  // Request App Tracking Transparency permission on first launch (iOS).
+  // Apple requires this prompt to appear before any tracking data is collected.
+  useEffect(() => {
+    if (!nativeApp) return;
+    const t = setTimeout(async () => {
+      try {
+        const platform = (window as any).Capacitor?.getPlatform?.();
+        if (platform !== "ios") return;
+        const mod: any = await (Function('return import("@capacitor-community/app-tracking-transparency")')() as Promise<any>);
+        const ATT = mod?.AppTrackingTransparency;
+        if (!ATT) return;
+        const { status } = await ATT.getStatus();
+        if (status === "notDetermined") {
+          await ATT.requestPermission();
+        }
+      } catch (err) {
+        console.warn("ATT prompt failed:", err);
+      }
+    }, 800);
+    return () => clearTimeout(t);
+  }, [nativeApp]);
+
   // Handle resume from My Issues
   useEffect(() => {
     const state = location.state as any;
