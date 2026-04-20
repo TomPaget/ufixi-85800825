@@ -65,7 +65,7 @@ export default function HomeDashboard() {
       try {
         const platform = (window as any).Capacitor?.getPlatform?.();
         if (platform !== "ios") return;
-        const mod: any = await (Function('return import("@capacitor-community/app-tracking-transparency")')() as Promise<any>);
+        const mod: any = await (Function('return import("capacitor-plugin-app-tracking-transparency")')() as Promise<any>);
         const ATT = mod?.AppTrackingTransparency;
         if (!ATT) return;
         const { status } = await ATT.getStatus();

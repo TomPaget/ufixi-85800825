@@ -1,4 +1,4 @@
-declare module "@capacitor-community/app-tracking-transparency" {
+declare module "capacitor-plugin-app-tracking-transparency" {
   export const AppTrackingTransparency: {
     getStatus: () => Promise<{ status: string }>;
     requestPermission: () => Promise<{ status: string }>;
