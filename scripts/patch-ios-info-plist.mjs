@@ -46,7 +46,7 @@ function insertBeforeRootDictClose(xmlBlock) {
 function setRaw(key, xmlBlock) {
   const escapedKey = escapeRegex(key);
   const existingValuePattern = new RegExp(
-    `([\\t ]*)<key>${escapedKey}<\\/key>\\s*(?:<string>[\\s\\S]*?<\\/string>|<true\\s*\\/>|<false\\s*\\/>|<array>[\\s\\S]*?<\\/array>|<dict>[\\s\\S]*?<\\/dict>)`,
+    `([\\t ]*)<key>${escapedKey}<\\/key>\\s*(?:<string>[\\s\\S]*?<\\/string>|<true\\s*\\/>|<false\\s*\\/>|<array\\s*\\/>|<dict\\s*\\/>|<array>[\\s\\S]*?<\\/array>|<dict>[\\s\\S]*?<\\/dict>)`,
     "m",
   );
 
