@@ -20,66 +20,80 @@ if (!existsSync(PLIST_PATH)) {
 let plist = readFileSync(PLIST_PATH, "utf8");
 let changed = false;
 
-/** Insert <key>...</key><value/> just before the final closing </dict></plist> if key absent. */
-function upsertRaw(key, xmlBlock) {
-  const keyRegex = new RegExp(`<key>${key}</key>`);
-  if (keyRegex.test(plist)) {
-    console.log(`[patch-info-plist] ${key} already present — skipping.`);
-    return;
-  }
-  // Insert before the LAST </dict> (the root dict close, right before </plist>)
-  const closing = "</dict>\n</plist>";
-  const idx = plist.lastIndexOf(closing);
-  if (idx === -1) {
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function insertBeforeRootDictClose(xmlBlock) {
+  const match = plist.match(/\n([\t ]*)<\/dict>\s*<\/plist>\s*$/);
+  if (!match) {
     console.error("[patch-info-plist] Could not find root </dict></plist> — aborting.");
     process.exit(1);
   }
-  plist = plist.slice(0, idx) + xmlBlock + "\n" + plist.slice(idx);
+
+  const indent = match[1] ?? "";
+  const closingIndex = match.index ?? -1;
+  plist = plist.slice(0, closingIndex) + `\n${xmlBlock}` + plist.slice(closingIndex);
   changed = true;
+  return indent;
+}
+
+/**
+ * Replaces an existing plist value for a key regardless of whether it is
+ * currently a string, boolean, array, or dict. If the key does not exist, it
+ * inserts the new block at the end of the root dict.
+ */
+function setRaw(key, xmlBlock) {
+  const escapedKey = escapeRegex(key);
+  const existingValuePattern = new RegExp(
+    `([\\t ]*)<key>${escapedKey}<\\/key>\\s*(?:<string>[\\s\\S]*?<\\/string>|<true\\s*\\/>|<false\\s*\\/>|<array>[\\s\\S]*?<\\/array>|<dict>[\\s\\S]*?<\\/dict>)`,
+    "m",
+  );
+
+  if (existingValuePattern.test(plist)) {
+    const before = plist;
+    plist = plist.replace(existingValuePattern, (_, indent = "") => `${indent}${xmlBlock}`);
+    if (plist !== before) {
+      changed = true;
+      console.log(`[patch-info-plist] Set ${key}`);
+    } else {
+      console.log(`[patch-info-plist] ${key} already up to date.`);
+    }
+    return;
+  }
+
+  insertBeforeRootDictClose(xmlBlock);
   console.log(`[patch-info-plist] Added ${key}`);
 }
 
 // --- 1. App Tracking Transparency (refined wording for ATT prompt) ---
-// We always overwrite the description string if present, to keep wording aligned.
 const NEW_ATT_DESC =
   "We use this identifier to deliver personalised ads and measure ad performance. You can change this anytime in iOS Settings.";
-if (/<key>NSUserTrackingUsageDescription<\/key>\s*<string>[^<]*<\/string>/.test(plist)) {
-  const before = plist;
-  plist = plist.replace(
-    /<key>NSUserTrackingUsageDescription<\/key>\s*<string>[^<]*<\/string>/,
-    `<key>NSUserTrackingUsageDescription</key>\n\t<string>${NEW_ATT_DESC}</string>`,
-  );
-  if (plist !== before) {
-    changed = true;
-    console.log("[patch-info-plist] Updated NSUserTrackingUsageDescription wording");
-  }
-} else {
-  upsertRaw(
-    "NSUserTrackingUsageDescription",
-    `\t<key>NSUserTrackingUsageDescription</key>\n\t<string>${NEW_ATT_DESC}</string>`,
-  );
-}
+setRaw(
+  "NSUserTrackingUsageDescription",
+  `\t<key>NSUserTrackingUsageDescription</key>\n\t<string>${NEW_ATT_DESC}</string>`,
+);
 
 // --- 2. Photo library add (saving the diagnosis PDF) ---
-upsertRaw(
+setRaw(
   "NSPhotoLibraryAddUsageDescription",
   `\t<key>NSPhotoLibraryAddUsageDescription</key>\n\t<string>Ufixi saves your repair diagnosis report to your photo library when you choose to download it.</string>`,
 );
 
 // --- 3. Export compliance: no non-exempt encryption ---
-upsertRaw(
+setRaw(
   "ITSAppUsesNonExemptEncryption",
   `\t<key>ITSAppUsesNonExemptEncryption</key>\n\t<false/>`,
 );
 
 // --- 4. App Transport Security: enforce HTTPS only ---
-upsertRaw(
+setRaw(
   "NSAppTransportSecurity",
   `\t<key>NSAppTransportSecurity</key>\n\t<dict>\n\t\t<key>NSAllowsArbitraryLoads</key>\n\t\t<false/>\n\t</dict>`,
 );
 
 // --- 5. AdMob GADApplicationIdentifier ---
-upsertRaw(
+setRaw(
   "GADApplicationIdentifier",
   `\t<key>GADApplicationIdentifier</key>\n\t<string>ca-app-pub-9591380465147865~3443454625</string>`,
 );
@@ -103,7 +117,7 @@ const skadXml =
       `\t\t<dict>\n\t\t\t<key>SKAdNetworkIdentifier</key>\n\t\t\t<string>${id}.skadnetwork</string>\n\t\t</dict>`,
   ).join("\n") +
   `\n\t</array>`;
-upsertRaw("SKAdNetworkItems", skadXml);
+setRaw("SKAdNetworkItems", skadXml);
 
 if (changed) {
   writeFileSync(PLIST_PATH, plist, "utf8");
