@@ -21,7 +21,15 @@ export default class AppErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("App startup error:", error, errorInfo);
+    console.error("App startup error:", error?.message, error?.stack, errorInfo);
+    // Persist for native debugging
+    try {
+      localStorage.setItem("ufixi_last_crash", JSON.stringify({
+        message: error?.message,
+        stack: error?.stack?.slice(0, 500),
+        time: new Date().toISOString(),
+      }));
+    } catch { /* noop */ }
   }
 
   private handleReload = () => {

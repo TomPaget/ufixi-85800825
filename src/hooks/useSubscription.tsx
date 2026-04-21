@@ -1,7 +1,15 @@
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { Browser } from "@capacitor/browser";
+// Browser is imported dynamically to avoid crash if native plugin isn't linked
+async function openBrowser(url: string): Promise<void> {
+  try {
+    const { Browser } = await import("@capacitor/browser");
+    await Browser.open({ url });
+  } catch {
+    window.location.href = url;
+  }
+}
 import { toast } from "sonner";
 import { getInAppPath } from "@/lib/appNavigation";
 import CheckoutRedirectModal from "@/components/CheckoutRedirectModal";
@@ -162,7 +170,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
     const navigateTo = (url: string) => {
       if (native) {
-        Browser.open({ url }).catch(() => { window.location.href = url; });
+        openBrowser(url).catch(() => { window.location.href = url; });
         return;
       }
       if (checkoutWindow && !checkoutWindow.closed) {
