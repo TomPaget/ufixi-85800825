@@ -170,7 +170,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
     const navigateTo = (url: string) => {
       if (native) {
-        Browser.open({ url }).catch(() => { window.location.href = url; });
+        openBrowser(url).catch(() => { window.location.href = url; });
         return;
       }
       if (checkoutWindow && !checkoutWindow.closed) {
