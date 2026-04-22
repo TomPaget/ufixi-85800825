@@ -218,10 +218,10 @@ export default function Support() {
                 <div className="space-y-4 rounded-2xl p-5" style={{ background: "rgba(255,255,255,0.85)", border: "1px solid var(--glass-border)", backdropFilter: "blur(12px)" }}>
                   <h2 className="text-lg font-semibold" style={{ color: "var(--color-navy)", letterSpacing: "0.02em" }}>Get in Touch</h2>
                   <p className="text-sm" style={{ color: "var(--color-text-secondary)", letterSpacing: "0.03em" }}>Our team will respond within 24 hours.</p>
-                  <input placeholder="Your name" className="w-full rounded-2xl p-4 text-sm" style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: "var(--color-navy)" }} />
-                  <input placeholder="Email address" className="w-full rounded-2xl p-4 text-sm" style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: "var(--color-navy)" }} />
-                  <textarea placeholder="How can we help?" className="w-full rounded-2xl p-4 text-sm resize-none" style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: "var(--color-navy)", minHeight: 100 }} rows={4} />
-                  <GradientButton size="lg">
+                  <input value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="Your name" className="w-full rounded-2xl p-4 text-base" style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: "var(--color-navy)" }} />
+                  <input value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="Email address" type="email" className="w-full rounded-2xl p-4 text-base" style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: "var(--color-navy)" }} />
+                  <textarea value={contactMessage} onChange={(e) => setContactMessage(e.target.value)} placeholder="How can we help?" className="w-full rounded-2xl p-4 text-base resize-none" style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: "var(--color-navy)", minHeight: 100 }} rows={4} />
+                  <GradientButton size="lg" onClick={openSupportEmail} disabled={!contactMessage.trim()}>
                     <span className="flex items-center justify-center gap-2"><MessageCircle className="w-4 h-4" /> Send Message</span>
                   </GradientButton>
                 </div>

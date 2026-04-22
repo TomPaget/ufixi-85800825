@@ -365,7 +365,7 @@ export default function AdminDashboard() {
                   ) : type === "number" ? (
                     <input type="number" defaultValue={3} className="w-20 px-3 py-1.5 rounded-lg text-sm text-right" style={{ border: "1px solid rgba(0,23,47,0.1)", color: navy }} />
                   ) : (
-                    <input type="text" defaultValue={label.includes("Amazon") ? "ufixi-21" : "support@ufixi.app"} className="w-48 px-3 py-1.5 rounded-lg text-sm" style={{ border: "1px solid rgba(0,23,47,0.1)", color: navy }} />
+                    <input type="text" defaultValue={label.includes("Amazon") ? "ufixi-21" : "info@ufixi.co.uk"} className="w-48 px-3 py-1.5 rounded-lg text-sm" style={{ border: "1px solid rgba(0,23,47,0.1)", color: navy }} />
                   )}
                 </div>
               ))}

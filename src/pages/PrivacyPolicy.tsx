@@ -98,7 +98,7 @@ export default function PrivacyPolicy() {
                 <li>Restrict or object to processing</li>
                 <li>Data portability</li>
               </ul>
-              <p className="mt-3">To exercise any of these rights, contact us at <a href="mailto:privacy@ufixi.app" className="text-primary underline">privacy@ufixi.app</a>.</p>
+              <p className="mt-3">To exercise any of these rights, contact us at <a href="mailto:info@ufixi.co.uk" className="text-primary underline">info@ufixi.co.uk</a>.</p>
             </section>
 
             <section>
@@ -123,7 +123,7 @@ export default function PrivacyPolicy() {
 
             <section>
               <h2 className="text-lg font-semibold text-foreground">11. Contact</h2>
-              <p>For privacy-related enquiries, contact us at <a href="mailto:privacy@ufixi.app" className="text-primary underline">privacy@ufixi.app</a>.</p>
+              <p>For privacy-related enquiries, contact us at <a href="mailto:info@ufixi.co.uk" className="text-primary underline">info@ufixi.co.uk</a>.</p>
             </section>
           </div>
         </div>
