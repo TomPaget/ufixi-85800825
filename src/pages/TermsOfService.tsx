@@ -97,7 +97,7 @@ export default function TermsOfService() {
 
             <section>
               <h2 className="text-lg font-semibold text-foreground">13. Contact</h2>
-              <p>For questions about these terms, contact us at <a href="mailto:legal@ufixi.app" className="text-primary underline">legal@ufixi.app</a>.</p>
+              <p>For questions about these terms, contact us at <a href="mailto:info@ufixi.co.uk" className="text-primary underline">info@ufixi.co.uk</a>.</p>
             </section>
           </div>
         </div>

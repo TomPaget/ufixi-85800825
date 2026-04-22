@@ -31,49 +31,10 @@ const GREETING: Message = {
   content: "Hi! I'm your Ufixi support assistant. I can help with account questions, scan issues, billing, and more. What can I help you with?",
 };
 
-function getSupportResponse(input: string, msgCount: number): { text: string; escalate: boolean } {
+function shouldEscalate(input: string, msgCount: number): boolean {
   const lower = input.toLowerCase();
-
-  // Check for escalation intent
   const wantsHuman = ESCALATION_KEYWORDS.some((kw) => lower.includes(kw));
-
-  if (wantsHuman && msgCount >= 2) {
-    return { text: "I understand you'd like to speak with our team directly. Let me connect you with our support team — you can use the contact form below to send us a message and we'll get back to you within 24 hours.", escalate: true };
-  }
-  if (wantsHuman && msgCount < 2) {
-    return { text: "I'd love to try and help you first! Could you tell me a bit more about what you're experiencing? I can resolve most issues right here.", escalate: false };
-  }
-
-  // After 4+ exchanges without resolution, offer escalation
-  if (msgCount >= 8) {
-    return { text: "It sounds like this might need a more detailed look from our team. I've unlocked the contact form below so you can reach us directly — we'll respond within 24 hours.", escalate: true };
-  }
-
-  if (lower.includes("scan") && (lower.includes("not working") || lower.includes("fail") || lower.includes("error")))
-    return { text: "Sorry to hear your scan isn't working! Try these steps:\n\n1. Make sure your photo is well-lit and in focus\n2. Ensure the image is at least 500x500 pixels\n3. Try uploading a different format (JPG or PNG work best)\n4. Check your internet connection\n\nIf it's still not working after these steps, let me know and I can look into it further.", escalate: false };
-
-  if (lower.includes("subscription") || lower.includes("premium") || lower.includes("upgrade") || lower.includes("plan"))
-    return { text: "Our Premium plan is £0.99/month and includes unlimited scans, priority AI analysis, and 90-day scan history. You can upgrade from the home page by tapping 'Go Premium'. If you're having trouble with your subscription, could you tell me more about what's happening?", escalate: false };
-
-  if (lower.includes("cancel") || lower.includes("refund"))
-    return { text: "To cancel your subscription, go to Settings → Subscription → Manage. Cancellation takes effect at the end of your billing period. For refund requests, I'll need a bit more detail — when did you subscribe and what's the reason for the refund?", escalate: false };
-
-  if (lower.includes("delete") && (lower.includes("account") || lower.includes("data")))
-    return { text: "To delete your account and all associated data, go to Settings → Privacy → Delete Account. This action is permanent and cannot be undone. All your scans, saved issues, and personal data will be removed within 30 days. Is there anything specific about this process I can clarify?", escalate: false };
-
-  if (lower.includes("scan") && (lower.includes("limit") || lower.includes("how many")))
-    return { text: "Free users get 3 scans per month. Your scan count resets on the 1st of each month. For unlimited scans, consider upgrading to Premium at £0.99/month. Would you like to know more about Premium features?", escalate: false };
-
-  if (lower.includes("save") || lower.includes("history") || lower.includes("expire"))
-    return { text: "Saved scans are kept for 45 days (90 days for Premium users), after which they're automatically deleted. You can export a PDF report of any scan before it expires from the issue detail page. Is there a specific scan you're trying to find?", escalate: false };
-
-  if (lower.includes("password") || lower.includes("login") || lower.includes("sign in") || lower.includes("locked out"))
-    return { text: "If you're having trouble signing in:\n\n1. Try the 'Forgot Password' link on the login page\n2. Check your spam folder for the reset email\n3. Make sure you're using the same email you signed up with\n\nIf you're still locked out after trying these, let me know.", escalate: false };
-
-  if (lower.includes("billing") || lower.includes("charge") || lower.includes("payment"))
-    return { text: "For billing help, open Settings → Subscription to manage your plan in the place you purchased it. If you see an unexpected charge, tell me the date and amount and I'll help investigate.", escalate: false };
-
-  return { text: "Thanks for sharing that. Could you give me a bit more detail so I can help you better? For example, what were you trying to do, and what happened instead?", escalate: false };
+  return (wantsHuman && msgCount >= 2) || msgCount >= 8;
 }
 
 export default function Support() {
@@ -82,6 +43,9 @@ export default function Support() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [showContactForm, setShowContactForm] = useState(false);
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const contactRef = useRef<HTMLDivElement>(null);
 
@@ -91,7 +55,7 @@ export default function Support() {
 
   const userMsgCount = messages.filter((m) => m.role === "user").length;
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     const text = input.trim();
     if (!text || isTyping) return;
 
@@ -102,11 +66,28 @@ export default function Support() {
 
     const newCount = userMsgCount + 1;
 
-    setTimeout(() => {
-      const { text: responseText, escalate } = getSupportResponse(text, newCount);
-      const aiMsg: Message = { id: crypto.randomUUID(), role: "assistant", content: responseText };
+    try {
+      const conversationHistory = [...messages, userMsg]
+        .filter((message) => message.id !== "welcome")
+        .map(({ role, content }) => ({ role, content }));
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/diagnosis-chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ userMessage: text, conversationHistory, mode: "support" }),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to get response");
+      }
+
+      const data = await resp.json();
+      const escalate = shouldEscalate(text, newCount) || /contact form|support team|human/i.test(data.reply || "");
+      const aiMsg: Message = { id: crypto.randomUUID(), role: "assistant", content: data.reply || "I can help troubleshoot this, or you can use the contact form below if you need the team to review it." };
       setMessages((prev) => [...prev, aiMsg]);
-      setIsTyping(false);
 
       if (escalate) {
         setShowContactForm(true);
@@ -114,7 +95,19 @@ export default function Support() {
           contactRef.current?.scrollIntoView({ behavior: "smooth" });
         }, 400);
       }
-    }, 1000 + Math.random() * 600);
+    } catch (err) {
+      console.error("Support chat error:", err);
+      setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: "I can't connect right now. Please use the contact form below and our team will review it." }]);
+      setShowContactForm(true);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  const openSupportEmail = () => {
+    const subject = encodeURIComponent("Ufixi support request");
+    const body = encodeURIComponent(`Name: ${contactName}\nEmail: ${contactEmail}\n\nMessage:\n${contactMessage}`);
+    window.location.href = `mailto:info@ufixi.co.uk?subject=${subject}&body=${body}`;
   };
 
   return (
@@ -225,10 +218,10 @@ export default function Support() {
                 <div className="space-y-4 rounded-2xl p-5" style={{ background: "rgba(255,255,255,0.85)", border: "1px solid var(--glass-border)", backdropFilter: "blur(12px)" }}>
                   <h2 className="text-lg font-semibold" style={{ color: "var(--color-navy)", letterSpacing: "0.02em" }}>Get in Touch</h2>
                   <p className="text-sm" style={{ color: "var(--color-text-secondary)", letterSpacing: "0.03em" }}>Our team will respond within 24 hours.</p>
-                  <input placeholder="Your name" className="w-full rounded-2xl p-4 text-sm" style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: "var(--color-navy)" }} />
-                  <input placeholder="Email address" className="w-full rounded-2xl p-4 text-sm" style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: "var(--color-navy)" }} />
-                  <textarea placeholder="How can we help?" className="w-full rounded-2xl p-4 text-sm resize-none" style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: "var(--color-navy)", minHeight: 100 }} rows={4} />
-                  <GradientButton size="lg">
+                  <input value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="Your name" className="w-full rounded-2xl p-4 text-base" style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: "var(--color-navy)" }} />
+                  <input value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="Email address" type="email" className="w-full rounded-2xl p-4 text-base" style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: "var(--color-navy)" }} />
+                  <textarea value={contactMessage} onChange={(e) => setContactMessage(e.target.value)} placeholder="How can we help?" className="w-full rounded-2xl p-4 text-base resize-none" style={{ background: "white", border: "1px solid rgba(0,23,47,0.1)", color: "var(--color-navy)", minHeight: 100 }} rows={4} />
+                  <GradientButton size="lg" onClick={openSupportEmail} disabled={!contactMessage.trim()}>
                     <span className="flex items-center justify-center gap-2"><MessageCircle className="w-4 h-4" /> Send Message</span>
                   </GradientButton>
                 </div>

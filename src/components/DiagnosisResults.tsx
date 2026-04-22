@@ -317,7 +317,7 @@ export default function DiagnosisResults({
               { label: `How to fix ${issueTitle.toLowerCase()}`, search: `how to fix ${issueTitle} UK DIY` },
               { label: `${categoryLabel} repair guide for beginners`, search: `${categoryLabel} repair guide beginners UK` },
               { label: `${issueTitle.toLowerCase()} step by step repair`, search: `${issueTitle} step by step repair UK` },
-              { label: `When to call a ${categoryLabel} professional`, search: `when to call ${categoryLabel} professional UK` },
+              { label: "When to call a professional", search: `when to call ${categoryLabel} professional UK` },
             ].map((tutorial, i) => (
               <a
                 key={i}

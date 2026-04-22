@@ -21,3 +21,5 @@ project_id = "rvxpqwscfmygfqanxfbq"
     verify_jwt = false
   [functions.delete-account]
     verify_jwt = false
+  [functions.diagnosis-chat]
+    verify_jwt = false
