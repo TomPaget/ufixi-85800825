@@ -20,5 +20,5 @@ export default function NativeBannerAd() {
 
   if (!isNative || isPremium) return null;
 
-  return <div aria-hidden="true" style={{ minHeight: 58 }} />;
+  return <div aria-hidden="true" style={{ minHeight: 50 }} />;
 }
