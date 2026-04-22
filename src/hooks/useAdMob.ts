@@ -5,13 +5,16 @@ const ADMOB_CONFIG = {
   android: {
     appId: "ca-app-pub-9591380465147865~4948107989",
     interstitialId: "ca-app-pub-9591380465147865/8859554738",
+    bannerId: "",
   },
   ios: {
     appId: "ca-app-pub-9591380465147865~7363598276",
     interstitialId: "ca-app-pub-9591380465147865/5858944911",
+    bannerId: "",
   },
   test: {
     interstitialId: "ca-app-pub-3940256099942544/1033173712",
+    bannerId: "ca-app-pub-3940256099942544/2934735716",
   },
 };
 
@@ -114,5 +117,39 @@ export function useAdMob() {
     }
   }, [initialize]);
 
-  return { initialize, showInterstitial, isNative: isNative.current };
+  const showBanner = useCallback(async (): Promise<boolean> => {
+    if (!isNative.current) return false;
+
+    try {
+      const { AdMob, BannerAdPosition, BannerAdSize } = await import("@capacitor-community/admob");
+      if (!admobInitialized) await initialize();
+
+      const platform = window.Capacitor?.getPlatform() === "ios" ? "ios" : "android";
+      const adId = import.meta.env.DEV ? ADMOB_CONFIG.test.bannerId : ADMOB_CONFIG[platform].bannerId;
+      if (!adId) return false;
+
+      await AdMob.showBanner({
+        adId,
+        adSize: BannerAdSize.ADAPTIVE_BANNER,
+        position: BannerAdPosition.BOTTOM_CENTER,
+        isTesting: import.meta.env.DEV,
+      });
+      return true;
+    } catch (err) {
+      console.error("AdMob banner error:", err);
+      return false;
+    }
+  }, [initialize]);
+
+  const hideBanner = useCallback(async () => {
+    if (!isNative.current) return;
+    try {
+      const { AdMob } = await import("@capacitor-community/admob");
+      await AdMob.removeBanner();
+    } catch (err) {
+      console.warn("AdMob banner remove error:", err);
+    }
+  }, []);
+
+  return { initialize, showInterstitial, showBanner, hideBanner, isNative: isNative.current };
 }
