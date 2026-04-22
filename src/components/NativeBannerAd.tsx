@@ -7,13 +7,21 @@ export default function NativeBannerAd() {
   const { showBanner, hideBanner, isNative } = useAdMob();
 
   useEffect(() => {
-    if (!isNative || loading || isPremium) {
+    if (!isNative || loading) {
+      return;
+    }
+
+    if (isPremium) {
       void hideBanner();
       return;
     }
 
-    void showBanner();
+    const timer = window.setTimeout(() => {
+      void showBanner();
+    }, 2500);
+
     return () => {
+      window.clearTimeout(timer);
       void hideBanner();
     };
   }, [hideBanner, isNative, isPremium, loading, showBanner]);
