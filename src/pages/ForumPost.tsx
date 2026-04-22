@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { Heart, BadgeCheck, Send } from "lucide-react";
+import { toast } from "sonner";
 import PageTransition from "@/components/PageTransition";
 import PageHeader from "@/components/PageHeader";
 import { MOCK_FORUM_POSTS } from "@/data/mockData";
@@ -14,6 +15,15 @@ export default function ForumPost() {
   const { id } = useParams();
   const post = MOCK_FORUM_POSTS.find((p) => p.id === id);
   const [comment, setComment] = useState("");
+  const [comments, setComments] = useState(MOCK_COMMENTS);
+
+  const sendComment = () => {
+    const text = comment.trim();
+    if (!text) return;
+    setComments((prev) => [{ id: crypto.randomUUID(), author: "You", content: text, likes: 0, date: "Just now", isTrades: false }, ...prev]);
+    setComment("");
+    toast.success("Message posted");
+  };
 
   if (!post) return <div className="p-6 text-center" style={{ color: "var(--color-text-secondary)" }}>Post not found</div>;
 
@@ -39,10 +49,10 @@ export default function ForumPost() {
             </div>
           </div>
 
-          <h3 className="text-sm font-semibold" style={{ color: "var(--color-navy)" }}>Comments ({MOCK_COMMENTS.length})</h3>
+          <h3 className="text-sm font-semibold" style={{ color: "var(--color-navy)" }}>Comments ({comments.length})</h3>
 
           <div className="space-y-3">
-            {MOCK_COMMENTS.map((c) => (
+            {comments.map((c) => (
               <div key={c.id} className="rounded-2xl p-4" style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)" }}>
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-xs font-semibold flex items-center gap-1" style={{ color: "var(--color-navy)" }}>
@@ -64,11 +74,12 @@ export default function ForumPost() {
             <input
               value={comment}
               onChange={(e) => setComment(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && sendComment()}
               placeholder="Add a comment..."
               className="flex-1 rounded-2xl px-4 py-3 text-sm"
               style={{ background: "white", border: "1px solid rgba(0,23,47,0.08)", color: "var(--color-navy)" }}
             />
-            <button className="rounded-2xl flex items-center justify-center" style={{ minWidth: 44, minHeight: 44, background: "var(--gradient-primary)", color: "white" }}>
+            <button onClick={sendComment} disabled={!comment.trim()} className="rounded-2xl flex items-center justify-center disabled:opacity-40" style={{ minWidth: 44, minHeight: 44, background: "var(--gradient-primary)", color: "white" }}>
               <Send className="w-4 h-4" />
             </button>
           </div>
