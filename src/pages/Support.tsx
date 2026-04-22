@@ -107,7 +107,12 @@ export default function Support() {
   const openSupportEmail = () => {
     const subject = encodeURIComponent("Ufixi support request");
     const body = encodeURIComponent(`Name: ${contactName}\nEmail: ${contactEmail}\n\nMessage:\n${contactMessage}`);
-    window.location.href = `mailto:info@ufixi.co.uk?subject=${subject}&body=${body}`;
+    const link = document.createElement("a");
+    link.href = `mailto:info@ufixi.co.uk?subject=${subject}&body=${body}`;
+    link.target = "_self";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
   };
 
   return (
