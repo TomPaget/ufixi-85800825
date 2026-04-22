@@ -151,6 +151,31 @@
   100% { box-shadow: 0 0 0 0 rgba(232, 83, 10, 0); }
 }
 
+@keyframes scan-button-breathe {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px hsla(var(--primary) / 0.10), 0 0 0 24px hsla(var(--secondary) / 0.06), 0 8px 38px hsla(var(--primary) / 0.34);
+  }
+  50% {
+    transform: scale(1.035);
+    box-shadow: 0 0 0 18px hsla(var(--primary) / 0.07), 0 0 0 34px hsla(var(--secondary) / 0.04), 0 10px 46px hsla(var(--primary) / 0.42);
+  }
+}
+
+.scan-issue-button {
+  animation: scan-button-breathe 2.4s ease-in-out infinite;
+  will-change: transform, box-shadow;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scan-issue-button {
+    animation: none;
+    box-shadow: 0 8px 30px hsla(var(--primary) / 0.32);
+  }
+}
+
 /* Global orange focus ring for all inputs */
 input:focus,
 textarea:focus,
