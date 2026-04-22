@@ -95,7 +95,7 @@ setRaw(
 // --- 5. AdMob GADApplicationIdentifier ---
 setRaw(
   "GADApplicationIdentifier",
-  `\t<key>GADApplicationIdentifier</key>\n\t<string>ca-app-pub-9591380465147865~3443454625</string>`,
+  `\t<key>GADApplicationIdentifier</key>\n\t<string>ca-app-pub-9591380465147865~7363598276</string>`,
 );
 
 // --- 6. SKAdNetworkItems (AdMob + mediation partners) ---

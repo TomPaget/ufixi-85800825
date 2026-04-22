@@ -8,6 +8,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { isRevenueCatPlatform } from "@/lib/revenueCat";
+import NativeBannerAd from "@/components/NativeBannerAd";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -193,6 +194,8 @@ export default function Settings() {
               <ChevronRight className="w-4 h-4" style={{ color: "#9aa5b4" }} />
             </button>
           </div>
+
+          <NativeBannerAd />
 
           {/* Logout */}
           <button
