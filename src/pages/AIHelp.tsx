@@ -45,17 +45,43 @@ export default function AIHelp() {
     setInput("");
     setIsTyping(true);
 
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      const conversationHistory = [...messages, userMsg]
+        .filter((message) => message.id !== "welcome")
+        .map(({ role, content }) => ({ role, content }));
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/diagnosis-chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ userMessage: text, conversationHistory, mode: "general" }),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to get response");
+      }
+
+      const data = await resp.json();
       const aiMsg: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: getSimulatedResponse(text),
+        content: data.reply || "I can't confidently solve that from text alone. Please scan the issue first, then come back with the diagnosis for follow-up help.",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, aiMsg]);
+    } catch (err) {
+      console.error("AI help error:", err);
+      setMessages((prev) => [...prev, {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: "I can't connect right now. Please scan the issue first, then come back with the diagnosis for follow-up help.",
+        timestamp: new Date(),
+      }]);
+    } finally {
       setIsTyping(false);
-    }, 1200 + Math.random() * 800);
+    }
   };
 
   return (
@@ -186,19 +212,4 @@ export default function AIHelp() {
       </div>
     </PageTransition>
   );
-}
-
-function getSimulatedResponse(input: string): string {
-  const lower = input.toLowerCase();
-  if (lower.includes("leak") || lower.includes("water"))
-    return "Water leaks can range from minor to serious. First, try to identify the source — check under sinks, around toilets, and near water heaters. If you see active dripping, turn off the water supply valve nearest to the leak. For small pipe leaks, plumber's tape can be a temporary fix. Would you like me to walk you through a step-by-step diagnosis?";
-  if (lower.includes("electric") || lower.includes("socket") || lower.includes("outlet"))
-    return "Warning: Electrical issues can be dangerous. Never attempt to fix live wiring yourself. If a socket isn't working, first check your fuse box/consumer unit for any tripped breakers. If breakers keep tripping, this could indicate a fault that needs a qualified electrician. Want me to help you identify the issue further?";
-  if (lower.includes("mould") || lower.includes("mold") || lower.includes("damp"))
-    return "Mould is usually caused by excess moisture. Check for ventilation issues, condensation on windows, or hidden leaks. For small areas, a solution of white vinegar or specialist mould spray can help. Ensure rooms are well-ventilated — open windows or use extractor fans. For persistent mould, you may need a professional damp survey. Shall I help you assess the severity?";
-  if (lower.includes("boiler") || lower.includes("heating") || lower.includes("radiator"))
-    return "Heating issues are common, especially in winter. If your boiler shows an error code, note it down — I can help decode it. For cold radiators, try bleeding them using a radiator key. If your boiler isn't firing at all, check the pressure gauge (should be 1-1.5 bar) and try resetting it. What specific issue are you experiencing?";
-  if (lower.includes("door") || lower.includes("lock") || lower.includes("window"))
-    return "For doors that stick, check if the hinges are loose — tightening screws often fixes this. If a lock is stiff, try graphite lubricant (avoid WD-40 on locks). For draughty windows, self-adhesive foam strips or silicone sealant can help. What's the specific problem you're dealing with?";
-  return "I'd be happy to help with that! Could you describe the issue in a bit more detail? For example: where in your home is it, when did you first notice it, and has it been getting worse? If you have a photo, you can use the Scan feature on the home page for an AI-powered diagnosis.";
 }
