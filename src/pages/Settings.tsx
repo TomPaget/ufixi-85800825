@@ -118,6 +118,7 @@ export default function Settings() {
                 <ChevronRight className="w-4 h-4" style={{ color: "#9aa5b4" }} />
               </button>
             </div>
+            <NativeBannerAd />
           </main>
           <BottomNavDemo />
         </div>
