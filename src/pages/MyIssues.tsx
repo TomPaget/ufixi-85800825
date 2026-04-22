@@ -13,7 +13,6 @@ import { useInProgressScan, InProgressScan } from "@/hooks/useInProgressScan";
 import { supabase } from "@/integrations/supabase/client";
 import { resolveSavedIssueMedia } from "@/lib/scanMedia";
 import PullToRefresh from "@/components/PullToRefresh";
-import NativeBannerAd from "@/components/NativeBannerAd";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -309,9 +308,6 @@ export default function MyIssues() {
               ))}
             </div>
           )}
-
-          <NativeBannerAd />
-
           {loading ? (
             <div className="text-center py-12">
               <p className="text-sm" style={{ color: textSec }}>Loading...</p>

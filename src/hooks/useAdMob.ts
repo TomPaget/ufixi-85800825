@@ -130,7 +130,7 @@ export function useAdMob() {
 
       await AdMob.showBanner({
         adId,
-        adSize: BannerAdSize.ADAPTIVE_BANNER,
+        adSize: BannerAdSize.BANNER,
         position: BannerAdPosition.BOTTOM_CENTER,
         isTesting: import.meta.env.DEV,
       });
