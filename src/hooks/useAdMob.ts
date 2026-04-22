@@ -5,12 +5,12 @@ const ADMOB_CONFIG = {
   android: {
     appId: "ca-app-pub-9591380465147865~4948107989",
     interstitialId: "ca-app-pub-9591380465147865/8859554738",
-    bannerId: "ca-app-pub-3940256099942544/6300978111",
+    bannerId: "",
   },
   ios: {
     appId: "ca-app-pub-9591380465147865~7363598276",
     interstitialId: "ca-app-pub-9591380465147865/5858944911",
-    bannerId: "ca-app-pub-3940256099942544/2934735716",
+    bannerId: "",
   },
   test: {
     interstitialId: "ca-app-pub-3940256099942544/1033173712",
@@ -126,6 +126,7 @@ export function useAdMob() {
 
       const platform = window.Capacitor?.getPlatform() === "ios" ? "ios" : "android";
       const adId = import.meta.env.DEV ? ADMOB_CONFIG.test.bannerId : ADMOB_CONFIG[platform].bannerId;
+      if (!adId) return false;
 
       await AdMob.showBanner({
         adId,
