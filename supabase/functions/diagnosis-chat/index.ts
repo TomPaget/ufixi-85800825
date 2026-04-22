@@ -9,11 +9,11 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { userMessage, conversationHistory, context } = await req.json();
+    const { userMessage, conversationHistory, context, mode } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const systemPrompt = `You are Ufixi, an expert UK home repair assistant. You have already analysed the following issue:
+    const systemPrompt = context?.issueTitle ? `You are Ufixi, an expert UK home repair assistant. You have already analysed the following issue:
 
 Title: ${context.issueTitle}
 Category: ${context.category}
@@ -24,11 +24,15 @@ Safety warnings: ${context.safetyWarnings?.join("; ") || "None"}
 Estimated DIY cost: ${context.diyCostRange}
 Estimated professional cost: ${context.proCostRange}
 
-Answer the user's follow-up questions about this specific issue only. Be concise — max 3 sentences. Use plain English. Never use emojis. If the user asks something outside the scope of this issue, redirect them back to it.`;
+Answer the user's follow-up questions about this specific issue only. Be concise — max 3 sentences. Use plain English. Never use emojis. If the user asks something outside the scope of this issue, redirect them back to it.`
+      : mode === "support"
+        ? `You are Ufixi's support assistant. Help with account, login, scan, subscription, billing, and app issues in plain UK English. Be concise, practical, and never use emojis. Do not repeat the same phrase or wording used earlier in the conversation. If the user clearly needs a human or you cannot resolve the issue after reasonable troubleshooting, tell them to use the contact form below.`
+        : `You are Ufixi, an expert UK home repair assistant. Help users understand home maintenance issues and safe next steps in plain UK English. Be concise — max 4 sentences. Never use emojis. Do not repeat the same phrase or wording used earlier in the conversation. If you cannot confidently help without seeing the problem, tell the user to scan the issue first in Ufixi, then come back with the diagnosis for follow-up help. Always advise a qualified professional for gas, electrical, structural, or urgent water problems.`;
 
     const messages = [
       { role: "system", content: systemPrompt },
-      ...(conversationHistory || []).map((m: any) => ({ role: m.role, content: m.content })),
+      ...((conversationHistory?.length ? conversationHistory : [{ role: "user", content: userMessage }]) || [])
+        .map((m: any) => ({ role: m.role, content: m.content })),
     ];
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -38,7 +42,7 @@ Answer the user's follow-up questions about this specific issue only. Be concise
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3-flash-preview",
         messages,
       }),
     });
