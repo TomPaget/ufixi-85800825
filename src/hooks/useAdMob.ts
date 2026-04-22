@@ -5,12 +5,12 @@ const ADMOB_CONFIG = {
   android: {
     appId: "ca-app-pub-9591380465147865~4948107989",
     interstitialId: "ca-app-pub-9591380465147865/8859554738",
-    bannerId: "",
+    bannerId: "ca-app-pub-9591380465147865/3029144743",
   },
   ios: {
     appId: "ca-app-pub-9591380465147865~7363598276",
     interstitialId: "ca-app-pub-9591380465147865/5858944911",
-    bannerId: "",
+    bannerId: "ca-app-pub-9591380465147865/3029144743",
   },
   test: {
     interstitialId: "ca-app-pub-3940256099942544/1033173712",
