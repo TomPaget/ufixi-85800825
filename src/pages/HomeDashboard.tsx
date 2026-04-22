@@ -82,6 +82,10 @@ export default function HomeDashboard() {
   // Handle resume from My Issues
   useEffect(() => {
     const state = location.state as any;
+    if (state?.startScan) {
+      setShowScanFlow(true);
+      window.history.replaceState({}, document.title);
+    }
     if (state?.resumeScanId) {
       setResumeScanId(state.resumeScanId);
       setResumeData({
