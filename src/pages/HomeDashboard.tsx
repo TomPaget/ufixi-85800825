@@ -254,14 +254,10 @@ export default function HomeDashboard() {
           >
             <button
               onClick={() => setShowScanFlow(true)}
-              className="w-40 h-40 rounded-full flex flex-col items-center justify-center gap-2 border-0 transition-transform active:scale-95"
+              className="scan-issue-button w-40 h-40 rounded-full flex flex-col items-center justify-center gap-2 border-0 transition-transform active:scale-95"
               style={{
                 background: "var(--gradient-primary)",
-                boxShadow: nativeApp
-                  ? "0 8px 24px rgba(232,83,10,0.28)"
-                  : "0 0 0 16px rgba(232,83,10,0.1), 0 0 0 32px rgba(217,56,112,0.06), 0 8px 48px rgba(232,83,10,0.4)",
                 color: "#fff",
-                animation: nativeApp ? "none" : "pulse-ring 2s ease-out infinite",
               }}
             >
               <Plus className="w-12 h-12" strokeWidth={2.5} />
