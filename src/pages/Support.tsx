@@ -43,6 +43,9 @@ export default function Support() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [showContactForm, setShowContactForm] = useState(false);
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const contactRef = useRef<HTMLDivElement>(null);
 
@@ -52,7 +55,7 @@ export default function Support() {
 
   const userMsgCount = messages.filter((m) => m.role === "user").length;
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     const text = input.trim();
     if (!text || isTyping) return;
 
@@ -63,11 +66,28 @@ export default function Support() {
 
     const newCount = userMsgCount + 1;
 
-    setTimeout(() => {
-      const { text: responseText, escalate } = getSupportResponse(text, newCount);
-      const aiMsg: Message = { id: crypto.randomUUID(), role: "assistant", content: responseText };
+    try {
+      const conversationHistory = [...messages, userMsg]
+        .filter((message) => message.id !== "welcome")
+        .map(({ role, content }) => ({ role, content }));
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/diagnosis-chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ userMessage: text, conversationHistory, mode: "support" }),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to get response");
+      }
+
+      const data = await resp.json();
+      const escalate = shouldEscalate(text, newCount) || /contact form|support team|human/i.test(data.reply || "");
+      const aiMsg: Message = { id: crypto.randomUUID(), role: "assistant", content: data.reply || "I can help troubleshoot this, or you can use the contact form below if you need the team to review it." };
       setMessages((prev) => [...prev, aiMsg]);
-      setIsTyping(false);
 
       if (escalate) {
         setShowContactForm(true);
@@ -75,7 +95,19 @@ export default function Support() {
           contactRef.current?.scrollIntoView({ behavior: "smooth" });
         }, 400);
       }
-    }, 1000 + Math.random() * 600);
+    } catch (err) {
+      console.error("Support chat error:", err);
+      setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: "I can't connect right now. Please use the contact form below and our team will review it." }]);
+      setShowContactForm(true);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  const openSupportEmail = () => {
+    const subject = encodeURIComponent("Ufixi support request");
+    const body = encodeURIComponent(`Name: ${contactName}\nEmail: ${contactEmail}\n\nMessage:\n${contactMessage}`);
+    window.location.href = `mailto:info@ufixi.co.uk?subject=${subject}&body=${body}`;
   };
 
   return (
