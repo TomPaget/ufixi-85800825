@@ -31,49 +31,10 @@ const GREETING: Message = {
   content: "Hi! I'm your Ufixi support assistant. I can help with account questions, scan issues, billing, and more. What can I help you with?",
 };
 
-function getSupportResponse(input: string, msgCount: number): { text: string; escalate: boolean } {
+function shouldEscalate(input: string, msgCount: number): boolean {
   const lower = input.toLowerCase();
-
-  // Check for escalation intent
   const wantsHuman = ESCALATION_KEYWORDS.some((kw) => lower.includes(kw));
-
-  if (wantsHuman && msgCount >= 2) {
-    return { text: "I understand you'd like to speak with our team directly. Let me connect you with our support team — you can use the contact form below to send us a message and we'll get back to you within 24 hours.", escalate: true };
-  }
-  if (wantsHuman && msgCount < 2) {
-    return { text: "I'd love to try and help you first! Could you tell me a bit more about what you're experiencing? I can resolve most issues right here.", escalate: false };
-  }
-
-  // After 4+ exchanges without resolution, offer escalation
-  if (msgCount >= 8) {
-    return { text: "It sounds like this might need a more detailed look from our team. I've unlocked the contact form below so you can reach us directly — we'll respond within 24 hours.", escalate: true };
-  }
-
-  if (lower.includes("scan") && (lower.includes("not working") || lower.includes("fail") || lower.includes("error")))
-    return { text: "Sorry to hear your scan isn't working! Try these steps:\n\n1. Make sure your photo is well-lit and in focus\n2. Ensure the image is at least 500x500 pixels\n3. Try uploading a different format (JPG or PNG work best)\n4. Check your internet connection\n\nIf it's still not working after these steps, let me know and I can look into it further.", escalate: false };
-
-  if (lower.includes("subscription") || lower.includes("premium") || lower.includes("upgrade") || lower.includes("plan"))
-    return { text: "Our Premium plan is £0.99/month and includes unlimited scans, priority AI analysis, and 90-day scan history. You can upgrade from the home page by tapping 'Go Premium'. If you're having trouble with your subscription, could you tell me more about what's happening?", escalate: false };
-
-  if (lower.includes("cancel") || lower.includes("refund"))
-    return { text: "To cancel your subscription, go to Settings → Subscription → Manage. Cancellation takes effect at the end of your billing period. For refund requests, I'll need a bit more detail — when did you subscribe and what's the reason for the refund?", escalate: false };
-
-  if (lower.includes("delete") && (lower.includes("account") || lower.includes("data")))
-    return { text: "To delete your account and all associated data, go to Settings → Privacy → Delete Account. This action is permanent and cannot be undone. All your scans, saved issues, and personal data will be removed within 30 days. Is there anything specific about this process I can clarify?", escalate: false };
-
-  if (lower.includes("scan") && (lower.includes("limit") || lower.includes("how many")))
-    return { text: "Free users get 3 scans per month. Your scan count resets on the 1st of each month. For unlimited scans, consider upgrading to Premium at £0.99/month. Would you like to know more about Premium features?", escalate: false };
-
-  if (lower.includes("save") || lower.includes("history") || lower.includes("expire"))
-    return { text: "Saved scans are kept for 45 days (90 days for Premium users), after which they're automatically deleted. You can export a PDF report of any scan before it expires from the issue detail page. Is there a specific scan you're trying to find?", escalate: false };
-
-  if (lower.includes("password") || lower.includes("login") || lower.includes("sign in") || lower.includes("locked out"))
-    return { text: "If you're having trouble signing in:\n\n1. Try the 'Forgot Password' link on the login page\n2. Check your spam folder for the reset email\n3. Make sure you're using the same email you signed up with\n\nIf you're still locked out after trying these, let me know.", escalate: false };
-
-  if (lower.includes("billing") || lower.includes("charge") || lower.includes("payment"))
-    return { text: "For billing help, open Settings → Subscription to manage your plan in the place you purchased it. If you see an unexpected charge, tell me the date and amount and I'll help investigate.", escalate: false };
-
-  return { text: "Thanks for sharing that. Could you give me a bit more detail so I can help you better? For example, what were you trying to do, and what happened instead?", escalate: false };
+  return (wantsHuman && msgCount >= 2) || msgCount >= 8;
 }
 
 export default function Support() {
