@@ -21,6 +21,12 @@ const ADMOB_CONFIG = {
 let admobInitialized = false;
 let attRequested = false;
 let bannerVisible = false;
+let adsConsentResolved = false;
+let canRequestAds = true;
+
+function shouldUseTestAds() {
+  return import.meta.env.DEV || import.meta.env.MODE === "development";
+}
 
 export function useAdMob() {
   const isNative = useRef(
@@ -55,9 +61,36 @@ export function useAdMob() {
 
       const { AdMob } = await import("@capacitor-community/admob");
       await AdMob.initialize({
-        initializeForTesting: import.meta.env.DEV,
+        initializeForTesting: shouldUseTestAds(),
       });
+
+      try {
+        const consentInfo = await AdMob.requestConsentInfo();
+        canRequestAds = consentInfo.canRequestAds;
+
+        if (!consentInfo.canRequestAds && consentInfo.isConsentFormAvailable) {
+          const updatedConsentInfo = await AdMob.showConsentForm();
+          canRequestAds = updatedConsentInfo.canRequestAds;
+        }
+
+        adsConsentResolved = true;
+        console.log("[AdMob] consent resolved", {
+          canRequestAds,
+          status: consentInfo.status,
+          formAvailable: consentInfo.isConsentFormAvailable,
+        });
+      } catch (consentErr) {
+        adsConsentResolved = true;
+        canRequestAds = true;
+        console.warn("[AdMob] consent flow unavailable, continuing:", consentErr);
+      }
+
       admobInitialized = true;
+      console.log("[AdMob] initialised", {
+        platform: window.Capacitor?.getPlatform?.(),
+        mode: import.meta.env.MODE,
+        usingTestAds: shouldUseTestAds(),
+      });
     } catch (err) {
       console.error("AdMob init error:", err);
     }
@@ -77,9 +110,14 @@ export function useAdMob() {
         await initialize();
       }
 
+      if (adsConsentResolved && !canRequestAds) {
+        console.warn("[AdMob] interstitial blocked: consent not granted for ads yet");
+        return false;
+      }
+
       const platform =
         window.Capacitor?.getPlatform() === "ios" ? "ios" : "android";
-      const adId = import.meta.env.DEV
+      const adId = shouldUseTestAds()
         ? ADMOB_CONFIG.test.interstitialId
         : ADMOB_CONFIG[platform].interstitialId;
 
@@ -104,7 +142,7 @@ export function useAdMob() {
         setTimeout(() => settle(false), 30000);
 
         try {
-          await AdMob.prepareInterstitial({ adId, isTesting: import.meta.env.DEV });
+          await AdMob.prepareInterstitial({ adId, isTesting: shouldUseTestAds() });
           await AdMob.showInterstitial();
         } catch {
           settle(false);
@@ -124,15 +162,20 @@ export function useAdMob() {
       const { AdMob, BannerAdPosition, BannerAdSize } = await import("@capacitor-community/admob");
       if (!admobInitialized) await initialize();
 
+      if (adsConsentResolved && !canRequestAds) {
+        console.warn("[AdMob] banner blocked: consent not granted for ads yet");
+        return false;
+      }
+
       const platform = window.Capacitor?.getPlatform() === "ios" ? "ios" : "android";
-      const adId = import.meta.env.DEV ? ADMOB_CONFIG.test.bannerId : ADMOB_CONFIG[platform].bannerId;
+      const adId = shouldUseTestAds() ? ADMOB_CONFIG.test.bannerId : ADMOB_CONFIG[platform].bannerId;
       if (!adId) return false;
 
       await AdMob.showBanner({
         adId,
         adSize: BannerAdSize.BANNER,
         position: BannerAdPosition.BOTTOM_CENTER,
-        isTesting: import.meta.env.DEV,
+        isTesting: shouldUseTestAds(),
         margin: 0,
       });
       bannerVisible = true;
