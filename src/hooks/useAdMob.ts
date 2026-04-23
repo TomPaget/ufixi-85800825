@@ -21,6 +21,8 @@ const ADMOB_CONFIG = {
 let admobInitialized = false;
 let attRequested = false;
 let bannerVisible = false;
+let adsConsentResolved = false;
+let canRequestAds = true;
 
 function shouldUseTestAds() {
   return import.meta.env.DEV || import.meta.env.MODE === "development";
@@ -61,6 +63,28 @@ export function useAdMob() {
       await AdMob.initialize({
         initializeForTesting: shouldUseTestAds(),
       });
+
+      try {
+        const consentInfo = await AdMob.requestConsentInfo();
+        canRequestAds = consentInfo.canRequestAds;
+
+        if (!consentInfo.canRequestAds && consentInfo.isConsentFormAvailable) {
+          const updatedConsentInfo = await AdMob.showConsentForm();
+          canRequestAds = updatedConsentInfo.canRequestAds;
+        }
+
+        adsConsentResolved = true;
+        console.log("[AdMob] consent resolved", {
+          canRequestAds,
+          status: consentInfo.status,
+          formAvailable: consentInfo.isConsentFormAvailable,
+        });
+      } catch (consentErr) {
+        adsConsentResolved = true;
+        canRequestAds = true;
+        console.warn("[AdMob] consent flow unavailable, continuing:", consentErr);
+      }
+
       admobInitialized = true;
       console.log("[AdMob] initialised", {
         platform: window.Capacitor?.getPlatform?.(),
@@ -84,6 +108,11 @@ export function useAdMob() {
 
       if (!admobInitialized) {
         await initialize();
+      }
+
+      if (adsConsentResolved && !canRequestAds) {
+        console.warn("[AdMob] interstitial blocked: consent not granted for ads yet");
+        return false;
       }
 
       const platform =
@@ -132,6 +161,11 @@ export function useAdMob() {
     try {
       const { AdMob, BannerAdPosition, BannerAdSize } = await import("@capacitor-community/admob");
       if (!admobInitialized) await initialize();
+
+      if (adsConsentResolved && !canRequestAds) {
+        console.warn("[AdMob] banner blocked: consent not granted for ads yet");
+        return false;
+      }
 
       const platform = window.Capacitor?.getPlatform() === "ios" ? "ios" : "android";
       const adId = shouldUseTestAds() ? ADMOB_CONFIG.test.bannerId : ADMOB_CONFIG[platform].bannerId;
