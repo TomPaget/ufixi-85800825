@@ -20,6 +20,7 @@ const ADMOB_CONFIG = {
 
 let admobInitialized = false;
 let attRequested = false;
+let bannerVisible = false;
 
 export function useAdMob() {
   const isNative = useRef(
@@ -30,23 +31,18 @@ export function useAdMob() {
 
   const requestATT = useCallback(async () => {
     if (attRequested) return;
-    if (window.Capacitor?.getPlatform() !== "ios") {
-      attRequested = true;
-      return;
-    }
     try {
-      const mod: any = await (Function('return import("capacitor-plugin-app-tracking-transparency")')() as Promise<any>);
-      const ATT = mod?.AppTrackingTransparency;
-      if (!ATT) throw new Error("ATT plugin not found");
-      const { status } = await ATT.getStatus();
-      console.log("[ATT] current status:", status);
-      if (status === "notDetermined") {
-        const res = await ATT.requestPermission();
-        console.log("[ATT] permission result:", res?.status);
+      const { AdMob } = await import("@capacitor-community/admob");
+      if (window.Capacitor?.getPlatform() === "ios") {
+        const { status } = await AdMob.trackingAuthorizationStatus();
+        console.log("[AdMob ATT] current status:", status);
+        if (status === "notDetermined") {
+          await AdMob.requestTrackingAuthorization();
+        }
       }
       attRequested = true;
     } catch (err) {
-      console.warn("ATT not available:", err);
+      console.warn("ATT not available via AdMob:", err);
       attRequested = true;
     }
   }, []);
@@ -89,18 +85,21 @@ export function useAdMob() {
 
       return new Promise<boolean>(async (resolve) => {
         let settled = false;
+        const handles: Array<{ remove: () => Promise<void> }> = [];
 
         const settle = (val: boolean) => {
           if (!settled) {
             settled = true;
-            (AdMob as any).removeAllListeners?.();
+            handles.forEach((handle) => {
+              void handle.remove().catch(() => undefined);
+            });
             resolve(val);
           }
         };
 
-        AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => settle(true));
-        AdMob.addListener(InterstitialAdPluginEvents.FailedToLoad, () => settle(false));
-        AdMob.addListener(InterstitialAdPluginEvents.FailedToShow, () => settle(false));
+        handles.push(await AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => settle(true)));
+        handles.push(await AdMob.addListener(InterstitialAdPluginEvents.FailedToLoad, () => settle(false)));
+        handles.push(await AdMob.addListener(InterstitialAdPluginEvents.FailedToShow, () => settle(false)));
 
         setTimeout(() => settle(false), 30000);
 
@@ -119,6 +118,7 @@ export function useAdMob() {
 
   const showBanner = useCallback(async (): Promise<boolean> => {
     if (!isNative.current) return false;
+    if (bannerVisible) return true;
 
     try {
       const { AdMob, BannerAdPosition, BannerAdSize } = await import("@capacitor-community/admob");
@@ -133,7 +133,9 @@ export function useAdMob() {
         adSize: BannerAdSize.BANNER,
         position: BannerAdPosition.BOTTOM_CENTER,
         isTesting: import.meta.env.DEV,
+        margin: 0,
       });
+      bannerVisible = true;
       return true;
     } catch (err) {
       console.error("AdMob banner error:", err);
@@ -146,6 +148,7 @@ export function useAdMob() {
     try {
       const { AdMob } = await import("@capacitor-community/admob");
       await AdMob.removeBanner();
+      bannerVisible = false;
     } catch (err) {
       console.warn("AdMob banner remove error:", err);
     }
