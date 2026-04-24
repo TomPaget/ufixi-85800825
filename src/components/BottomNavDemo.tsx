@@ -1,5 +1,7 @@
 import { Home, ClipboardList, Bot, Settings } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAdMob } from "@/hooks/useAdMob";
+import { useSubscription } from "@/hooks/useSubscription";
 
 const NAV_ITEMS = [
   { label: "Home", icon: Home, path: "/home" },
@@ -11,6 +13,16 @@ const NAV_ITEMS = [
 export default function BottomNavDemo() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { showInterstitial, isNative } = useAdMob();
+  const { isPremium } = useSubscription();
+
+  const handleNavigate = async (path: string) => {
+    if (path === location.pathname) return;
+    if (path === "/ai-help" && !isPremium && isNative) {
+      await showInterstitial().catch((err) => console.warn("AI Help interstitial failed:", err));
+    }
+    navigate(path);
+  };
 
   return (
     <nav
@@ -32,7 +44,7 @@ export default function BottomNavDemo() {
         return (
           <button
             key={path}
-            onClick={() => navigate(path)}
+            onClick={() => void handleNavigate(path)}
             className="flex flex-col items-center gap-0.5 rounded-xl transition-all active:scale-90"
             style={{ minWidth: 56, minHeight: 44, background: "transparent", border: "none", cursor: "pointer", padding: "4px 8px", flex: "1 1 0" }}
           >
