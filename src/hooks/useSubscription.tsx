@@ -228,8 +228,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    if (isRevenueCatPlatform()) await setRevenueCatUser(null);
     await supabase.auth.signOut();
+    if (isRevenueCatPlatform()) await setRevenueCatUser(null);
     setUser(null);
     setIsPremium(false);
     setSubscriptionEnd(null);
@@ -298,11 +298,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       await syncNativeSubscriptionUser(session?.user ?? null);
       if (cancelled) return;
 
-      if (session?.user) {
-        await checkSubscription();
-      } else {
-        setLoading(false);
-      }
+      await checkSubscription();
     };
 
     void bootstrap();
@@ -318,6 +314,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         } else {
           setIsPremium(false);
           setSubscriptionEnd(null);
+          setCancelAtPeriodEnd(false);
+          setHasEverSubscribed(false);
           setLoading(false);
         }
       })();
