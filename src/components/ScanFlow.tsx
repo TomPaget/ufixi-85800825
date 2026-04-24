@@ -429,7 +429,6 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
       if (!data.success) {
         if (data.error === "not_home_issue") {
           setAiError("The uploaded image doesn't appear to show a home maintenance issue. Please try again with a clearer photo.");
-          setShowAd(false);
           setStep(1);
           toast.error("That doesn't look like a home issue.");
           return;
@@ -492,10 +491,10 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
       if (!isPremium) {
         if (isNative) {
           if (nativeAdPromise) await nativeAdPromise;
-          setTriage(data.triage);
-          setDiagnosis(data.diagnosis);
-          setStep(5);
         }
+        setTriage(data.triage);
+        setDiagnosis(data.diagnosis);
+        setStep(5);
       } else {
         setTriage(data.triage);
         setDiagnosis(data.diagnosis);
@@ -531,48 +530,6 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
     } finally {
       setIsAnalysing(false);
     }
-  };
-
-  // Ad countdown timer — enforced minimum 15s
-  useEffect(() => {
-    if (!showAd || adCountdown <= 0) return;
-    const timer = setTimeout(() => {
-      const newElapsed = adElapsed + 1;
-      setAdElapsed(newElapsed);
-      if (adCountdown <= 1) {
-        setAdDone(true);
-        setAdCountdown(0);
-      } else {
-        setAdCountdown(adCountdown - 1);
-      }
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [showAd, adCountdown, adElapsed]);
-
-  // Handle ad close attempt — restart if under 15s
-  const handleAdCloseAttempt = () => {
-    if (adElapsed < AD_MIN_SECONDS) {
-      // Restart the ad timer
-      const newTime = Math.floor(Math.random() * (AD_MAX_SECONDS - AD_MIN_SECONDS + 1)) + AD_MIN_SECONDS;
-      setAdTotalTime(newTime);
-      setAdCountdown(newTime);
-      setAdElapsed(0);
-      setAdDone(false);
-      toast.error("Please watch the full ad to see your results");
-      try {
-        ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
-      } catch (e) {}
-    }
-  };
-
-  const handleAdContinue = () => {
-    if (pendingResults) {
-      setTriage(pendingResults.triage);
-      setDiagnosis(pendingResults.diagnosis);
-      setPendingResults(null);
-    }
-    setShowAd(false);
-    setStep(5);
   };
 
   const handleSave = async () => {
