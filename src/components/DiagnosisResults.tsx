@@ -97,14 +97,14 @@ export default function DiagnosisResults({
   hideSaveActions = false,
 }: DiagnosisResultsProps) {
   const [expandedSection, setExpandedSection] = useState<string | null>("causes");
-  const { isPremium } = useSubscription();
+  const { isPremium, loading } = useSubscription();
   const { showInterstitial, isNative } = useAdMob();
   const tradeName = getTradeNameForCategory(triage?.category);
 
   // Show an interstitial ad for non-premium users when they close/leave the diagnosis view.
   // No-ops on web (only runs on native iOS/Android with AdMob initialised).
   const runWithAd = async (action: () => void) => {
-    if (!isPremium && isNative) {
+    if (!loading && !isPremium && isNative) {
       try {
         await showInterstitial();
       } catch (err) {
@@ -114,7 +114,7 @@ export default function DiagnosisResults({
     action();
   };
   const handleClose = () => runWithAd(onClose);
-  const handleSave = () => runWithAd(onSave);
+  const handleSave = onSave;
   const navigate = useNavigate();
 
   const issueTitle = triage?.issue_title || "Issue Detected";

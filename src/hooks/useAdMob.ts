@@ -5,24 +5,23 @@ const ADMOB_CONFIG = {
   android: {
     appId: "ca-app-pub-9591380465147865~4948107989",
     interstitialId: "ca-app-pub-9591380465147865/8859554738",
-    bannerId: "ca-app-pub-9591380465147865/3029144743",
   },
   ios: {
     appId: "ca-app-pub-9591380465147865~7363598276",
     interstitialId: "ca-app-pub-9591380465147865/5858944911",
-    bannerId: "ca-app-pub-9591380465147865/3029144743",
   },
   test: {
     interstitialId: "ca-app-pub-3940256099942544/1033173712",
-    bannerId: "ca-app-pub-3940256099942544/2934735716",
   },
 };
 
 let admobInitialized = false;
+let admobInitializing: Promise<void> | null = null;
 let attRequested = false;
-let bannerVisible = false;
 let adsConsentResolved = false;
 let canRequestAds = true;
+let requestNonPersonalizedAds = false;
+let interstitialInProgress = false;
 
 function shouldUseTestAds() {
   return false;
@@ -55,7 +54,9 @@ export function useAdMob() {
 
   const initialize = useCallback(async () => {
     if (!isNative.current || admobInitialized) return;
-    try {
+    if (admobInitializing) return admobInitializing;
+
+    admobInitializing = (async () => {
       // Request ATT before initialising AdMob (required by Apple)
       await requestATT();
 
@@ -73,15 +74,23 @@ export function useAdMob() {
           canRequestAds = updatedConsentInfo.canRequestAds;
         }
 
+        if (!canRequestAds) {
+          requestNonPersonalizedAds = true;
+          canRequestAds = true;
+          console.warn("[AdMob] personalised ad consent unavailable; requesting non-personalised live ads.");
+        }
+
         adsConsentResolved = true;
         console.log("[AdMob] consent resolved", {
           canRequestAds,
+          requestNonPersonalizedAds,
           status: consentInfo.status,
           formAvailable: consentInfo.isConsentFormAvailable,
         });
       } catch (consentErr) {
         adsConsentResolved = true;
         canRequestAds = true;
+        requestNonPersonalizedAds = true;
         console.warn("[AdMob] consent flow unavailable, continuing:", consentErr);
       }
 
@@ -91,9 +100,14 @@ export function useAdMob() {
         mode: import.meta.env.MODE,
         usingTestAds: shouldUseTestAds(),
       });
-    } catch (err) {
+    })().catch((err) => {
+      admobInitialized = false;
       console.error("AdMob init error:", err);
-    }
+    }).finally(() => {
+      admobInitializing = null;
+    });
+
+    return admobInitializing;
   }, [requestATT]);
 
   const showInterstitial = useCallback(async (): Promise<boolean> => {
@@ -102,16 +116,23 @@ export function useAdMob() {
     }
 
     try {
-      const { AdMob, InterstitialAdPluginEvents } = await import(
-        "@capacitor-community/admob"
-      );
+      if (interstitialInProgress) return false;
+      interstitialInProgress = true;
+
+      const { AdMob, InterstitialAdPluginEvents } = await import("@capacitor-community/admob");
 
       if (!admobInitialized) {
         await initialize();
       }
 
+      if (!admobInitialized) {
+        interstitialInProgress = false;
+        return false;
+      }
+
       if (adsConsentResolved && !canRequestAds) {
         console.warn("[AdMob] interstitial blocked: consent not granted for ads yet");
+        interstitialInProgress = false;
         return false;
       }
 
@@ -131,6 +152,7 @@ export function useAdMob() {
             handles.forEach((handle) => {
               void handle.remove().catch(() => undefined);
             });
+            interstitialInProgress = false;
             resolve(val);
           }
         };
@@ -142,60 +164,25 @@ export function useAdMob() {
         setTimeout(() => settle(false), 30000);
 
         try {
-          await AdMob.prepareInterstitial({ adId, isTesting: shouldUseTestAds() });
+          console.log("[AdMob] loading live interstitial", { platform, adId, npa: requestNonPersonalizedAds });
+          await AdMob.prepareInterstitial({
+            adId,
+            isTesting: shouldUseTestAds(),
+            npa: requestNonPersonalizedAds,
+            immersiveMode: true,
+          });
           await AdMob.showInterstitial();
-        } catch {
+        } catch (err) {
+          console.error("[AdMob] interstitial prepare/show failed:", err);
           settle(false);
         }
       });
     } catch (err) {
+      interstitialInProgress = false;
       console.error("AdMob interstitial error:", err);
       return false;
     }
   }, [initialize]);
 
-  const showBanner = useCallback(async (): Promise<boolean> => {
-    if (!isNative.current) return false;
-    if (bannerVisible) return true;
-
-    try {
-      const { AdMob, BannerAdPosition, BannerAdSize } = await import("@capacitor-community/admob");
-      if (!admobInitialized) await initialize();
-
-      if (adsConsentResolved && !canRequestAds) {
-        console.warn("[AdMob] banner blocked: consent not granted for ads yet");
-        return false;
-      }
-
-      const platform = window.Capacitor?.getPlatform() === "ios" ? "ios" : "android";
-      const adId = shouldUseTestAds() ? ADMOB_CONFIG.test.bannerId : ADMOB_CONFIG[platform].bannerId;
-      if (!adId) return false;
-
-      await AdMob.showBanner({
-        adId,
-        adSize: BannerAdSize.BANNER,
-        position: BannerAdPosition.BOTTOM_CENTER,
-        isTesting: shouldUseTestAds(),
-        margin: 0,
-      });
-      bannerVisible = true;
-      return true;
-    } catch (err) {
-      console.error("AdMob banner error:", err);
-      return false;
-    }
-  }, [initialize]);
-
-  const hideBanner = useCallback(async () => {
-    if (!isNative.current) return;
-    try {
-      const { AdMob } = await import("@capacitor-community/admob");
-      await AdMob.removeBanner();
-      bannerVisible = false;
-    } catch (err) {
-      console.warn("AdMob banner remove error:", err);
-    }
-  }, []);
-
-  return { initialize, showInterstitial, showBanner, hideBanner, isNative: isNative.current };
+  return { initialize, showInterstitial, isNative: isNative.current };
 }
