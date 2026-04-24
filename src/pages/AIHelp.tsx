@@ -7,6 +7,8 @@ import PageHeader from "@/components/PageHeader";
 import BottomNavDemo from "@/components/BottomNavDemo";
 import LavaLampBackground from "@/components/LavaLampBackground";
 import PageTransition from "@/components/PageTransition";
+import { useAdMob } from "@/hooks/useAdMob";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface Message {
   id: string;
