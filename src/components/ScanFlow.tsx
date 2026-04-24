@@ -617,17 +617,6 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
     return `rgb(${r},${g},${b})`;
   };
 
-  // Push AdSense ad when ad overlay mounts
-  useEffect(() => {
-    if (showAd && !isNative) {
-      try {
-        ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
-      } catch (e) {
-        console.warn("AdSense push error:", e);
-      }
-    }
-  }, [showAd, isNative]);
-
   // --- EXIT WARNING OVERLAY (free users) ---
   if (showExitWarning) {
     return (
@@ -683,98 +672,6 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
                 {isPremium ? "Save & Exit" : "Exit Anyway"}
               </button>
             </div>
-          </div>
-        </div>
-      </motion.div>
-    );
-  }
-
-  // --- AD OVERLAY ---
-  if (showAd) {
-    return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="fixed inset-0 z-50 flex flex-col items-center justify-center"
-        style={{ background: "var(--color-bg)" }}
-      >
-        <LavaLampBackground />
-        <div className="relative z-10 w-full max-w-md px-6 space-y-6 text-center">
-          {/* Close attempt handler */}
-          {!adDone && (
-            <button
-              onClick={handleAdCloseAttempt}
-              className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center"
-              style={{ background: "rgba(0,23,47,0.1)", color: textSecondary, top: "calc(var(--safe-top) + 16px)", right: "calc(var(--safe-right) + 16px)" }}
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-
-          {/* Ad unit */}
-          <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.95)", border: "1px solid rgba(0,23,47,0.08)", boxShadow: "var(--shadow-card)" }}>
-            <div className="p-2">
-              <p className="text-[10px] uppercase tracking-wider mb-1" style={{ color: textSecondary }}>Advertisement</p>
-              <div
-                className="w-full flex items-center justify-center rounded-xl"
-                style={{ minHeight: 250, background: "rgba(0,23,47,0.03)" }}
-              >
-                <ins
-                  className="adsbygoogle"
-                  style={{ display: "block", width: "100%", height: 250 }}
-                  data-ad-client="ca-pub-9591380465147865"
-                  data-ad-slot="XXXXXXXXXX"
-                  data-ad-format="auto"
-                  data-full-width-responsive="true"
-                />
-              </div>
-              <div className="text-center p-4 space-y-2">
-                <Crown className="w-8 h-8 mx-auto" style={{ color: "var(--color-primary)" }} />
-                <p className="text-sm font-bold" style={{ color: navy }}>Go Premium — No ads, unlimited scans</p>
-                <p className="text-lg font-bold" style={{ background: "var(--gradient-primary)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                  Just {hasEverSubscribed ? "£1.99" : "£0.99"}/month
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            {(!adDone || !pendingResults) ? (
-              <div className="py-4">
-                <p className="text-sm font-semibold" style={{ color: textSecondary }}>
-                  {isAnalysing
-                    ? "Analysing your issue..."
-                    : adCountdown > 0
-                    ? `Results ready in ${adCountdown}s...`
-                    : "Preparing your results..."}
-                </p>
-                <div className="mt-2 w-full h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(0,23,47,0.08)" }}>
-                  <motion.div
-                    className="h-full rounded-full"
-                    style={{ background: "var(--gradient-primary)" }}
-                    initial={{ width: "100%" }}
-                    animate={{ width: "0%" }}
-                    transition={{ duration: adCountdown, ease: "linear" }}
-                    key={adTotalTime}
-                  />
-                </div>
-                <p className="text-[10px] mt-1" style={{ color: textSecondary }}>
-                  Minimum {AD_MIN_SECONDS}s viewing required
-                </p>
-              </div>
-            ) : (
-              <GradientButton size="lg" onClick={handleAdContinue}>
-                Continue to Results →
-              </GradientButton>
-            )}
-
-            <button
-              onClick={startCheckout}
-              className="w-full text-center py-2 text-sm font-semibold"
-              style={{ color: "var(--color-primary)" }}
-            >
-              Skip ads forever — Go Premium
-            </button>
           </div>
         </div>
       </motion.div>
