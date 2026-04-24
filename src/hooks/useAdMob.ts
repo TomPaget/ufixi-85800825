@@ -25,7 +25,7 @@ let adsConsentResolved = false;
 let canRequestAds = true;
 
 function shouldUseTestAds() {
-  return import.meta.env.DEV || import.meta.env.MODE === "development";
+  return false;
 }
 
 export function useAdMob() {
