@@ -46,10 +46,18 @@ export default function AIHelp() {
   const [attachedPreview, setAttachedPreview] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { showInterstitial, isNative } = useAdMob();
+  const { isPremium } = useSubscription();
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, isTyping]);
+
+  useEffect(() => {
+    if (!isNative || isPremium) return;
+    void showInterstitial().catch((err) => console.warn("AI Help interstitial failed:", err));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const openScan = () => navigate("/home", { state: { startScan: true } });
 
