@@ -86,7 +86,6 @@ const App = () => (
           <Router>
             <Suspense fallback={<RouteFallback />}>
               <AnimatedRoutes />
-              <NativeBannerAd />
             </Suspense>
           </Router>
         </SubscriptionProvider>
