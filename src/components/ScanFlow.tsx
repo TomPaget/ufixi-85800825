@@ -97,7 +97,7 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
   const [storedMediaPath, setStoredMediaPath] = useState<string | null>(resumeData?.uploadedFileUrl || null);
   const [postcode, setPostcode] = useState("");
 
-  const { isPremium, hasEverSubscribed, startCheckout, user } = useSubscription();
+  const { isPremium, hasEverSubscribed, startCheckout, user, loading } = useSubscription();
   const { showInterstitial, isNative } = useAdMob();
   const { saveScanProgress, deleteScan } = useInProgressScan();
 
@@ -389,7 +389,7 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
 
     // For free users on native, fire the live Google interstitial while the diagnosis is generating.
     let nativeAdPromise: Promise<boolean> | null = null;
-    if (!isPremium && isNative) {
+    if (!loading && !isPremium && isNative) {
       nativeAdPromise = showInterstitial();
     }
 
