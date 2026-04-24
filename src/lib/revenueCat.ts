@@ -75,9 +75,16 @@ export async function setRevenueCatUser(userId: string | null): Promise<void> {
 
   try {
     const { Purchases } = revenueCat;
+    const [{ appUserID }, { isAnonymous }] = await Promise.all([
+      Purchases.getAppUserID(),
+      Purchases.isAnonymous(),
+    ]);
+
     if (userId) {
+      if (!isAnonymous && appUserID === userId) return;
       await Purchases.logIn({ appUserID: userId });
     } else {
+      if (isAnonymous) return;
       await Purchases.logOut();
     }
   } catch (err) {
