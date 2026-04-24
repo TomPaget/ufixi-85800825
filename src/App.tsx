@@ -8,7 +8,6 @@ import { AnimatePresence } from "framer-motion";
 import { SubscriptionProvider } from "@/hooks/useSubscription";
 import { isNativeApp } from "@/lib/appNavigation";
 import AppErrorBoundary from "@/components/AppErrorBoundary";
-import NativeBannerAd from "@/components/NativeBannerAd";
 const Index = lazy(() => import("./pages/Index"));
 const HomeDashboard = lazy(() => import("./pages/HomeDashboard"));
 const Landing = lazy(() => import("./pages/Landing"));
