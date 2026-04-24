@@ -97,13 +97,6 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
   const [storedMediaPath, setStoredMediaPath] = useState<string | null>(resumeData?.uploadedFileUrl || null);
   const [postcode, setPostcode] = useState("");
 
-  // Ad state
-  const [showAd, setShowAd] = useState(false);
-  const [adCountdown, setAdCountdown] = useState(0);
-  const [adTotalTime, setAdTotalTime] = useState(0);
-  const [adElapsed, setAdElapsed] = useState(0);
-  const [adDone, setAdDone] = useState(false);
-  const [pendingResults, setPendingResults] = useState<{ triage: any; diagnosis: any } | null>(null);
   const { isPremium, hasEverSubscribed, startCheckout, user } = useSubscription();
   const { showInterstitial, isNative } = useAdMob();
   const { saveScanProgress, deleteScan } = useInProgressScan();
@@ -502,8 +495,6 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
           setTriage(data.triage);
           setDiagnosis(data.diagnosis);
           setStep(5);
-        } else {
-          setPendingResults({ triage: data.triage, diagnosis: data.diagnosis });
         }
       } else {
         setTriage(data.triage);
@@ -535,7 +526,6 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
     } catch (err: any) {
       console.error("AI analysis error:", err);
       setAiError(err.message);
-      setShowAd(false);
       toast.error(err.message || "Analysis failed. Please try again.");
       setStep(1);
     } finally {
