@@ -47,10 +47,6 @@ const PREMIUM_BENEFITS = [
   { icon: FileText, text: "Export diagnosis as PDF" },
 ];
 
-// Minimum 15s, max 20s ad duration
-const AD_MIN_SECONDS = 15;
-const AD_MAX_SECONDS = 20;
-
 interface ScanFlowProps {
   onClose: () => void;
   resumeScanId?: string;
@@ -398,17 +394,7 @@ export default function ScanFlow({ onClose, resumeScanId, resumeData }: ScanFlow
     setIsAnalysing(true);
     setAiError(null);
 
-    // For free users on web, show the ad screen with enforced minimum time
-    if (!isPremium && !isNative) {
-      const adTime = Math.floor(Math.random() * (AD_MAX_SECONDS - AD_MIN_SECONDS + 1)) + AD_MIN_SECONDS;
-      setAdTotalTime(adTime);
-      setAdCountdown(adTime);
-      setAdElapsed(0);
-      setAdDone(false);
-      setShowAd(true);
-    }
-
-    // For free users on native, fire the interstitial in parallel
+    // For free users on native, fire the live Google interstitial while the diagnosis is generating.
     let nativeAdPromise: Promise<boolean> | null = null;
     if (!isPremium && isNative) {
       nativeAdPromise = showInterstitial();
