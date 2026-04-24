@@ -114,7 +114,7 @@ export default function DiagnosisResults({
     action();
   };
   const handleClose = () => runWithAd(onClose);
-  const handleSave = () => runWithAd(onSave);
+  const handleSave = onSave;
   const navigate = useNavigate();
 
   const issueTitle = triage?.issue_title || "Issue Detected";
