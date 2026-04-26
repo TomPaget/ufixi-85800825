@@ -22,6 +22,8 @@ let adsConsentResolved = false;
 let canRequestAds = true;
 let requestNonPersonalizedAds = false;
 let interstitialInProgress = false;
+let interstitialPreloaded = false;
+let interstitialPreloading: Promise<boolean> | null = null;
 
 function shouldUseTestAds() {
   return false;
@@ -142,6 +144,34 @@ export function useAdMob() {
         ? ADMOB_CONFIG.test.interstitialId
         : ADMOB_CONFIG[platform].interstitialId;
 
+      const prepareInterstitial = async () => {
+        if (interstitialPreloaded) return true;
+        if (interstitialPreloading) return interstitialPreloading;
+
+        interstitialPreloading = (async () => {
+          try {
+            console.log("[AdMob] preparing live interstitial", { platform, adId, npa: requestNonPersonalizedAds });
+            await AdMob.prepareInterstitial({
+              adId,
+              isTesting: shouldUseTestAds(),
+              npa: requestNonPersonalizedAds,
+              immersiveMode: true,
+            });
+            interstitialPreloaded = true;
+            console.log("[AdMob] interstitial ready");
+            return true;
+          } catch (err) {
+            interstitialPreloaded = false;
+            console.error("[AdMob] interstitial prepare failed:", err);
+            return false;
+          } finally {
+            interstitialPreloading = null;
+          }
+        })();
+
+        return interstitialPreloading;
+      };
+
       return new Promise<boolean>(async (resolve) => {
         let settled = false;
         const handles: Array<{ remove: () => Promise<void> }> = [];
@@ -158,22 +188,30 @@ export function useAdMob() {
         };
 
         handles.push(await AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => settle(true)));
-        handles.push(await AdMob.addListener(InterstitialAdPluginEvents.FailedToLoad, () => settle(false)));
-        handles.push(await AdMob.addListener(InterstitialAdPluginEvents.FailedToShow, () => settle(false)));
+        handles.push(await AdMob.addListener(InterstitialAdPluginEvents.Loaded, (info) => console.log("[AdMob] interstitial loaded", info)));
+        handles.push(await AdMob.addListener(InterstitialAdPluginEvents.FailedToLoad, (error) => {
+          console.error("[AdMob] interstitial failed to load", error);
+          settle(false);
+        }));
+        handles.push(await AdMob.addListener(InterstitialAdPluginEvents.FailedToShow, (error) => {
+          console.error("[AdMob] interstitial failed to show", error);
+          settle(false);
+        }));
+        handles.push(await AdMob.addListener(InterstitialAdPluginEvents.Showed, () => console.log("[AdMob] interstitial showed")));
 
         setTimeout(() => settle(false), 30000);
 
         try {
-          console.log("[AdMob] loading live interstitial", { platform, adId, npa: requestNonPersonalizedAds });
-          await AdMob.prepareInterstitial({
-            adId,
-            isTesting: shouldUseTestAds(),
-            npa: requestNonPersonalizedAds,
-            immersiveMode: true,
-          });
+          const prepared = await prepareInterstitial();
+          if (!prepared) {
+            settle(false);
+            return;
+          }
+          interstitialPreloaded = false;
           await AdMob.showInterstitial();
         } catch (err) {
-          console.error("[AdMob] interstitial prepare/show failed:", err);
+          interstitialPreloaded = false;
+          console.error("[AdMob] interstitial show failed:", err);
           settle(false);
         }
       });
@@ -184,5 +222,45 @@ export function useAdMob() {
     }
   }, [initialize]);
 
-  return { initialize, showInterstitial, isNative: isNative.current };
+  const preloadInterstitial = useCallback(async (): Promise<boolean> => {
+    if (!isNative.current) return false;
+    if (!admobInitialized) await initialize();
+    if (!admobInitialized || interstitialPreloaded) return admobInitialized && interstitialPreloaded;
+
+    try {
+      const { AdMob } = await import("@capacitor-community/admob");
+      const platform = window.Capacitor?.getPlatform() === "ios" ? "ios" : "android";
+      const adId = shouldUseTestAds()
+        ? ADMOB_CONFIG.test.interstitialId
+        : ADMOB_CONFIG[platform].interstitialId;
+
+      if (interstitialPreloading) return interstitialPreloading;
+      interstitialPreloading = (async () => {
+        try {
+          console.log("[AdMob] preloading live interstitial", { platform, adId, npa: requestNonPersonalizedAds });
+          await AdMob.prepareInterstitial({
+            adId,
+            isTesting: shouldUseTestAds(),
+            npa: requestNonPersonalizedAds,
+            immersiveMode: true,
+          });
+          interstitialPreloaded = true;
+          console.log("[AdMob] live interstitial preloaded");
+          return true;
+        } catch (err) {
+          interstitialPreloaded = false;
+          console.error("[AdMob] interstitial preload failed:", err);
+          return false;
+        } finally {
+          interstitialPreloading = null;
+        }
+      })();
+      return interstitialPreloading;
+    } catch (err) {
+      console.error("[AdMob] preload error:", err);
+      return false;
+    }
+  }, [initialize]);
+
+  return { initialize, preloadInterstitial, showInterstitial, isNative: isNative.current };
 }
