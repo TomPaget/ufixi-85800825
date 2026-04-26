@@ -188,8 +188,15 @@ export function useAdMob() {
         };
 
         handles.push(await AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => settle(true)));
-        handles.push(await AdMob.addListener(InterstitialAdPluginEvents.FailedToLoad, () => settle(false)));
-        handles.push(await AdMob.addListener(InterstitialAdPluginEvents.FailedToShow, () => settle(false)));
+        handles.push(await AdMob.addListener(InterstitialAdPluginEvents.Loaded, (info) => console.log("[AdMob] interstitial loaded", info)));
+        handles.push(await AdMob.addListener(InterstitialAdPluginEvents.FailedToLoad, (error) => {
+          console.error("[AdMob] interstitial failed to load", error);
+          settle(false);
+        }));
+        handles.push(await AdMob.addListener(InterstitialAdPluginEvents.FailedToShow, (error) => {
+          console.error("[AdMob] interstitial failed to show", error);
+          settle(false);
+        }));
         handles.push(await AdMob.addListener(InterstitialAdPluginEvents.Showed, () => console.log("[AdMob] interstitial showed")));
 
         setTimeout(() => settle(false), 30000);
