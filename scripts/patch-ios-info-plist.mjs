@@ -98,7 +98,13 @@ setRaw(
   `\t<key>GADApplicationIdentifier</key>\n\t<string>ca-app-pub-9591380465147865~7363598276</string>`,
 );
 
-// --- 6. SKAdNetworkItems (AdMob + mediation partners) ---
+// --- 6. AdMob plugin flag required by @capacitor-community/admob iOS setup ---
+setRaw(
+  "GADIsAdManagerApp",
+  `\t<key>GADIsAdManagerApp</key>\n\t<true/>`,
+);
+
+// --- 7. SKAdNetworkItems (AdMob + mediation partners) ---
 const SKAD_IDS = [
   "cstr6suwn9", "4fzdc2evr5", "2fnua5tdw4", "ydx93a7ass", "p78axxw29g",
   "v72qych5uu", "ludvb6z3bs", "cp8zw746q7", "3sh42y64q3", "c6k4g5qg8m",
