@@ -18,9 +18,8 @@ export default function BottomNavDemo() {
 
   const handleNavigate = async (path: string) => {
     if (path === location.pathname) return;
-    if (path === "/ai-help" && !loading && !isPremium && isNative) {
-      await showInterstitial().catch((err) => console.warn("AI Help interstitial failed:", err));
-    }
+    const shouldShowAd = path === "/ai-help" && !loading && !isPremium && isNative;
+    if (shouldShowAd) await showInterstitial().catch((err) => console.warn("AI Help interstitial failed:", err));
     navigate(path);
   };
 
